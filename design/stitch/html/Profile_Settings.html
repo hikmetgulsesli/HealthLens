@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthLens - Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#222a3d",
+                        "on-secondary-container": "#abb9d1",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#2d4c46",
+                        "on-surface": "#dae2fd",
+                        "tertiary-fixed-dim": "#accec5",
+                        "tertiary-container": "#496861",
+                        "primary-fixed": "#9ff0fb",
+                        "background": "#0b1326",
+                        "error": "#ffb4ab",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "inverse-primary": "#006972",
+                        "surface-dim": "#0b1326",
+                        "error-container": "#93000a",
+                        "on-tertiary": "#163630",
+                        "tertiary-fixed": "#c7eae1",
+                        "primary-container": "#006d77",
+                        "on-primary-fixed": "#001f23",
+                        "secondary": "#b9c7df",
+                        "surface-container-low": "#131b2e",
+                        "outline": "#889394",
+                        "on-tertiary-fixed": "#00201b",
+                        "on-primary-fixed-variant": "#004f56",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#3c4a5e",
+                        "on-primary": "#00363c",
+                        "inverse-surface": "#dae2fd",
+                        "primary-fixed-dim": "#82d3de",
+                        "on-secondary": "#233144",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#82d3de",
+                        "surface-container": "#171f33",
+                        "on-background": "#dae2fd",
+                        "outline-variant": "#3e494a",
+                        "tertiary": "#accec5",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "surface-bright": "#31394d",
+                        "surface-container-highest": "#2d3449",
+                        "primary": "#82d3de",
+                        "on-tertiary-container": "#c3e6dd",
+                        "on-primary-container": "#9becf7",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "surface-container-lowest": "#060e20",
+                        "surface-variant": "#2d3449",
+                        "on-surface-variant": "#bec8ca",
+                        "surface": "#0b1326",
+                        "inverse-on-surface": "#283044"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "gutter-mobile": "12px",
+                        "sm": "8px",
+                        "margin-mobile": "20px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-xl-mobile": ["Hanken Grotesk"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-sm": ["Inter"],
+                        "headline-xl": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-xl-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* iOS Toggle Switch Styles */
+        .ios-switch {
+            appearance: none;
+            width: 51px;
+            height: 31px;
+            background-color: #3e494a; /* outline-variant */
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .ios-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 27px;
+            height: 27px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .ios-switch:checked {
+            background-color: #006d77; /* primary-container */
+        }
+        .ios-switch:checked::after {
+            transform: translateX(20px);
+        }
+        
+        /* Glassmorphic Panel Base */
+        .glass-panel {
+            background: rgba(34, 42, 61, 0.4); /* surface-container-high with opacity */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(136, 147, 148, 0.2); /* outline with opacity */
+        }
+
+        /* iOS Grouped List Styles */
+        .ios-list-group {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .ios-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background-color: rgba(23, 31, 51, 0.6); /* surface-container with opacity */
+            position: relative;
+        }
+        .ios-list-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 16px;
+            right: 0;
+            height: 0.5px;
+            background-color: rgba(136, 147, 148, 0.3); /* outline with opacity */
+        }
+        .ios-list-input {
+            background: transparent;
+            border: none;
+            text-align: right;
+            color: #dae2fd; /* on-surface */
+            font-family: inherit;
+            font-size: inherit;
+            width: 100px;
+            outline: none;
+        }
+        .ios-list-input:focus {
+            color: #82d3de; /* primary */
+        }
+        .ios-list-input::placeholder {
+            color: #bec8ca; /* on-surface-variant */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 dark:bg-background/80 backdrop-blur-xl border-b border-outline-variant/30 flex items-center justify-between px-margin-mobile h-16">
+<button class="text-primary dark:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 transition-transform duration-200 p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight">HealthLens</h1>
+<button class="text-primary dark:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 transition-transform duration-200 p-2 -mr-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-margin-mobile pb-8 max-w-2xl mx-auto space-y-lg">
+<!-- Page Header -->
+<div class="mb-6">
+<h2 class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface">Profile</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage your nutrition targets and app preferences.</p>
+</div>
+<!-- Section 1: Daily Targets -->
+<section>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2 ml-4 uppercase tracking-wider">Daily Targets</h3>
+<div class="ios-list-group glass-panel">
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Calorie Target</span>
+<div class="flex items-center">
+<input class="ios-list-input font-body-md text-body-md" placeholder="2000" type="number" value="2000"/>
+<span class="font-body-md text-body-md text-on-surface-variant ml-2">kcal</span>
+</div>
+</div>
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Protein</span>
+<div class="flex items-center">
+<input class="ios-list-input font-body-md text-body-md" placeholder="150" type="number" value="150"/>
+<span class="font-body-md text-body-md text-on-surface-variant ml-2">g</span>
+</div>
+</div>
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Carbs</span>
+<div class="flex items-center">
+<input class="ios-list-input font-body-md text-body-md" placeholder="200" type="number" value="200"/>
+<span class="font-body-md text-body-md text-on-surface-variant ml-2">g</span>
+</div>
+</div>
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Fat</span>
+<div class="flex items-center">
+<input class="ios-list-input font-body-md text-body-md" placeholder="65" type="number" value="65"/>
+<span class="font-body-md text-body-md text-on-surface-variant ml-2">g</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Micronutrient Tracking -->
+<section>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2 ml-4 uppercase tracking-wider">Micronutrient Tracking</h3>
+<div class="ios-list-group glass-panel">
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Sodium</span>
+<input checked="" class="ios-switch" type="checkbox"/>
+</div>
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Fiber</span>
+<input checked="" class="ios-switch" type="checkbox"/>
+</div>
+<div class="ios-list-item">
+<span class="font-body-md text-body-md text-on-surface">Sugar</span>
+<input class="ios-switch" type="checkbox"/>
+</div>
+</div>
+</section>
+<!-- Section 3: Preferences -->
+<section>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2 ml-4 uppercase tracking-wider">Preferences</h3>
+<div class="ios-list-group glass-panel">
+<label class="ios-list-item cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface">Unit Preference</span>
+<div class="relative flex items-center">
+<select class="appearance-none bg-transparent border-none text-right font-body-md text-body-md text-primary pr-6 outline-none cursor-pointer focus:ring-0">
+<option class="bg-surface-container text-on-surface" value="metric">Metric (g, ml)</option>
+<option class="bg-surface-container text-on-surface" value="imperial">Imperial (oz, lb)</option>
+</select>
+<span class="material-symbols-outlined absolute right-0 text-on-surface-variant pointer-events-none" style="font-size: 20px;">chevron_right</span>
+</div>
+</label>
+</div>
+</section>
+<!-- Section 4: Data Actions -->
+<section class="mt-8 space-y-4">
+<button class="w-full py-3 rounded-xl bg-surface-container border border-outline-variant/50 font-headline-md text-headline-md text-primary flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                Export Data
+            </button>
+<button class="w-full py-3 rounded-xl bg-error-container/20 border border-error/30 font-headline-md text-headline-md text-error flex items-center justify-center gap-2 hover:bg-error-container/40 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="delete_forever">delete_forever</span>
+                Delete History
+            </button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pt-3 pb-safe bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-xl border-t border-outline-variant/20 rounded-t-xl h-20 md:hidden">
+<button class="flex flex-col items-center justify-center text-on-secondary-container opacity-70 hover:bg-surface-container-high transition-all active:scale-90 duration-300 w-20 py-2 rounded-xl">
+<span class="material-symbols-outlined mb-1" data-icon="menu_book">menu_book</span>
+<span class="font-label-md text-label-md">Library</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container opacity-70 hover:bg-surface-container-high transition-all active:scale-90 duration-300 w-20 py-2 rounded-xl">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-6 py-1 active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined mb-1" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-md text-label-md font-semibold">Settings</span>
+</button>
+</nav>
+<!-- Support for safe area inset on mobile -->
+<style>
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+    </style>
+</body></html>

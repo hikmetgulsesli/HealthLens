@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>HealthLens Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#353534",
+                        "primary": "#82d3de",
+                        "surface-container-low": "#1c1b1b",
+                        "on-error": "#690005",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffd7bd",
+                        "surface-container-high": "#2a2a2a",
+                        "surface": "#131313",
+                        "on-primary-container": "#9becf7",
+                        "outline": "#889394",
+                        "surface-bright": "#393939",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "inverse-on-surface": "#313030",
+                        "on-surface-variant": "#bec8ca",
+                        "primary-container": "#006d77",
+                        "on-tertiary-fixed": "#301400",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#00504b",
+                        "on-secondary-fixed": "#00201e",
+                        "tertiary": "#ffb783",
+                        "inverse-surface": "#e5e2e1",
+                        "secondary-container": "#025550",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-container": "#201f1f",
+                        "tertiary-fixed": "#ffdcc5",
+                        "secondary-fixed": "#acefe7",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#82d3de",
+                        "surface-dim": "#131313",
+                        "primary-fixed": "#9ff0fb",
+                        "on-primary": "#00363c",
+                        "surface-container-highest": "#353534",
+                        "on-surface": "#e5e2e1",
+                        "on-background": "#e5e2e1",
+                        "secondary": "#90d3cb",
+                        "secondary-fixed-dim": "#90d3cb",
+                        "background": "#131313",
+                        "on-secondary-container": "#86c8c1",
+                        "inverse-primary": "#006972",
+                        "on-primary-fixed": "#001f23",
+                        "on-tertiary-fixed-variant": "#6d390c",
+                        "on-primary-fixed-variant": "#004f56",
+                        "outline-variant": "#3e494a",
+                        "on-tertiary": "#4f2500",
+                        "tertiary-container": "#8e5426",
+                        "surface-tint": "#82d3de",
+                        "on-secondary": "#003734"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "4px",
+                        "gutter-mobile": "12px",
+                        "stack-lg": "24px",
+                        "base": "8px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.4px", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.2px", "fontWeight": "600" }],
+                        "body-lg": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "13px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+                        "headline-lg": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.4px", "fontWeight": "700" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.1px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #121212; color: #e5e2e1; }
+        .glass-panel { background: rgba(30, 30, 30, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .card-elevation { background-color: #1E1E1E; border: 1px solid rgba(255, 255, 255, 0.05); }
+        /* Circular Progress */
+        .circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
+        .circle-bg { fill: none; stroke: #2a2a2a; stroke-width: 3.8; }
+        .circle { fill: none; stroke-width: 2.8; stroke-linecap: round; animation: progress 1s ease-out forwards; }
+        @keyframes progress { 0% { stroke-dasharray: 0 100; } }
+        .percentage { fill: #e5e2e1; font-family: 'Inter', sans-serif; font-size: 0.5em; text-anchor: middle; font-weight: 700; }
+        .sub-text { fill: #bec8ca; font-family: 'Inter', sans-serif; font-size: 0.2em; text-anchor: middle; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased pb-32">
+<!-- TopAppBar from JSON -->
+<header class="flex justify-between items-center px-margin-mobile h-14 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl sticky top-0 full-width docked pt-safe">
+<div class="flex items-center gap-base">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A close-up, softly lit portrait of a young professional in a minimalist setting. The mood is calm and approachable, aligning with a modern, clinical health app aesthetic. The color palette is composed of natural skin tones against a clean, neutral background, emphasizing clarity and trust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7rkzWapd1onovdFgIB3A9nZqb_Okq-2ajpEclYHk25zS0fuN_OtexS2mgnx45TAzepjElZXL0xJxoTi6_WhiivwrU5eitDGRuu4msWzgIRMGc1tyB6-vwsonbEIBbQrVwGeDWlZFedl6YxlYShnBwWfxgMXhalzntonXgfoVLVWXYU9jdM-zOw7hPsEmDSF0wKlGzmfIuO3DSCcKWCeig1E2eKiHrWYdAekatOvf3DeIi0ZP7Qz-uyQeslEK9fPdmfDw9dpz_ZQPy"/>
+</div>
+<span class="font-headline-md text-headline-md-mobile font-bold text-on-surface dark:text-on-surface">HealthLens</span>
+</div>
+<div class="flex items-center gap-stack-sm text-on-surface-variant">
+<span class="font-label-md text-label-md">Today</span>
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim hover:bg-surface-variant/20 transition-opacity duration-200 active:opacity-70 rounded-full p-1 cursor-pointer">calendar_today</span>
+</div>
+</header>
+<main class="px-margin-mobile py-stack-md flex flex-col gap-stack-lg max-w-2xl mx-auto">
+<!-- Section 1: Circular Calorie Progress Ring -->
+<section class="card-elevation rounded-xl p-stack-md flex flex-col items-center shadow-sm">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface mb-stack-sm self-start">Daily Energy</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-md self-start">Target: 2,000 kcal</p>
+<div class="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
+<svg class="circular-chart w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="circle-bg" d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+<path class="circle stroke-primary" d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831" stroke-dasharray="65, 100"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">1,450</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-1">kcal consumed</span>
+<div class="w-12 h-px bg-surface-container-high my-2"></div>
+<span class="font-headline-md text-headline-md-mobile text-primary">550</span>
+<span class="font-label-sm text-label-sm text-primary/70 uppercase tracking-wider">kcal remaining</span>
+</div>
+</div>
+</section>
+<!-- Section 2: Macro Progress Bars -->
+<section class="card-elevation rounded-xl p-stack-md flex flex-col gap-stack-md shadow-sm">
+<h3 class="font-body-lg text-body-lg text-on-surface mb-1">Macronutrients</h3>
+<!-- Protein -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface-variant">Protein</span>
+<div class="flex items-baseline gap-1">
+<span class="font-body-md text-body-md text-on-surface">75g</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">/ 120g</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+<div class="bg-primary h-2 rounded-full" style="width: 62.5%"></div>
+</div>
+</div>
+<!-- Carbs -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface-variant">Carbs</span>
+<div class="flex items-baseline gap-1">
+<span class="font-body-md text-body-md text-on-surface">150g</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">/ 200g</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+<div class="bg-secondary h-2 rounded-full" style="width: 75%"></div>
+</div>
+</div>
+<!-- Fat -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface-variant">Fat</span>
+<div class="flex items-baseline gap-1">
+<span class="font-body-md text-body-md text-on-surface">45g</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">/ 65g</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+<div class="bg-tertiary h-2 rounded-full" style="width: 69%"></div>
+</div>
+</div>
+</section>
+<!-- Section 3: Today's Meals List -->
+<section class="flex flex-col gap-stack-md">
+<h3 class="font-headline-md text-headline-md-mobile text-on-surface px-1">Today's Meals</h3>
+<div class="flex flex-col gap-stack-sm">
+<!-- Meal Card 1 -->
+<div class="card-elevation rounded-lg p-stack-md flex justify-between items-center shadow-sm">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">breakfast_dining</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-lg text-body-lg text-on-surface">Avocado Toast &amp; Eggs</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Breakfast • 8:30 AM</span>
+</div>
+</div>
+<span class="font-body-md text-body-md text-primary font-semibold">450 kcal</span>
+</div>
+<!-- Meal Card 2 -->
+<div class="card-elevation rounded-lg p-stack-md flex justify-between items-center shadow-sm">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">lunch_dining</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-lg text-body-lg text-on-surface">Grilled Chicken Salad</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Lunch • 1:15 PM</span>
+</div>
+</div>
+<span class="font-body-md text-body-md text-secondary font-semibold">620 kcal</span>
+</div>
+</div>
+<div class="flex justify-between items-center px-2 pt-2 border-t border-white/5 mt-1">
+<span class="font-body-md text-body-md text-on-surface-variant">Total Logged</span>
+<span class="font-headline-md text-headline-md-mobile text-on-surface">1,070 kcal</span>
+</div>
+</section>
+</main>
+<!-- Prominent FAB -->
+<button class="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-primary-container text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-200 z-40 border border-primary/20">
+<span class="material-symbols-outlined text-3xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+</button>
+<!-- BottomNavBar from JSON -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-safe h-20 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-white/10 md:hidden">
+<!-- Tab 1: Library -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant/10 active:scale-95 transition-transform duration-150 p-2 rounded-lg flex-1" href="#">
+<span class="material-symbols-outlined mb-1">folder_open</span>
+<span class="font-label-md text-label-md">Library</span>
+</a>
+<!-- Tab 2: Dashboard (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim hover:bg-surface-variant/10 active:scale-95 transition-transform duration-150 p-2 rounded-lg flex-1" href="#">
+<span class="material-symbols-outlined mb-1" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<!-- Tab 3: Settings -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant/10 active:scale-95 transition-transform duration-150 p-2 rounded-lg flex-1" href="#">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<!-- Web Navigation (Hidden on Mobile, Visible on md+) -->
+<nav class="hidden md:flex fixed left-0 top-14 bottom-0 w-64 bg-surface/80 backdrop-blur-xl border-r border-white/10 flex-col py-stack-lg z-40">
+<div class="px-margin-mobile flex flex-col gap-base">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/20 transition-colors" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-lg text-body-lg">Library</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-surface-container text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-body-lg text-body-lg font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/20 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-lg text-body-lg">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>

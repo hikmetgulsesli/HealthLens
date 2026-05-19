@@ -1,0 +1,70 @@
+{
+  "project": "HealthLens",
+  "projectId": "12961361258698830402",
+  "screens": [
+    {
+      "id": "3d1e13972c7040bcbe24cb30f77af3f5",
+      "title": "Camera Capture",
+      "width": "780",
+      "height": "1768",
+      "source": "Camera_Capture",
+      "png": "design/stitch/screens/Camera_Capture.png",
+      "html": "design/stitch/html/Camera_Capture.html"
+    },
+    {
+      "id": "f0c0c09cd6784710acf978072f3c1217",
+      "title": "AI Review",
+      "width": "780",
+      "height": "2398",
+      "source": "AI_Review",
+      "png": "design/stitch/screens/AI_Review.png",
+      "html": "design/stitch/html/AI_Review.html"
+    },
+    {
+      "id": "4631817ba87a4ce4b56518e248bd3f72",
+      "title": "Dashboard (Empty State)",
+      "width": "780",
+      "height": "2140",
+      "source": "Dashboard",
+      "png": "design/stitch/screens/Dashboard_Empty_State.png",
+      "html": "design/stitch/html/Dashboard_Empty_State.html"
+    },
+    {
+      "id": "dc589550bc6e47168286549d462f78aa",
+      "title": "Dashboard (Daily Tracking)",
+      "width": "780",
+      "height": "2214",
+      "source": "Dashboard",
+      "png": "design/stitch/screens/Dashboard_Daily_Tracking.png",
+      "html": "design/stitch/html/Dashboard_Daily_Tracking.html"
+    },
+    {
+      "id": "e60bcc6b2dae4d3e9910b1a5d3ce82b8",
+      "title": "History",
+      "width": "780",
+      "height": "2442",
+      "source": "History",
+      "png": "design/stitch/screens/History.png",
+      "html": "design/stitch/html/History.html"
+    },
+    {
+      "id": "ac3a0b59e0094dc887fd70c96288ec59",
+      "title": "Profile Settings",
+      "width": "780",
+      "height": "2144",
+      "source": "Profile_and_Goals",
+      "png": "design/stitch/screens/Profile_Settings.png",
+      "html": "design/stitch/html/Profile_Settings.html"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ce9932d17bea45f1b6d6a2dbb1f9439f",
+      "title": "A clean, minimal line-art illustration of an empty dinner plate with a fork and knife, iOS style, thin strokes, deep teal accent, on a dark background, for an empty state.",
+      "width": "1024",
+      "height": "1024",
+      "source": "Dashboard",
+      "png": "design/stitch/assets/empty_plate_illustration.png"
+    }
+  ]
+}
