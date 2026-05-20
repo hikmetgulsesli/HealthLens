@@ -1,0 +1,62 @@
+export const colors = {
+  surface: '#0b1326',
+  surfaceDim: '#0b1326',
+  surfaceBright: '#31394d',
+  surfaceContainerLowest: '#060e20',
+  surfaceContainerLow: '#131b2e',
+  surfaceContainer: '#171f33',
+  surfaceContainerHigh: '#222a3d',
+  surfaceContainerHighest: '#2d3449',
+  onSurface: '#dae2fd',
+  onSurfaceVariant: '#bec8ca',
+  inverseSurface: '#dae2fd',
+  inverseOnSurface: '#283044',
+  outline: '#889394',
+  outlineVariant: '#3e494a',
+  surfaceTint: '#82d3de',
+  primary: '#82d3de',
+  onPrimary: '#00363c',
+  primaryContainer: '#006d77',
+  onPrimaryContainer: '#9becf7',
+  inversePrimary: '#006972',
+  secondary: '#b9c7df',
+  onSecondary: '#233144',
+  secondaryContainer: '#3c4a5e',
+  onSecondaryContainer: '#abb9d1',
+  tertiary: '#accec5',
+  onTertiary: '#163630',
+  tertiaryContainer: '#496861',
+  onTertiaryContainer: '#c3e6dd',
+  error: '#ffb4ab',
+  onError: '#690005',
+  errorContainer: '#93000a',
+  onErrorContainer: '#ffdad6',
+  background: '#0b1326',
+  onBackground: '#dae2fd',
+  surfaceVariant: '#2d3449',
+} as const;
+
+export const fonts = {
+  headline: 'HankenGrotesk-Bold',
+  headlineSemi: 'HankenGrotesk-SemiBold',
+  body: 'Inter-Regular',
+  bodyMedium: 'Inter-Medium',
+  bodyBold: 'Inter-Bold',
+} as const;
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+} as const;
+
+export const radii = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  full: 9999,
+} as const;
