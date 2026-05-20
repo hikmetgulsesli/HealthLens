@@ -10,7 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {colors, spacing, radii} from '../theme/colors';
+import {colors} from '../theme/colors';
+import {spacing} from '../theme/spacing';
+import {radii} from '../theme/radii';
+import {typography, fontFamily} from '../theme/typography';
 import {useAnalysisStore} from '../stores/analysisStore';
 import {useLogStore} from '../stores/logStore';
 import type {MealCategory} from '../types';
@@ -78,38 +81,32 @@ export function ReviewScreen(): React.JSX.Element {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.headerAction}>✕</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sonuçları İncele</Text>
-        <View style={{width: 24}} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.imageCard}>
-          <Image
-            source={{uri: analysis.imageUri}}
-            style={styles.foodImage}
-            resizeMode="cover"
-          />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Image Section */}
+        <View style={styles.imageSection}>
+          <View style={styles.imageCard}>
+            <Image
+              source={{uri: analysis.imageUri}}
+              style={styles.foodImage}
+              resizeMode="cover"
+            />
+          </View>
         </View>
 
+        {/* Category Selector */}
         <View style={styles.categoryRow}>
           {MEAL_CATEGORIES.map(cat => (
             <TouchableOpacity
               key={cat.value}
               style={[
                 styles.categoryChip,
-                analysis.mealCategory === cat.value &&
-                  styles.categoryChipActive,
+                analysis.mealCategory === cat.value && styles.categoryChipActive,
               ]}
               onPress={() => setMealCategory(cat.value)}>
               <Text
                 style={[
                   styles.categoryText,
-                  analysis.mealCategory === cat.value &&
-                    styles.categoryTextActive,
+                  analysis.mealCategory === cat.value && styles.categoryTextActive,
                 ]}>
                 {cat.label}
               </Text>
@@ -117,21 +114,28 @@ export function ReviewScreen(): React.JSX.Element {
           ))}
         </View>
 
+        {/* Item Cards */}
         {analysis.items.map(item => (
           <View key={item.id} style={styles.itemCard}>
+            {/* Header */}
             <View style={styles.itemHeader}>
-              <View>
+              <View style={styles.itemHeaderLeft}>
+                <View style={styles.itemIcon}>
+                  <Text style={styles.itemIconText}>🍽</Text>
+                </View>
                 <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemConfidence}>
-                  Güven: %{Math.round(item.confidence * 100)}
-                </Text>
               </View>
               <TouchableOpacity onPress={() => removeItem(item.id)}>
                 <Text style={styles.deleteIcon}>🗑</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.sliderRow}>
-              <Text style={styles.sliderLabel}>Porsiyon (g)</Text>
+
+            {/* Portion Slider */}
+            <View style={styles.portionSection}>
+              <View style={styles.portionLabelRow}>
+                <Text style={styles.portionLabel}>Porsiyon</Text>
+                <Text style={styles.portionValue}>{item.estimatedPortionGrams}g</Text>
+              </View>
               <TextInput
                 style={styles.portionInput}
                 keyboardType="numeric"
@@ -144,165 +148,409 @@ export function ReviewScreen(): React.JSX.Element {
                 }}
               />
             </View>
-            <View style={styles.macroRow}>
-              <MacroBadge label="Kal" value={Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)} />
-              <MacroBadge label="Prot" value={Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)} />
-              <MacroBadge label="Karb" value={Math.round((item.carbsPer100g * item.estimatedPortionGrams) / 100)} />
-              <MacroBadge label="Yağ" value={Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)} />
+
+            {/* Macros Data */}
+            <View style={styles.macroSection}>
+              <View style={styles.macroLeft}>
+                <Text style={styles.macroLabelSmall}>Energy</Text>
+                <View style={styles.macroValueRow}>
+                  <Text style={styles.macroValueLarge}>
+                    {Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)}
+                  </Text>
+                  <Text style={styles.macroUnit}>kcal</Text>
+                </View>
+              </View>
+              <View style={styles.macroRight}>
+                <MacroBadge label="PRO" value={`${Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)}g`} />
+                <MacroBadge label="CARB" value={`${Math.round((item.carbsPer100g * item.estimatedPortionGrams) / 100)}g`} />
+                <MacroBadge label="FAT" value={`${Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)}g`} />
+              </View>
             </View>
           </View>
         ))}
 
+        {/* Add Item Button */}
         <TouchableOpacity style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Besin Ekle</Text>
         </TouchableOpacity>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Toplam</Text>
-          <View style={styles.summaryRow}>
-            <SummaryItem label="Kalori" value={`${Math.round(totals.cal)}`} />
-            <SummaryItem label="Protein" value={`${Math.round(totals.protein)}g`} />
-            <SummaryItem label="Karbonhidrat" value={`${Math.round(totals.carbs)}g`} />
-            <SummaryItem label="Yağ" value={`${Math.round(totals.fat)}g`} />
-          </View>
-        </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          testID="saveLogButton">
-          <Text style={styles.saveButtonText}>Öğünü Kaydet</Text>
-        </TouchableOpacity>
+      {/* Sticky Bottom Summary Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomContent}>
+          {/* Summary Stats */}
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryLeft}>
+              <Text style={styles.summaryLabel}>TOPLAM BESİN</Text>
+              <View style={styles.summaryValueRow}>
+                <Text style={styles.summaryValue}>{Math.round(totals.cal)}</Text>
+                <Text style={styles.summaryUnit}>kcal</Text>
+              </View>
+            </View>
+            <View style={styles.summaryRight}>
+              <MacroBento label="PRO" value={`${Math.round(totals.protein)}g`} />
+              <MacroBento label="CARB" value={`${Math.round(totals.carbs)}g`} />
+              <MacroBento label="FAT" value={`${Math.round(totals.fat)}g`} />
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.retakeButton}
+              onPress={() => navigation.goBack()}>
+              <Text style={styles.retakeText}>Tekrar Çek</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSave}
+              testID="saveLogButton">
+              <Text style={styles.saveText}>Öğünü Kaydet</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </View>
   );
 }
 
-function MacroBadge({label, value}: {label: string; value: number}) {
+function MacroBadge({label, value}: {label: string; value: string}) {
   return (
     <View style={styles.macroBadge}>
-      <Text style={styles.macroValue}>{value}</Text>
-      <Text style={styles.macroLabel}>{label}</Text>
+      <Text style={styles.macroBadgeLabel}>{label}</Text>
+      <Text style={styles.macroBadgeValue}>{value}</Text>
     </View>
   );
 }
 
-function SummaryItem({label, value}: {label: string; value: string}) {
+function MacroBento({label, value}: {label: string; value: string}) {
   return (
-    <View style={styles.summaryItem}>
-      <Text style={styles.summaryValue}>{value}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
+    <View style={styles.macroBento}>
+      <Text style={styles.macroBentoLabel}>{label}</Text>
+      <Text style={styles.macroBentoValue}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: colors.background},
-  emptyText: {color: colors.onSurface, textAlign: 'center', marginTop: 40},
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: colors.surfaceContainerLow,
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    position: 'relative',
   },
-  headerTitle: {color: colors.onSurface, fontSize: 17, fontWeight: '600'},
-  headerAction: {color: colors.onSurface, fontSize: 20},
-  content: {padding: 16, gap: 12},
+  scrollContent: {
+    paddingBottom: 260,
+  },
+  emptyText: {
+    color: colors.onSurface,
+    textAlign: 'center',
+    marginTop: 40,
+    ...typography.bodyMd,
+  },
+  imageSection: {
+    width: '100%',
+    maxWidth: 672,
+    alignSelf: 'center',
+    paddingHorizontal: spacing['margin-mobile'],
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+  },
   imageCard: {
-    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainer,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  foodImage: {width: '100%', height: 200},
-  categoryRow: {flexDirection: 'row', gap: 8, flexWrap: 'wrap'},
+  foodImage: {
+    width: '100%',
+    height: 256,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing['margin-mobile'],
+    paddingBottom: spacing.md,
+  },
   categoryChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceContainer,
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.outlineVariant,
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoryChipActive: {
     backgroundColor: colors.primaryContainer,
     borderColor: colors.primary,
   },
-  categoryText: {color: colors.onSurfaceVariant, fontSize: 13},
-  categoryTextActive: {color: colors.onPrimaryContainer, fontWeight: '600'},
+  categoryText: {
+    ...typography.labelMd,
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  categoryTextActive: {
+    color: colors.onPrimaryContainer,
+    fontWeight: '700',
+  },
   itemCard: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radii.lg,
-    padding: 16,
-    gap: 10,
+    backgroundColor: 'rgba(23,31,51,0.4)',
+    borderRadius: radii.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(62,73,74,0.4)',
+    flexDirection: 'column',
+    gap: spacing.md,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    marginHorizontal: spacing['margin-mobile'],
+    marginBottom: spacing.md,
   },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  itemName: {color: colors.onSurface, fontSize: 16, fontWeight: '600'},
-  itemConfidence: {color: colors.onSurfaceVariant, fontSize: 12, marginTop: 2},
-  deleteIcon: {fontSize: 18},
-  sliderRow: {
+  itemHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  sliderLabel: {color: colors.onSurfaceVariant, fontSize: 13},
+  itemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(62,73,74,0.3)',
+  },
+  itemIconText: {
+    fontSize: 16,
+  },
+  itemName: {
+    ...typography.bodyLg,
+    color: colors.onSurface,
+    fontWeight: '600',
+    fontFamily: fontFamily.bodyMedium,
+  },
+  deleteIcon: {
+    fontSize: 20,
+    color: colors.outline,
+  },
+  portionSection: {
+    paddingHorizontal: 4,
+  },
+  portionLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  portionLabel: {
+    ...typography.labelMd,
+    color: colors.onSurfaceVariant,
+  },
+  portionValue: {
+    ...typography.labelMd,
+    color: colors.primary,
+    fontWeight: '700',
+  },
   portionInput: {
     backgroundColor: colors.surfaceContainerHigh,
     color: colors.onSurface,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: '100%',
+    textAlign: 'center',
+    ...typography.bodyMd,
+  },
+  macroSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(62,73,74,0.2)',
+  },
+  macroLeft: {
+    flexDirection: 'column',
+  },
+  macroLabelSmall: {
+    ...typography.labelCaps,
+    color: colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
+  macroValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  macroValueLarge: {
+    ...typography.headlineMd,
+    color: colors.onSurface,
+  },
+  macroUnit: {
+    ...typography.labelMd,
+    color: colors.onSurfaceVariant,
+  },
+  macroRight: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  macroBadge: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+  },
+  macroBadgeLabel: {
+    ...typography.labelCaps,
+    color: colors.outline,
+    marginBottom: 4,
+  },
+  macroBadgeValue: {
+    ...typography.bodyMd,
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  addButton: {
+    width: '100%',
+    paddingVertical: 16,
+    marginTop: 8,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(136,147,148,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: spacing['margin-mobile'],
+  },
+  addButtonText: {
+    ...typography.labelMd,
+    color: colors.primary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.48,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(11,19,38,0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(62,73,74,0.3)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    zIndex: 40,
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  bottomContent: {
+    maxWidth: 672,
+    alignSelf: 'center',
+    paddingHorizontal: spacing['margin-mobile'],
+    paddingTop: spacing.lg,
+    paddingBottom: 32,
+    flexDirection: 'column',
+    gap: spacing.md,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  summaryLeft: {
+    flexDirection: 'column',
+  },
+  summaryLabel: {
+    ...typography.labelCaps,
+    color: colors.onSurfaceVariant,
+    marginBottom: 4,
+    letterSpacing: 0.96,
+  },
+  summaryValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  summaryValue: {
+    ...typography['headlineXlMobile'],
+    color: colors.primary,
+    fontWeight: '700',
+    fontFamily: fontFamily.headline,
+  },
+  summaryUnit: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+  },
+  summaryRight: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  macroBento: {
+    backgroundColor: colors.surfaceContainerHigh,
+    borderWidth: 1,
+    borderColor: 'rgba(62,73,74,0.2)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    width: 80,
-    textAlign: 'center',
-  },
-  macroRow: {flexDirection: 'row', gap: 8},
-  macroBadge: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: radii.md,
-    padding: 8,
-    alignItems: 'center',
-  },
-  macroValue: {color: colors.onSurface, fontSize: 14, fontWeight: '700'},
-  macroLabel: {color: colors.onSurfaceVariant, fontSize: 10, marginTop: 2},
-  addButton: {
-    alignSelf: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: radii.full,
-    backgroundColor: colors.secondaryContainer,
-  },
-  addButtonText: {color: colors.onSecondaryContainer, fontWeight: '600'},
-  summaryCard: {
-    backgroundColor: colors.surfaceContainer,
     borderRadius: radii.lg,
-    padding: 16,
-    gap: 10,
+    alignItems: 'center',
+    minWidth: 48,
   },
-  summaryTitle: {color: colors.onSurface, fontSize: 16, fontWeight: '700'},
-  summaryRow: {flexDirection: 'row', justifyContent: 'space-around'},
-  summaryItem: {alignItems: 'center'},
-  summaryValue: {color: colors.primary, fontSize: 20, fontWeight: '700'},
-  summaryLabel: {color: colors.onSurfaceVariant, fontSize: 11, marginTop: 2},
-  footer: {
-    padding: 16,
-    backgroundColor: colors.surfaceContainerLow,
-    borderTopWidth: 0.5,
-    borderTopColor: colors.outline,
+  macroBentoLabel: {
+    ...typography.labelCaps,
+    color: colors.outline,
+    marginBottom: 2,
+  },
+  macroBentoValue: {
+    ...typography.labelMd,
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    width: '100%',
+  },
+  retakeButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: radii.xl,
+    backgroundColor: colors.surfaceContainer,
+    borderWidth: 1,
+    borderColor: 'rgba(62,73,74,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retakeText: {
+    ...typography.labelMd,
+    color: colors.onSurface,
+    fontWeight: '600',
   },
   saveButton: {
+    flex: 2,
+    paddingVertical: 16,
+    borderRadius: radii.xl,
     backgroundColor: colors.primaryContainer,
-    paddingVertical: 14,
-    borderRadius: radii.lg,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  saveButtonText: {color: colors.onPrimaryContainer, fontSize: 16, fontWeight: '700'},
+  saveText: {
+    ...typography.labelMd,
+    color: colors.onPrimaryContainer,
+    fontWeight: '700',
+  },
 });

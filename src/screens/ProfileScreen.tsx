@@ -9,11 +9,16 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import {colors, spacing, radii} from '../theme/colors';
+import {colors} from '../theme/colors';
+import {spacing} from '../theme/spacing';
+import {radii} from '../theme/radii';
+import {typography, fontFamily} from '../theme/typography';
 import {useUserStore} from '../stores/userStore';
 import {useLogStore} from '../stores/logStore';
+import {useNavigation} from '@react-navigation/native';
 
 export function ProfileScreen(): React.JSX.Element {
+  const navigation = useNavigation();
   const profile = useUserStore(s => s.profile);
   const setGoals = useUserStore(s => s.setGoals);
   const setUnitSystem = useUserStore(s => s.setUnitSystem);
@@ -64,94 +69,105 @@ export function ProfileScreen(): React.JSX.Element {
     );
   };
 
-  const GoalInput = ({
-    label,
-    value,
-    onChange,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-  }) => (
-    <View style={styles.inputRow}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        value={value}
-        onChangeText={onChange}
-        onBlur={saveGoals}
-        placeholderTextColor={colors.onSurfaceVariant}
-        placeholder="---"
-      />
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Profil</Text>
+      {/* TopAppBar */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.iconText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>HealthLens</Text>
+        <TouchableOpacity style={styles.iconButton}>
+          <Text style={styles.iconText}>⚙</Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.group}>
-          <Text style={styles.groupTitle}>Günlük Hedefler</Text>
-          <View style={styles.groupCard}>
-            <GoalInput label="Kalori (kcal)" value={localGoals.cal} onChange={v => setLocalGoals(p => ({...p, cal: v}))} />
-            <View style={styles.divider} />
-            <GoalInput label="Protein (g)" value={localGoals.protein} onChange={v => setLocalGoals(p => ({...p, protein: v}))} />
-            <View style={styles.divider} />
-            <GoalInput label="Karbonhidrat (g)" value={localGoals.carbs} onChange={v => setLocalGoals(p => ({...p, carbs: v}))} />
-            <View style={styles.divider} />
-            <GoalInput label="Yağ (g)" value={localGoals.fat} onChange={v => setLocalGoals(p => ({...p, fat: v}))} />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Goals Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Günlük Hedefler</Text>
           </View>
+          <GoalInput
+            label="Kalori (kcal)"
+            value={localGoals.cal}
+            onChange={v => setLocalGoals(p => ({...p, cal: v}))}
+            onBlur={saveGoals}
+          />
+          <ListDivider />
+          <GoalInput
+            label="Protein (g)"
+            value={localGoals.protein}
+            onChange={v => setLocalGoals(p => ({...p, protein: v}))}
+            onBlur={saveGoals}
+          />
+          <ListDivider />
+          <GoalInput
+            label="Karbonhidrat (g)"
+            value={localGoals.carbs}
+            onChange={v => setLocalGoals(p => ({...p, carbs: v}))}
+            onBlur={saveGoals}
+          />
+          <ListDivider />
+          <GoalInput
+            label="Yağ (g)"
+            value={localGoals.fat}
+            onChange={v => setLocalGoals(p => ({...p, fat: v}))}
+            onBlur={saveGoals}
+          />
         </View>
 
-        <View style={styles.group}>
-          <Text style={styles.groupTitle}>Mikro Besinler</Text>
-          <View style={styles.groupCard}>
-            <ToggleRow
-              label="Sodyum göster"
-              value={profile.goals.showMicronutrients}
-              onChange={v => setGoals({showMicronutrients: v})}
-            />
-            <View style={styles.divider} />
-            <ToggleRow
-              label="Lif göster"
-              value={profile.goals.showMicronutrients}
-              onChange={v => setGoals({showMicronutrients: v})}
-            />
-            <View style={styles.divider} />
-            <ToggleRow
-              label="Şeker göster"
-              value={profile.goals.showMicronutrients}
-              onChange={v => setGoals({showMicronutrients: v})}
-            />
+        {/* Micronutrients Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Mikro Besinler</Text>
           </View>
+          <ToggleRow
+            label="Sodyum göster"
+            value={profile.goals.showMicronutrients}
+            onChange={v => setGoals({showMicronutrients: v})}
+          />
+          <ListDivider />
+          <ToggleRow
+            label="Lif göster"
+            value={profile.goals.showMicronutrients}
+            onChange={v => setGoals({showMicronutrients: v})}
+          />
+          <ListDivider />
+          <ToggleRow
+            label="Şeker göster"
+            value={profile.goals.showMicronutrients}
+            onChange={v => setGoals({showMicronutrients: v})}
+          />
         </View>
 
-        <View style={styles.group}>
-          <Text style={styles.groupTitle}>Birim Sistemi</Text>
-          <View style={styles.groupCard}>
-            <ToggleRow
-              label="Metrik (g, kcal)"
-              value={profile.unitSystem === 'metric'}
-              onChange={v => setUnitSystem(v ? 'metric' : 'imperial')}
-            />
+        {/* Unit System Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Birim Sistemi</Text>
           </View>
+          <ToggleRow
+            label="Metrik (g, kcal)"
+            value={profile.unitSystem === 'metric'}
+            onChange={v => setUnitSystem(v ? 'metric' : 'imperial')}
+          />
         </View>
 
-        <View style={styles.group}>
-          <Text style={styles.groupTitle}>Veri Yönetimi</Text>
-          <View style={styles.groupCard}>
-            <TouchableOpacity style={styles.actionRow} onPress={handleExport}>
-              <Text style={styles.actionText}>Verileri Dışa Aktar (JSON)</Text>
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.actionRow} onPress={handleExport}>
-              <Text style={styles.actionText}>Verileri Dışa Aktar (CSV)</Text>
-            </TouchableOpacity>
+        {/* Data Management Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Veri Yönetimi</Text>
           </View>
+          <TouchableOpacity style={styles.actionRow} onPress={handleExport}>
+            <Text style={styles.actionText}>Verileri Dışa Aktar (JSON)</Text>
+          </TouchableOpacity>
+          <ListDivider />
+          <TouchableOpacity style={styles.actionRow} onPress={handleExport}>
+            <Text style={styles.actionText}>Verileri Dışa Aktar (CSV)</Text>
+          </TouchableOpacity>
         </View>
 
+        {/* Destructive Action */}
         <TouchableOpacity style={styles.destructiveButton} onPress={handleDeleteAll}>
           <Text style={styles.destructiveText}>Tüm Geçmişi Sil</Text>
         </TouchableOpacity>
@@ -160,10 +176,27 @@ export function ProfileScreen(): React.JSX.Element {
   );
 }
 
+function GoalInput({label, value, onChange, onBlur}: {label: string; value: string; onChange: (v: string) => void; onBlur: () => void}) {
+  return (
+    <View style={styles.listItem}>
+      <Text style={styles.listLabel}>{label}</Text>
+      <TextInput
+        style={styles.listInput}
+        keyboardType="numeric"
+        value={value}
+        onChangeText={onChange}
+        onBlur={onBlur}
+        placeholderTextColor={colors.onSurfaceVariant}
+        placeholder="---"
+      />
+    </View>
+  );
+}
+
 function ToggleRow({label, value, onChange}: {label: string; value: boolean; onChange: (v: boolean) => void}) {
   return (
-    <View style={styles.toggleRow}>
-      <Text style={styles.toggleLabel}>{label}</Text>
+    <View style={styles.listItem}>
+      <Text style={styles.listLabel}>{label}</Text>
       <Switch
         value={value}
         onValueChange={onChange}
@@ -174,65 +207,120 @@ function ToggleRow({label, value, onChange}: {label: string; value: boolean; onC
   );
 }
 
+function ListDivider() {
+  return (
+    <View style={styles.divider} />
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: colors.background},
-  content: {padding: 16, gap: 20, paddingBottom: 40},
-  header: {color: colors.onSurface, fontSize: 28, fontWeight: '700', marginBottom: 4},
-  group: {gap: 6},
-  groupTitle: {
-    color: colors.onSurfaceVariant,
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginLeft: 12,
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  groupCard: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radii.lg,
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing['margin-mobile'],
+    height: 64,
+    backgroundColor: 'rgba(11,19,38,0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(62,73,74,0.3)',
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.full,
+  },
+  iconText: {
+    color: colors.primary,
+    fontSize: 20,
+  },
+  headerTitle: {
+    ...typography['headlineLgMobile'],
+    color: colors.primary,
+    fontFamily: fontFamily.headline,
+    letterSpacing: -0.24,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing['margin-mobile'],
+    paddingTop: 80,
+    paddingBottom: 40,
+    gap: spacing.lg,
+    maxWidth: 672,
+    alignSelf: 'center',
+  },
+  section: {
+    backgroundColor: 'rgba(34,42,61,0.4)',
+    borderRadius: radii.xl,
     overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(136,147,148,0.2)',
   },
-  inputRow: {
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(23,31,51,0.6)',
+  },
+  sectionTitle: {
+    ...typography.labelCaps,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+  },
+  listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: 'rgba(23,31,51,0.6)',
+    position: 'relative',
   },
-  inputLabel: {color: colors.onSurface, fontSize: 15},
-  input: {
-    backgroundColor: colors.surfaceContainerHigh,
+  listLabel: {
+    ...typography.bodyMd,
     color: colors.onSurface,
-    borderRadius: radii.md,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    width: 90,
+  },
+  listInput: {
+    backgroundColor: 'transparent',
+    color: colors.onSurface,
     textAlign: 'right',
-    fontSize: 15,
+    width: 100,
+    ...typography.bodyMd,
   },
   divider: {
     height: 0.5,
-    backgroundColor: colors.outlineVariant,
+    backgroundColor: 'rgba(136,147,148,0.3)',
     marginLeft: 16,
   },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  toggleLabel: {color: colors.onSurface, fontSize: 15},
   actionRow: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(23,31,51,0.6)',
   },
-  actionText: {color: colors.primary, fontSize: 15},
+  actionText: {
+    ...typography.bodyMd,
+    color: colors.primary,
+  },
   destructiveButton: {
-    backgroundColor: colors.errorContainer,
-    borderRadius: radii.lg,
+    backgroundColor: 'rgba(147,0,10,0.2)',
+    borderRadius: radii.xl,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,180,171,0.3)',
   },
-  destructiveText: {color: colors.onErrorContainer, fontSize: 16, fontWeight: '700'},
+  destructiveText: {
+    ...typography.bodyMd,
+    color: colors.error,
+    fontWeight: '700',
+  },
 });
