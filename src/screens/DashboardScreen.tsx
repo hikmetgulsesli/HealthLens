@@ -1,27 +1,54 @@
-import React, {useMemo} from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
-import {colors} from '../theme/colors';
-import {spacing} from '../theme/spacing';
-import {radii} from '../theme/radii';
-import {typography, fontFamily} from '../theme/typography';
-import {useLogStore} from '../stores/logStore';
-import {useUserStore} from '../stores/userStore';
-import {useNavigation} from '@react-navigation/native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../navigation/AppNavigator';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { colors, withAlpha } from '../theme/colors';
+import { radii } from '../theme/radii';
+import { fontFamily } from '../theme/typography';
+import { useLogStore } from '../stores/logStore';
+import { useUserStore } from '../stores/userStore';
+import { useAnalysisStore } from '../stores/analysisStore';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
+
+import { tr } from '../i18n';
+
+const C = colors;
+const D = {
+  bg: C.dashboardBackground,
+  surface: C.dashboardSurface,
+  surfaceContainer: C.dashboardSurfaceContainer,
+  surfaceContainerHigh: C.dashboardSurfaceContainerHigh,
+  surfaceVariant: C.dashboardSurfaceVariant,
+  onSurface: C.dashboardOnSurface,
+  onSurfaceVariant: C.dashboardOnSurfaceVariant,
+  primary: C.dashboardPrimary,
+  secondary: C.dashboardSecondary,
+  tertiary: C.dashboardTertiary,
+  outline: C.dashboardOutline,
+};
 
 export function DashboardScreen(): React.JSX.Element {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const entries = useLogStore(s => s.entries);
+  const deleteEntry = useLogStore(s => s.deleteEntry);
   const goals = useUserStore(s => s.profile.goals);
+  const setAnalysis = useAnalysisStore(s => s.setAnalysis);
   const todayKey = new Date().toISOString().split('T')[0];
-  const todayEntries = entries[todayKey] ?? [];
+  const todayEntries = React.useMemo(
+    () => entries[todayKey] ?? [],
+    [entries, todayKey],
+  );
 
   const totals = useMemo(() => {
     return todayEntries.reduce(
@@ -32,7 +59,7 @@ export function DashboardScreen(): React.JSX.Element {
         acc.fat += e.totalFat;
         return acc;
       },
-      {cal: 0, protein: 0, carbs: 0, fat: 0},
+      { cal: 0, protein: 0, carbs: 0, fat: 0 },
     );
   }, [todayEntries]);
 
@@ -40,111 +67,215 @@ export function DashboardScreen(): React.JSX.Element {
   const calPercent = Math.min(totals.cal / goalCal, 1);
   const remaining = Math.max(goalCal - totals.cal, 0);
 
+  // SVG ring math
+  const size = 280;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - calPercent);
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* TopAppBar */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>👤</Text>
+            <Icon name="person" size={18} color={D.onSurfaceVariant} />
           </View>
-          <Text style={styles.headerTitle}>HealthLens</Text>
+          <Text style={styles.headerTitle}>{tr.appName}</Text>
         </View>
         <View style={styles.headerRight}>
-          <Text style={styles.todayLabel}>Bugün</Text>
-          <Text style={styles.calendarIcon}>📅</Text>
+          <Text style={styles.todayLabel}>{tr.dashboard.today}</Text>
+          <TouchableOpacity activeOpacity={0.7}>
+            <Icon name="calendar-today" size={20} color={D.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Calorie Progress Ring */}
         <View style={styles.ringSection}>
-          <Text style={styles.ringTitle}>Günlük Enerji</Text>
-          <Text style={styles.ringTarget}>Hedef: {goalCal.toLocaleString()} kcal</Text>
+          <Text style={styles.ringTitle}>{tr.dashboard.dailyEnergy}</Text>
+          <Text style={styles.ringTarget}>
+            {tr.dashboard.target}: {goalCal.toLocaleString()} kcal
+          </Text>
           <View style={styles.ringContainer}>
-            <View style={[styles.ringOuter, {borderColor: colors.surfaceContainerHigh}]}>
-              <View
-                style={[
-                  styles.ringInner,
-                  {
-                    borderColor: colors.primary,
-                    borderBottomWidth: 8 * calPercent,
-                    borderRightWidth: 8 * calPercent,
-                    borderTopWidth: 8 * (calPercent > 0.5 ? 1 : 0),
-                    borderLeftWidth: 8 * (calPercent > 0.75 ? 1 : 0),
-                  },
-                ]}
+            <Svg
+              width={size}
+              height={size}
+              viewBox={`0 0 ${size} ${size}`}
+              style={{ transform: [{ rotate: '-90deg' }] }}
+            >
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke={D.surfaceContainerHigh}
+                strokeWidth={strokeWidth}
+                fill="none"
               />
-              <View style={styles.ringCenter}>
-                <Text style={styles.ringValue}>{totals.cal.toLocaleString()}</Text>
-                <Text style={styles.ringLabel}>kcal tüketildi</Text>
-                <View style={styles.ringDivider} />
-                <Text style={styles.ringRemaining}>{remaining}</Text>
-                <Text style={styles.ringRemainingLabel}>kcal kaldı</Text>
-              </View>
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke={D.primary}
+                strokeWidth={strokeWidth}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+              />
+            </Svg>
+            <View style={styles.ringCenter}>
+              <Text style={styles.ringValue}>
+                {totals.cal.toLocaleString()}
+              </Text>
+              <Text style={styles.ringLabel}>{tr.dashboard.kcalConsumed}</Text>
+              <View style={styles.ringDivider} />
+              <Text style={styles.ringRemaining}>{remaining}</Text>
+              <Text style={styles.ringRemainingLabel}>
+                {tr.dashboard.kcalRemaining}
+              </Text>
             </View>
           </View>
         </View>
 
         {/* Macro Progress Bars */}
         <View style={styles.macroSection}>
-          <Text style={styles.macroTitle}>Makro Besinler</Text>
+          <Text style={styles.macroTitle}>{tr.dashboard.macronutrients}</Text>
           <MacroBar
-            label="Protein"
+            label={tr.dashboard.protein}
             current={totals.protein}
             goal={goals.dailyProteinGoal ?? 120}
-            barColor={colors.primary}
+            barColor={D.primary}
           />
           <MacroBar
-            label="Karbonhidrat"
+            label={tr.dashboard.carbs}
             current={totals.carbs}
             goal={goals.dailyCarbGoal ?? 200}
-            barColor={colors.secondary}
+            barColor={D.secondary}
           />
           <MacroBar
-            label="Yağ"
+            label={tr.dashboard.fat}
             current={totals.fat}
             goal={goals.dailyFatGoal ?? 65}
-            barColor={colors.tertiary}
+            barColor={D.tertiary}
           />
         </View>
 
         {/* Today's Meals */}
         <View style={styles.mealsSection}>
-          <Text style={styles.mealsTitle}>Bugünkü Öğünler</Text>
+          <Text style={styles.mealsTitle}>{tr.dashboard.todaysMeals}</Text>
           {todayEntries.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyEmoji}>🍽</Text>
-              <Text style={styles.emptyText}>İlk öğününüzü fotoğraflayın</Text>
+              <Icon name="no-meals" size={40} color={D.onSurfaceVariant} />
+              <Text style={styles.emptyText}>{tr.dashboard.emptyMeals}</Text>
             </View>
           ) : (
-            todayEntries.map(entry => (
-              <View key={entry.id} style={styles.mealCard}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealCategory}>{categoryLabel(entry.mealCategory)}</Text>
-                  <Text style={styles.mealCal}>{entry.totalCalories} kcal</Text>
-                </View>
-                <Text style={styles.mealItems}>
-                  {entry.items.map(i => i.name).join(', ')}
+            <>
+              {todayEntries.map(entry => (
+                <TouchableOpacity
+                  key={entry.id}
+                  style={styles.mealCard}
+                  onPress={() => {
+                    setAnalysis({
+                      imageUri: entry.imageUri || '',
+                      mealCategory: entry.mealCategory,
+                      items: entry.items,
+                    });
+                    navigation.navigate('Review');
+                  }}
+                  onLongPress={() => {
+                    Alert.alert(
+                      'Öğün İşlemleri',
+                      'Bu öğün için ne yapmak istersiniz?',
+                      [
+                        {
+                          text: 'Düzenle',
+                          onPress: () => {
+                            setAnalysis({
+                              imageUri: entry.imageUri || '',
+                              mealCategory: entry.mealCategory,
+                              items: entry.items,
+                            });
+                            navigation.navigate('Review');
+                          },
+                        },
+                        {
+                          text: 'Sil',
+                          style: 'destructive',
+                          onPress: () => deleteEntry(todayKey, entry.id),
+                        },
+                        { text: 'İptal', style: 'cancel' },
+                      ],
+                    );
+                  }}
+                >
+                  <View style={styles.mealRow}>
+                    <View style={styles.mealIconBox}>
+                      <Icon
+                        name={
+                          entry.mealCategory === 'breakfast'
+                            ? 'breakfast-dining'
+                            : 'lunch-dining'
+                        }
+                        size={20}
+                        color={
+                          entry.mealCategory === 'breakfast'
+                            ? D.primary
+                            : D.secondary
+                        }
+                      />
+                    </View>
+                    <View style={styles.mealInfo}>
+                      <Text style={styles.mealName}>
+                        {entry.items.map(i => i.name).join(', ')}
+                      </Text>
+                      <Text style={styles.mealTime}>
+                        {tr.meals[entry.mealCategory as keyof typeof tr.meals]}{' '}
+                        •{' '}
+                        {new Date(entry.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Text>
+                    </View>
+                    <Text style={styles.mealCal}>
+                      {entry.totalCalories} kcal
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>
+                  {tr.dashboard.totalLogged}
+                </Text>
+                <Text style={styles.totalValue}>
+                  {todayEntries
+                    .reduce((s, e) => s + e.totalCalories, 0)
+                    .toLocaleString()}{' '}
+                  kcal
                 </Text>
               </View>
-            ))
+            </>
           )}
         </View>
       </ScrollView>
-
-      {/* Camera FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('CameraTab' as never)}
-        testID="cameraCaptureButton">
-        <Text style={styles.fabText}>📷</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
-function MacroBar({label, current, goal, barColor}: {label: string; current: number; goal: number; barColor: string}) {
+function MacroBar({
+  label,
+  current,
+  goal,
+  barColor,
+}: {
+  label: string;
+  current: number;
+  goal: number;
+  barColor: string;
+}) {
   const pct = Math.min(current / goal, 1);
   return (
     <View style={styles.macroRow}>
@@ -156,177 +287,163 @@ function MacroBar({label, current, goal, barColor}: {label: string; current: num
         </View>
       </View>
       <View style={styles.barTrack}>
-        <View style={[styles.barFill, {width: `${pct * 100}%`, backgroundColor: barColor}]} />
+        <View
+          style={[
+            styles.barFill,
+            { width: `${pct * 100}%`, backgroundColor: barColor },
+          ]}
+        />
       </View>
     </View>
   );
 }
 
-function categoryLabel(cat: string) {
-  const map: Record<string, string> = {
-    breakfast: 'Kahvaltı',
-    lunch: 'Öğle',
-    dinner: 'Akşam',
-    snack: 'Ara Öğün',
-  };
-  return map[cat] ?? cat;
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: D.bg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing['margin-mobile'],
+    paddingHorizontal: 16,
     height: 56,
-    width: '100%',
-    zIndex: 50,
-    backgroundColor: 'rgba(11,19,38,0.8)',
+    backgroundColor: withAlpha(D.surface, 0.8),
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.base,
+    gap: 8,
   },
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: radii.full,
+    borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainer,
+    backgroundColor: D.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 16,
-  },
   headerTitle: {
-    ...typography['headlineMd'],
-    color: colors.onSurface,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '700',
+    color: D.onSurface,
     fontFamily: fontFamily.headline,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing['stack-sm'],
+    gap: 8,
   },
   todayLabel: {
-    ...typography['labelMd'],
-    color: colors.onSurfaceVariant,
-  },
-  calendarIcon: {
-    fontSize: 20,
-    color: colors.primary,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: D.onSurfaceVariant,
   },
   scrollContent: {
-    paddingHorizontal: spacing['margin-mobile'],
-    paddingVertical: spacing['stack-md'],
-    gap: spacing['stack-lg'],
-    maxWidth: 672,
-    alignSelf: 'center',
-    paddingBottom: 120,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 24,
+    paddingBottom: 140,
   },
   ringSection: {
-    backgroundColor: colors.surfaceContainer,
+    backgroundColor: '#1E1E1E',
     borderRadius: radii.xl,
-    padding: spacing['stack-md'],
-    flexDirection: 'column',
-    alignItems: 'center',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   ringTitle: {
-    ...typography['headlineMd'],
-    color: colors.onSurface,
-    marginBottom: spacing['stack-sm'],
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: D.onSurface,
+    marginBottom: 4,
     alignSelf: 'flex-start',
   },
   ringTarget: {
-    ...typography['bodyMd'],
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing['stack-md'],
+    fontSize: 15,
+    lineHeight: 20,
+    color: D.onSurfaceVariant,
+    marginBottom: 16,
     alignSelf: 'flex-start',
   },
   ringContainer: {
     alignItems: 'center',
-    marginVertical: 8,
-  },
-  ringOuter: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 8,
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  ringInner: {
-    position: 'absolute',
+    alignSelf: 'center',
     width: 280,
     height: 280,
-    borderRadius: 140,
-    borderWidth: 8,
   },
   ringCenter: {
+    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
   ringValue: {
-    ...typography['headlineLg'],
-    color: colors.onSurface,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
+    color: D.onSurface,
     fontFamily: fontFamily.headline,
   },
   ringLabel: {
-    ...typography['labelSm'],
-    color: colors.onSurfaceVariant,
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: '600',
+    color: D.onSurfaceVariant,
     textTransform: 'uppercase',
-    letterSpacing: 0.48,
+    letterSpacing: 0.5,
     marginTop: 4,
   },
   ringDivider: {
     width: 48,
     height: 1,
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: D.surfaceContainerHigh,
     marginVertical: 8,
   },
   ringRemaining: {
-    ...typography['headlineMd'],
-    color: colors.primary,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '700',
+    color: D.primary,
     fontFamily: fontFamily.headline,
   },
   ringRemainingLabel: {
-    ...typography['labelSm'],
-    color: 'rgba(130,211,222,0.7)',
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: '600',
+    color: withAlpha(D.primary, 0.7),
     textTransform: 'uppercase',
-    letterSpacing: 0.48,
+    letterSpacing: 0.5,
   },
   macroSection: {
-    backgroundColor: colors.surfaceContainer,
+    backgroundColor: '#1E1E1E',
     borderRadius: radii.xl,
-    padding: spacing['stack-md'],
-    flexDirection: 'column',
-    gap: spacing['stack-md'],
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    gap: 16,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   macroTitle: {
-    ...typography['bodyLg'],
-    color: colors.onSurface,
+    fontSize: 17,
+    lineHeight: 22,
+    color: D.onSurface,
     marginBottom: 4,
   },
   macroRow: {
-    flexDirection: 'column',
-    gap: spacing['stack-sm'],
+    gap: 4,
   },
   macroLabelRow: {
     flexDirection: 'row',
@@ -334,8 +451,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   macroLabel: {
-    ...typography['labelMd'],
-    color: colors.onSurfaceVariant,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: D.onSurfaceVariant,
   },
   macroValueRow: {
     flexDirection: 'row',
@@ -343,16 +462,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   macroValue: {
-    ...typography['bodyMd'],
-    color: colors.onSurface,
+    fontSize: 15,
+    lineHeight: 20,
+    color: D.onSurface,
   },
   macroTarget: {
-    ...typography['labelSm'],
-    color: colors.onSurfaceVariant,
+    fontSize: 11,
+    lineHeight: 13,
+    color: D.onSurfaceVariant,
   },
   barTrack: {
     width: '100%',
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: D.surfaceContainerHigh,
     borderRadius: radii.full,
     height: 8,
     overflow: 'hidden',
@@ -362,69 +483,97 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
   },
   mealsSection: {
-    flexDirection: 'column',
-    gap: spacing['stack-md'],
+    gap: 12,
   },
   mealsTitle: {
-    ...typography['headlineMd'],
-    color: colors.onSurface,
-    marginBottom: 4,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: D.onSurface,
+    paddingLeft: 4,
   },
   emptyCard: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radii.xl,
+    backgroundColor: '#1E1E1E',
+    borderRadius: radii.lg,
     padding: 40,
     alignItems: 'center',
     gap: 8,
-  },
-  emptyEmoji: {
-    fontSize: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   emptyText: {
-    ...typography['bodySm'],
-    color: colors.onSurfaceVariant,
+    fontSize: 14,
+    lineHeight: 20,
+    color: D.onSurfaceVariant,
     textAlign: 'center',
   },
   mealCard: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radii.xl,
+    backgroundColor: '#1E1E1E',
+    borderRadius: radii.lg,
     padding: 14,
-    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  mealHeader: {
+  mealRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
-  mealCategory: {
-    ...typography['bodyMd'],
-    color: colors.onSurface,
-    fontWeight: '600',
-  },
-  mealCal: {
-    ...typography['bodyMd'],
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  mealItems: {
-    ...typography['bodySm'],
-    color: colors.onSurfaceVariant,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primaryContainer,
+  mealIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.lg,
+    backgroundColor: D.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
   },
-  fabText: {
-    fontSize: 24,
+  mealInfo: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  mealName: {
+    fontSize: 17,
+    lineHeight: 22,
+    color: D.onSurface,
+    fontWeight: '600',
+  },
+  mealTime: {
+    fontSize: 11,
+    lineHeight: 13,
+    color: D.onSurfaceVariant,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  mealCal: {
+    fontSize: 15,
+    lineHeight: 20,
+    color: D.primary,
+    fontWeight: '700',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+    marginTop: 4,
+  },
+  totalLabel: {
+    fontSize: 15,
+    lineHeight: 20,
+    color: D.onSurfaceVariant,
+  },
+  totalValue: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: D.onSurface,
   },
 });

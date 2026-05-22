@@ -1,55 +1,111 @@
-import React, {useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   Text,
-  Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import {Camera, CameraType} from 'react-native-camera-kit';
-import {colors, withAlpha} from '../theme/colors';
-import {spacing} from '../theme/spacing';
-import {radii} from '../theme/radii';
-import {typography, fontFamily} from '../theme/typography';
-import {useAnalysisStore} from '../stores/analysisStore';
-import {useNavigation} from '@react-navigation/native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../navigation/AppNavigator';
+import { Camera, CameraType } from 'react-native-camera-kit';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { colors, withAlpha } from '../theme/colors';
+import { spacing } from '../theme/spacing';
+import { radii } from '../theme/radii';
+import { typography, fontFamily } from '../theme/typography';
+import { useAnalysisStore } from '../stores/analysisStore';
+import { useOfflineQueueStore } from '../stores/offlineQueueStore';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
+import { tr } from '../i18n';
+import { analyzeFoodImage, getMockAnalysis } from '../services/aiService';
+import { saveImage } from '../utils/imageStorage';
 
 export function CameraScreen(): React.JSX.Element {
   const cameraRef = useRef<any>(null);
   const [flashOn, setFlashOn] = useState(false);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAnalysis = useAnalysisStore(s => s.setAnalysis);
   const setAnalyzing = useAnalysisStore(s => s.setAnalyzing);
+  const addToQueue = useOfflineQueueStore(s => s.addToQueue);
 
   const handleCapture = async () => {
     try {
       setAnalyzing(true);
-      setTimeout(() => {
-        setAnalysis({
-          imageUri: 'mock://captured-image',
+      setIsProcessing(true);
+
+      const image = await cameraRef.current?.capture?.();
+      if (!image?.uri) {
+        throw new Error('Failed to capture image');
+      }
+
+      const savedUri = await saveImage(image.uri);
+
+      try {
+        const result = await analyzeFoodImage(savedUri);
+        setAnalysis(result);
+      } catch (error) {
+        console.warn('AI analysis failed, using mock data:', error);
+        addToQueue({
+          imageUri: savedUri,
           mealCategory: 'breakfast',
-          items: [
-            {
-              id: '1',
-              name: 'Mercimek Çorbası',
-              confidence: 0.92,
-              estimatedPortionGrams: 250,
-              caloriesPer100g: 85,
-              proteinPer100g: 4.5,
-              carbsPer100g: 12,
-              fatPer100g: 2.1,
-            },
-          ],
         });
-        setAnalyzing(false);
-        navigation.navigate('Review');
-      }, 1500);
-    } catch {
-      Alert.alert('Hata', 'Fotoğraf çekilemedi.');
+        setAnalysis(getMockAnalysis(savedUri));
+      }
+
       setAnalyzing(false);
+      setIsProcessing(false);
+      navigation.navigate('Review');
+    } catch {
+      Alert.alert(tr.camera.errorTitle || 'Hata', tr.camera.captureError);
+      setAnalyzing(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGalleryPick = async () => {
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
+
+      if (result.didCancel || !result.assets?.[0]?.uri) {
+        return;
+      }
+
+      setAnalyzing(true);
+      setIsProcessing(true);
+
+      const sourceUri = result.assets[0].uri;
+      const savedUri = await saveImage(sourceUri);
+
+      try {
+        const analysisResult = await analyzeFoodImage(savedUri);
+        setAnalysis(analysisResult);
+      } catch (error) {
+        console.warn('AI analysis failed, using mock data:', error);
+        addToQueue({
+          imageUri: savedUri,
+          mealCategory: 'breakfast',
+        });
+        setAnalysis(getMockAnalysis(savedUri));
+      }
+
+      setAnalyzing(false);
+      setIsProcessing(false);
+      navigation.navigate('Review');
+    } catch {
+      Alert.alert(
+        tr.camera.errorTitle || 'Hata',
+        tr.camera.galleryError || 'Galeriden fotoğraf seçilemedi.',
+      );
+      setAnalyzing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -70,11 +126,11 @@ export function CameraScreen(): React.JSX.Element {
       {/* TopAppBar */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-          <Text style={styles.iconText}>✕</Text>
+          <Icon name="close" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.title}>HealthLens</Text>
+        <Text style={styles.title}>{tr.appName}</Text>
         <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-          <Text style={styles.iconText}>⚙</Text>
+          <Icon name="settings" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -97,16 +153,28 @@ export function CameraScreen(): React.JSX.Element {
         {/* Scanning Status Pill */}
         <View style={styles.statusPill}>
           <View style={styles.statusDot} />
-          <Text style={styles.statusText}>Align food in frame</Text>
+          <Text style={styles.statusText}>{tr.camera.alignFood}</Text>
         </View>
       </View>
+
+      {/* Bottom Controls Area */}
+      {isProcessing && (
+        <View style={styles.processingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.processingText}>{tr.camera.processing}</Text>
+        </View>
+      )}
 
       {/* Bottom Controls Area */}
       <View style={styles.bottomControls}>
         <View style={styles.controlsRow}>
           {/* Gallery Shortcut */}
-          <TouchableOpacity style={styles.sideButton} activeOpacity={0.7}>
-            <Text style={styles.sideIcon}>🖼</Text>
+          <TouchableOpacity
+            style={styles.sideButton}
+            activeOpacity={0.7}
+            onPress={handleGalleryPick}
+          >
+            <Icon name="photo-library" size={24} color={colors.onSurface} />
           </TouchableOpacity>
 
           {/* Main Capture Button */}
@@ -114,7 +182,8 @@ export function CameraScreen(): React.JSX.Element {
             style={styles.captureButtonWrap}
             onPress={handleCapture}
             activeOpacity={0.8}
-            testID="cameraCaptureButton">
+            testID="cameraCaptureButton"
+          >
             <View style={styles.captureOuterRing} />
             <View style={styles.captureInnerFill} />
           </TouchableOpacity>
@@ -123,10 +192,13 @@ export function CameraScreen(): React.JSX.Element {
           <TouchableOpacity
             style={styles.sideButton}
             onPress={() => setFlashOn(v => !v)}
-            activeOpacity={0.7}>
-            <Text style={[styles.sideIcon, flashOn && styles.flashActive]}>
-              ⚡
-            </Text>
+            activeOpacity={0.7}
+          >
+            <Icon
+              name={flashOn ? 'flash-on' : 'flash-off'}
+              size={24}
+              color={flashOn ? colors.primary : colors.onSurface}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -172,7 +244,9 @@ const styles = StyleSheet.create({
     fontFamily: typography['labelMd'].fontWeight,
   },
   title: {
-    ...typography['headlineMd'],
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '600',
     color: colors.primary,
     fontFamily: fontFamily.headline,
   },
@@ -273,7 +347,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   statusText: {
-    ...typography['labelMd'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
     color: colors.onSurface,
   },
   bottomControls: {
@@ -328,5 +404,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryContainer,
     borderWidth: 2,
     borderColor: 'transparent',
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: withAlpha(colors.background, 0.8),
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+    gap: 16,
+  },
+  processingText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+    color: colors.onSurface,
   },
 });

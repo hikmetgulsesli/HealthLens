@@ -1,27 +1,30 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TextInput,
-  Switch,
   TouchableOpacity,
   Alert,
+  Switch,
 } from 'react-native';
-import {colors} from '../theme/colors';
-import {spacing} from '../theme/spacing';
-import {radii} from '../theme/radii';
-import {typography, fontFamily} from '../theme/typography';
-import {useUserStore} from '../stores/userStore';
-import {useLogStore} from '../stores/logStore';
-import {useNavigation} from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { colors, withAlpha } from '../theme/colors';
+import { spacing } from '../theme/spacing';
+import { radii } from '../theme/radii';
+import { fontFamily } from '../theme/typography';
+import { useUserStore } from '../stores/userStore';
+import { useLogStore } from '../stores/logStore';
+import { useNavigation } from '@react-navigation/native';
+import { tr } from '../i18n';
 
 export function ProfileScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const profile = useUserStore(s => s.profile);
   const setGoals = useUserStore(s => s.setGoals);
-  const setUnitSystem = useUserStore(s => s.setUnitSystem);
+  // const setUnitSystem = useUserStore(s => s.setUnitSystem);
   const entries = useLogStore(s => s.entries);
   const deleteEntry = useLogStore(s => s.deleteEntry);
 
@@ -47,170 +50,209 @@ export function ProfileScreen(): React.JSX.Element {
 
   const handleExport = () => {
     const data = JSON.stringify(entries, null, 2);
-    Alert.alert('Veri Dışa Aktar', data.substring(0, 500) + '...');
+    Alert.alert('Export Data', data.substring(0, 500) + '...');
   };
 
   const handleDeleteAll = () => {
-    Alert.alert(
-      'Tüm Geçmişi Sil',
-      'Bu işlem geri alınamaz. Emin misiniz?',
-      [
-        {text: 'İptal', style: 'cancel'},
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: () => {
-            Object.keys(entries).forEach(dateKey => {
-              entries[dateKey].forEach(e => deleteEntry(dateKey, e.id));
-            });
-          },
+    Alert.alert(tr.profile.deleteTitle, tr.profile.deleteConfirm, [
+      { text: tr.profile.cancel, style: 'cancel' },
+      {
+        text: tr.profile.delete,
+        style: 'destructive',
+        onPress: () => {
+          Object.keys(entries).forEach(dateKey => {
+            entries[dateKey].forEach(e => deleteEntry(dateKey, e.id));
+          });
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* TopAppBar */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.iconText}>←</Text>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>HealthLens</Text>
+        <Text style={styles.headerTitle}>{tr.appName}</Text>
         <TouchableOpacity style={styles.iconButton}>
-          <Text style={styles.iconText}>⚙</Text>
+          <Icon name="settings" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Goals Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Günlük Hedefler</Text>
-          </View>
-          <GoalInput
-            label="Kalori (kcal)"
-            value={localGoals.cal}
-            onChange={v => setLocalGoals(p => ({...p, cal: v}))}
-            onBlur={saveGoals}
-          />
-          <ListDivider />
-          <GoalInput
-            label="Protein (g)"
-            value={localGoals.protein}
-            onChange={v => setLocalGoals(p => ({...p, protein: v}))}
-            onBlur={saveGoals}
-          />
-          <ListDivider />
-          <GoalInput
-            label="Karbonhidrat (g)"
-            value={localGoals.carbs}
-            onChange={v => setLocalGoals(p => ({...p, carbs: v}))}
-            onBlur={saveGoals}
-          />
-          <ListDivider />
-          <GoalInput
-            label="Yağ (g)"
-            value={localGoals.fat}
-            onChange={v => setLocalGoals(p => ({...p, fat: v}))}
-            onBlur={saveGoals}
-          />
+        {/* Page Header */}
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>{tr.profile.title}</Text>
+          <Text style={styles.pageSubtitle}>{tr.profile.subtitle}</Text>
         </View>
 
-        {/* Micronutrients Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Mikro Besinler</Text>
+        {/* Daily Targets */}
+        <View style={styles.sectionWrap}>
+          <Text style={styles.sectionLabel}>{tr.profile.dailyTargets}</Text>
+          <View style={styles.glassPanel}>
+            <GoalInput
+              label={tr.profile.calorieTarget}
+              value={localGoals.cal}
+              unit="kcal"
+              onChange={v => setLocalGoals(p => ({ ...p, cal: v }))}
+              onBlur={saveGoals}
+            />
+            <ListDivider />
+            <GoalInput
+              label={tr.profile.protein}
+              value={localGoals.protein}
+              unit="g"
+              onChange={v => setLocalGoals(p => ({ ...p, protein: v }))}
+              onBlur={saveGoals}
+            />
+            <ListDivider />
+            <GoalInput
+              label={tr.profile.carbs}
+              value={localGoals.carbs}
+              unit="g"
+              onChange={v => setLocalGoals(p => ({ ...p, carbs: v }))}
+              onBlur={saveGoals}
+            />
+            <ListDivider />
+            <GoalInput
+              label={tr.profile.fat}
+              value={localGoals.fat}
+              unit="g"
+              onChange={v => setLocalGoals(p => ({ ...p, fat: v }))}
+              onBlur={saveGoals}
+            />
           </View>
-          <ToggleRow
-            label="Sodyum göster"
-            value={profile.goals.showMicronutrients}
-            onChange={v => setGoals({showMicronutrients: v})}
-          />
-          <ListDivider />
-          <ToggleRow
-            label="Lif göster"
-            value={profile.goals.showMicronutrients}
-            onChange={v => setGoals({showMicronutrients: v})}
-          />
-          <ListDivider />
-          <ToggleRow
-            label="Şeker göster"
-            value={profile.goals.showMicronutrients}
-            onChange={v => setGoals({showMicronutrients: v})}
-          />
         </View>
 
-        {/* Unit System Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Birim Sistemi</Text>
+        {/* Micronutrient Tracking */}
+        <View style={styles.sectionWrap}>
+          <Text style={styles.sectionLabel}>
+            {tr.profile.micronutrientTracking}
+          </Text>
+          <View style={styles.glassPanel}>
+            <ToggleRow
+              label={tr.profile.sodium}
+              value={profile.goals.showSodium}
+              onChange={v => setGoals({ showSodium: v })}
+            />
+            <ListDivider />
+            <ToggleRow
+              label={tr.profile.fiber}
+              value={profile.goals.showFiber}
+              onChange={v => setGoals({ showFiber: v })}
+            />
+            <ListDivider />
+            <ToggleRow
+              label={tr.profile.sugar}
+              value={profile.goals.showSugar}
+              onChange={v => setGoals({ showSugar: v })}
+            />
           </View>
-          <ToggleRow
-            label="Metrik (g, kcal)"
-            value={profile.unitSystem === 'metric'}
-            onChange={v => setUnitSystem(v ? 'metric' : 'imperial')}
-          />
         </View>
 
-        {/* Data Management Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Veri Yönetimi</Text>
+        {/* Preferences */}
+        <View style={styles.sectionWrap}>
+          <Text style={styles.sectionLabel}>{tr.profile.preferences}</Text>
+          <View style={styles.glassPanel}>
+            <View style={styles.listItem}>
+              <Text style={styles.listLabel}>{tr.profile.unitPreference}</Text>
+              <Text style={styles.listValue}>
+                {profile.unitSystem === 'metric'
+                  ? tr.profile.metric
+                  : tr.profile.imperial}
+              </Text>
+            </View>
           </View>
-          <TouchableOpacity style={styles.actionRow} onPress={handleExport}>
-            <Text style={styles.actionText}>Verileri Dışa Aktar (JSON)</Text>
+        </View>
+
+        {/* Data Actions */}
+        <View style={styles.actionSection}>
+          <TouchableOpacity
+            style={[styles.exportButton, { marginBottom: 16 }]}
+            onPress={handleExport}
+          >
+            <Icon name="download" size={20} color={colors.primary} />
+            <Text style={styles.exportText}>{tr.profile.exportData}</Text>
           </TouchableOpacity>
-          <ListDivider />
-          <TouchableOpacity style={styles.actionRow} onPress={handleExport}>
-            <Text style={styles.actionText}>Verileri Dışa Aktar (CSV)</Text>
+          <TouchableOpacity
+            style={styles.destructiveButton}
+            onPress={handleDeleteAll}
+          >
+            <Icon name="delete-forever" size={20} color={colors.error} />
+            <Text style={styles.destructiveText}>
+              {tr.profile.deleteHistory}
+            </Text>
           </TouchableOpacity>
         </View>
-
-        {/* Destructive Action */}
-        <TouchableOpacity style={styles.destructiveButton} onPress={handleDeleteAll}>
-          <Text style={styles.destructiveText}>Tüm Geçmişi Sil</Text>
-        </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
-function GoalInput({label, value, onChange, onBlur}: {label: string; value: string; onChange: (v: string) => void; onBlur: () => void}) {
+function GoalInput({
+  label,
+  value,
+  unit,
+  onChange,
+  onBlur,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  onChange: (v: string) => void;
+  onBlur: () => void;
+}) {
   return (
     <View style={styles.listItem}>
       <Text style={styles.listLabel}>{label}</Text>
-      <TextInput
-        style={styles.listInput}
-        keyboardType="numeric"
-        value={value}
-        onChangeText={onChange}
-        onBlur={onBlur}
-        placeholderTextColor={colors.onSurfaceVariant}
-        placeholder="---"
-      />
+      <View style={styles.inputWrap}>
+        <TextInput
+          style={styles.listInput}
+          keyboardType="numeric"
+          value={value}
+          onChangeText={onChange}
+          onBlur={onBlur}
+          placeholderTextColor={colors.onSurfaceVariant}
+          placeholder="---"
+        />
+        <Text style={styles.unitText}>{unit}</Text>
+      </View>
     </View>
   );
 }
 
-function ToggleRow({label, value, onChange}: {label: string; value: boolean; onChange: (v: boolean) => void}) {
+function ToggleRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <View style={styles.listItem}>
       <Text style={styles.listLabel}>{label}</Text>
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{false: colors.surfaceContainerHigh, true: colors.primaryContainer}}
-        thumbColor={value ? colors.primary : colors.onSurfaceVariant}
+        trackColor={{
+          false: colors.outlineVariant,
+          true: colors.primaryContainer,
+        }}
+        thumbColor={value ? colors.primary : '#fff'}
       />
     </View>
   );
 }
 
 function ListDivider() {
-  return (
-    <View style={styles.divider} />
-  );
+  return <View style={styles.divider} />;
 }
 
 const styles = StyleSheet.create({
@@ -219,19 +261,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing['margin-mobile'],
     height: 64,
-    backgroundColor: 'rgba(11,19,38,0.8)',
+    backgroundColor: withAlpha(colors.background, 0.8),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(62,73,74,0.3)',
+    borderBottomColor: withAlpha(colors.outlineVariant, 0.3),
   },
   iconButton: {
     width: 40,
@@ -240,40 +277,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radii.full,
   },
-  iconText: {
-    color: colors.primary,
-    fontSize: 20,
-  },
   headerTitle: {
-    ...typography['headlineLgMobile'],
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '700',
     color: colors.primary,
     fontFamily: fontFamily.headline,
-    letterSpacing: -0.24,
   },
   scrollContent: {
     paddingHorizontal: spacing['margin-mobile'],
-    paddingTop: 80,
+    paddingTop: 24,
     paddingBottom: 40,
-    gap: spacing.lg,
     maxWidth: 672,
     alignSelf: 'center',
   },
-  section: {
-    backgroundColor: 'rgba(34,42,61,0.4)',
+  pageHeader: {
+    marginBottom: 30,
+  },
+  pageTitle: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: colors.onSurface,
+    fontFamily: fontFamily.headline,
+  },
+  pageSubtitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.onSurfaceVariant,
+    marginTop: 4,
+  },
+  sectionWrap: {
+    marginBottom: 24,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    paddingLeft: 16,
+  },
+  glassPanel: {
+    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.4),
     borderRadius: radii.xl,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(136,147,148,0.2)',
-  },
-  sectionHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(23,31,51,0.6)',
-  },
-  sectionTitle: {
-    ...typography.labelCaps,
-    color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
+    borderColor: withAlpha(colors.outline, 0.2),
   },
   listItem: {
     flexDirection: 'row',
@@ -281,46 +332,79 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(23,31,51,0.6)',
-    position: 'relative',
+    backgroundColor: withAlpha(colors.surfaceContainer, 0.6),
   },
   listLabel: {
-    ...typography.bodyMd,
+    fontSize: 16,
+    lineHeight: 24,
     color: colors.onSurface,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   listInput: {
     backgroundColor: 'transparent',
-    color: colors.onSurface,
+    borderWidth: 0,
     textAlign: 'right',
+    color: colors.onSurface,
     width: 100,
-    ...typography.bodyMd,
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  unitText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.onSurfaceVariant,
+    marginLeft: 8,
+  },
+  listValue: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.primary,
   },
   divider: {
     height: 0.5,
-    backgroundColor: 'rgba(136,147,148,0.3)',
+    backgroundColor: withAlpha(colors.outline, 0.3),
     marginLeft: 16,
   },
-  actionRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(23,31,51,0.6)',
+  actionSection: {
+    marginTop: 8,
   },
-  actionText: {
-    ...typography.bodyMd,
+  exportButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: radii.xl,
+    backgroundColor: colors.surfaceContainer,
+    borderWidth: 0.5,
+    borderColor: withAlpha(colors.outlineVariant, 0.5),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  exportText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
     color: colors.primary,
   },
   destructiveButton: {
-    backgroundColor: 'rgba(147,0,10,0.2)',
-    borderRadius: radii.xl,
+    width: '100%',
     paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
+    borderRadius: radii.xl,
+    backgroundColor: withAlpha(colors.errorContainer, 0.2),
     borderWidth: 0.5,
-    borderColor: 'rgba(255,180,171,0.3)',
+    borderColor: withAlpha(colors.error, 0.3),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   destructiveText: {
-    ...typography.bodyMd,
-    color: colors.error,
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: '700',
+    color: colors.error,
   },
 });

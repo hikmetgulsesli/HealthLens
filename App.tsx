@@ -1,6 +1,10 @@
 import React from 'react';
-import {StatusBar} from 'react-native';
+import {StatusBar, LogBox} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+
+LogBox.ignoreLogs([
+  'Failed to find parent screen controller from <RNSScreenContentWrapper>',
+]);
 import {AppNavigator} from './src/navigation/AppNavigator';
 import {colors} from './src/theme/colors';
 

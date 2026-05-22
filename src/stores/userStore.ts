@@ -20,6 +20,9 @@ const defaultGoals: NutritionGoals = {
   dailyCarbGoal: null,
   dailyFatGoal: null,
   showMicronutrients: false,
+  showSodium: false,
+  showFiber: false,
+  showSugar: false,
 };
 
 const defaultProfile: UserProfile = {

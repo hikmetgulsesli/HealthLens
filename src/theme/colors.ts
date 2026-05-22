@@ -2,6 +2,7 @@
 // Stitch names mapped to JS-safe camelCase; hex values are exact from design system
 
 export const colors = {
+  // === Clinical Dark (Camera, History, Profile, Review) ===
   surface: '#0b1326',
   surfaceDim: '#0b1326',
   surfaceBright: '#31394d',
@@ -49,6 +50,34 @@ export const colors = {
   background: '#0b1326',
   onBackground: '#dae2fd',
   surfaceVariant: '#2d3449',
+
+  // === Dashboard Dark (distinct palette from Dashboard_Daily_Tracking.html) ===
+  dashboardBackground: '#131313',
+  dashboardSurface: '#131313',
+  dashboardSurfaceDim: '#131313',
+  dashboardSurfaceBright: '#393939',
+  dashboardSurfaceContainerLowest: '#0e0e0e',
+  dashboardSurfaceContainerLow: '#1c1b1b',
+  dashboardSurfaceContainer: '#201f1f',
+  dashboardSurfaceContainerHigh: '#2a2a2a',
+  dashboardSurfaceContainerHighest: '#353534',
+  dashboardOnSurface: '#e5e2e1',
+  dashboardOnSurfaceVariant: '#bec8ca',
+  dashboardOutline: '#889394',
+  dashboardOutlineVariant: '#3e494a',
+  dashboardPrimary: '#82d3de',
+  dashboardOnPrimary: '#00363c',
+  dashboardPrimaryContainer: '#006d77',
+  dashboardOnPrimaryContainer: '#9becf7',
+  dashboardSecondary: '#90d3cb',
+  dashboardOnSecondary: '#003734',
+  dashboardSecondaryContainer: '#025550',
+  dashboardOnSecondaryContainer: '#86c8c1',
+  dashboardTertiary: '#ffb783',
+  dashboardOnTertiary: '#4f2500',
+  dashboardTertiaryContainer: '#8e5426',
+  dashboardOnTertiaryContainer: '#ffd7bd',
+  dashboardSurfaceVariant: '#353534',
 } as const;
 
 export const withAlpha = (hex: string, alpha: number): string => {

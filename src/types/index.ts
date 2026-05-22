@@ -34,6 +34,9 @@ export interface NutritionGoals {
   dailyCarbGoal: number | null;
   dailyFatGoal: number | null;
   showMicronutrients: boolean;
+  showSodium: boolean;
+  showFiber: boolean;
+  showSugar: boolean;
 }
 
 export interface UserProfile {

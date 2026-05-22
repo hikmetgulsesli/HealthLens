@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,23 +6,27 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  TextInput,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {colors} from '../theme/colors';
-import {spacing} from '../theme/spacing';
-import {radii} from '../theme/radii';
-import {typography, fontFamily} from '../theme/typography';
-import {useAnalysisStore} from '../stores/analysisStore';
-import {useLogStore} from '../stores/logStore';
-import type {MealCategory} from '../types';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
+import { colors, withAlpha } from '../theme/colors';
+import { spacing } from '../theme/spacing';
+import { radii } from '../theme/radii';
+import { typography, fontFamily } from '../theme/typography';
+import { useAnalysisStore } from '../stores/analysisStore';
+import { useLogStore } from '../stores/logStore';
+import type { MealCategory } from '../types';
+import { tr } from '../i18n';
 
-const MEAL_CATEGORIES: {label: string; value: MealCategory}[] = [
-  {label: 'Kahvaltı', value: 'breakfast'},
-  {label: 'Öğle', value: 'lunch'},
-  {label: 'Akşam', value: 'dinner'},
-  {label: 'Ara Öğün', value: 'snack'},
+const MEAL_CATEGORIES: { label: string; value: MealCategory }[] = [
+  { label: tr.review.breakfast, value: 'breakfast' },
+  { label: tr.review.lunch, value: 'lunch' },
+  { label: tr.review.dinner, value: 'dinner' },
+  { label: tr.review.snack, value: 'snack' },
 ];
 
 export function ReviewScreen(): React.JSX.Element {
@@ -31,10 +35,19 @@ export function ReviewScreen(): React.JSX.Element {
   const updateItemPortion = useAnalysisStore(s => s.updateItemPortion);
   const removeItem = useAnalysisStore(s => s.removeItem);
   const setMealCategory = useAnalysisStore(s => s.setMealCategory);
+  const addItem = useAnalysisStore(s => s.addItem);
   const addEntry = useLogStore(s => s.addEntry);
 
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCalories, setNewItemCalories] = useState('');
+  const [newItemProtein, setNewItemProtein] = useState('');
+  const [newItemCarbs, setNewItemCarbs] = useState('');
+  const [newItemFat, setNewItemFat] = useState('');
+  const [newItemPortion, setNewItemPortion] = useState('100');
+
   const totals = useMemo(() => {
-    if (!analysis) return {cal: 0, protein: 0, carbs: 0, fat: 0};
+    if (!analysis) return { cal: 0, protein: 0, carbs: 0, fat: 0 };
     return analysis.items.reduce(
       (acc, item) => {
         const ratio = item.estimatedPortionGrams / 100;
@@ -44,135 +57,330 @@ export function ReviewScreen(): React.JSX.Element {
         acc.fat += item.fatPer100g * ratio;
         return acc;
       },
-      {cal: 0, protein: 0, carbs: 0, fat: 0},
+      { cal: 0, protein: 0, carbs: 0, fat: 0 },
     );
   }, [analysis]);
 
   if (!analysis) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.emptyText}>Analiz bulunamadı</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.emptyText}>{tr.review.noAnalysis}</Text>
+      </SafeAreaView>
     );
   }
 
   const handleSave = () => {
     if (analysis.items.length === 0) {
-      Alert.alert('Hata', 'En az bir besin ekleyin.');
+      Alert.alert('Hata', tr.review.errorNoItems);
       return;
     }
     const dateKey = new Date().toISOString().split('T')[0];
-    addEntry({
-      id: Math.random().toString(36).substring(7),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      dateKey,
-      mealCategory: analysis.mealCategory,
-      imageUri: analysis.imageUri,
-      items: analysis.items,
-      totalCalories: Math.round(totals.cal),
-      totalProtein: Math.round(totals.protein),
-      totalCarbs: Math.round(totals.carbs),
-      totalFat: Math.round(totals.fat),
-    });
+    const existingEntry = useLogStore
+      .getState()
+      .entries[dateKey]?.find(
+        e =>
+          e.imageUri === analysis.imageUri &&
+          e.items.length === analysis.items.length,
+      );
+
+    if (existingEntry) {
+      useLogStore.getState().updateEntry({
+        ...existingEntry,
+        updatedAt: new Date().toISOString(),
+        mealCategory: analysis.mealCategory,
+        items: analysis.items,
+        totalCalories: Math.round(totals.cal),
+        totalProtein: Math.round(totals.protein),
+        totalCarbs: Math.round(totals.carbs),
+        totalFat: Math.round(totals.fat),
+      });
+    } else {
+      addEntry({
+        id: Math.random().toString(36).substring(7),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        dateKey,
+        mealCategory: analysis.mealCategory,
+        imageUri: analysis.imageUri,
+        items: analysis.items,
+        totalCalories: Math.round(totals.cal),
+        totalProtein: Math.round(totals.protein),
+        totalCarbs: Math.round(totals.carbs),
+        totalFat: Math.round(totals.fat),
+      });
+    }
     useAnalysisStore.getState().setAnalysis(null);
     navigation.goBack();
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      {/* TopAppBar */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="close" size={24} color={colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{tr.review.title}</Text>
+        <TouchableOpacity style={styles.iconButton}>
+          <Icon name="settings" size={24} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Image Section */}
+        {/* Photo Preview */}
         <View style={styles.imageSection}>
           <View style={styles.imageCard}>
-            <Image
-              source={{uri: analysis.imageUri}}
-              style={styles.foodImage}
-              resizeMode="cover"
-            />
+            {analysis.imageUri && !analysis.imageUri.startsWith('mock://') ? (
+              <Image
+                source={{ uri: analysis.imageUri }}
+                style={styles.foodImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.foodImage, styles.placeholderImage]}>
+                <Icon
+                  name="restaurant"
+                  size={48}
+                  color={colors.onSurfaceVariant}
+                />
+                <Text style={styles.placeholderText}>
+                  {tr.review.noAnalysis}
+                </Text>
+              </View>
+            )}
+            <View style={styles.matchBadge}>
+              <Icon name="check-circle" size={16} color={colors.primary} />
+              <Text style={styles.matchText}>98% {tr.review.match}</Text>
+            </View>
           </View>
         </View>
 
         {/* Category Selector */}
-        <View style={styles.categoryRow}>
-          {MEAL_CATEGORIES.map(cat => (
-            <TouchableOpacity
-              key={cat.value}
-              style={[
-                styles.categoryChip,
-                analysis.mealCategory === cat.value && styles.categoryChipActive,
-              ]}
-              onPress={() => setMealCategory(cat.value)}>
-              <Text
+        <View style={styles.categorySection}>
+          <Text style={styles.categoryLabel}>{tr.review.mealCategory}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryRow}
+          >
+            {MEAL_CATEGORIES.map(cat => (
+              <TouchableOpacity
+                key={cat.value}
                 style={[
-                  styles.categoryText,
-                  analysis.mealCategory === cat.value && styles.categoryTextActive,
-                ]}>
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                  styles.categoryChip,
+                  analysis.mealCategory === cat.value &&
+                    styles.categoryChipActive,
+                ]}
+                onPress={() => setMealCategory(cat.value)}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    analysis.mealCategory === cat.value &&
+                      styles.categoryTextActive,
+                  ]}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Item Cards */}
-        {analysis.items.map(item => (
-          <View key={item.id} style={styles.itemCard}>
-            {/* Header */}
-            <View style={styles.itemHeader}>
-              <View style={styles.itemHeaderLeft}>
-                <View style={styles.itemIcon}>
-                  <Text style={styles.itemIconText}>🍽</Text>
-                </View>
-                <Text style={styles.itemName}>{item.name}</Text>
-              </View>
-              <TouchableOpacity onPress={() => removeItem(item.id)}>
-                <Text style={styles.deleteIcon}>🗑</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Portion Slider */}
-            <View style={styles.portionSection}>
-              <View style={styles.portionLabelRow}>
-                <Text style={styles.portionLabel}>Porsiyon</Text>
-                <Text style={styles.portionValue}>{item.estimatedPortionGrams}g</Text>
-              </View>
-              <TextInput
-                style={styles.portionInput}
-                keyboardType="numeric"
-                value={String(item.estimatedPortionGrams)}
-                onChangeText={text => {
-                  const val = parseInt(text, 10);
-                  if (!isNaN(val) && val > 0) {
-                    updateItemPortion(item.id, val);
-                  }
-                }}
-              />
-            </View>
-
-            {/* Macros Data */}
-            <View style={styles.macroSection}>
-              <View style={styles.macroLeft}>
-                <Text style={styles.macroLabelSmall}>Energy</Text>
-                <View style={styles.macroValueRow}>
-                  <Text style={styles.macroValueLarge}>
-                    {Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)}
-                  </Text>
-                  <Text style={styles.macroUnit}>kcal</Text>
-                </View>
-              </View>
-              <View style={styles.macroRight}>
-                <MacroBadge label="PRO" value={`${Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)}g`} />
-                <MacroBadge label="CARB" value={`${Math.round((item.carbsPer100g * item.estimatedPortionGrams) / 100)}g`} />
-                <MacroBadge label="FAT" value={`${Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)}g`} />
-              </View>
+        {/* Detected Items */}
+        <View style={styles.itemsSection}>
+          <View style={styles.itemsHeader}>
+            <Text style={styles.itemsLabel}>{tr.review.detectedItems}</Text>
+            <View style={styles.itemsBadge}>
+              <Text style={styles.itemsBadgeText}>
+                {analysis.items.length} {tr.review.items}
+              </Text>
             </View>
           </View>
-        ))}
 
-        {/* Add Item Button */}
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Besin Ekle</Text>
-        </TouchableOpacity>
+          {analysis.items.map(item => (
+            <View key={item.id} style={styles.itemCard}>
+              {/* Header */}
+              <View style={styles.itemHeader}>
+                <View style={styles.itemHeaderLeft}>
+                  <View style={styles.itemIcon}>
+                    <Icon name="restaurant" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                </View>
+                <TouchableOpacity onPress={() => removeItem(item.id)}>
+                  <Icon name="delete" size={20} color={colors.outline} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Portion Slider */}
+              <View style={styles.portionSection}>
+                <View style={styles.portionLabelRow}>
+                  <Text style={styles.portionLabel}>{tr.review.portion}</Text>
+                  <Text style={styles.portionValue}>
+                    {item.estimatedPortionGrams}g
+                  </Text>
+                </View>
+                <SimpleSlider
+                  value={item.estimatedPortionGrams}
+                  min={0}
+                  max={300}
+                  onChange={val => updateItemPortion(item.id, Math.round(val))}
+                />
+              </View>
+
+              {/* Macros Data */}
+              <View style={styles.macroSection}>
+                <View style={styles.macroLeft}>
+                  <Text style={styles.macroLabelSmall}>{tr.review.energy}</Text>
+                  <View style={styles.macroValueRow}>
+                    <Text style={styles.macroValueLarge}>
+                      {Math.round(
+                        (item.caloriesPer100g * item.estimatedPortionGrams) /
+                          100,
+                      )}
+                    </Text>
+                    <Text style={styles.macroUnit}>kcal</Text>
+                  </View>
+                </View>
+                <View style={styles.macroRight}>
+                  <MacroBadge
+                    label={tr.review.pro}
+                    value={`${Math.round(
+                      (item.proteinPer100g * item.estimatedPortionGrams) / 100,
+                    )}g`}
+                  />
+                  <MacroBadge
+                    label={tr.review.carb}
+                    value={`${Math.round(
+                      (item.carbsPer100g * item.estimatedPortionGrams) / 100,
+                    )}g`}
+                  />
+                  <MacroBadge
+                    label={tr.review.fat}
+                    value={`${Math.round(
+                      (item.fatPer100g * item.estimatedPortionGrams) / 100,
+                    )}g`}
+                  />
+                </View>
+              </View>
+            </View>
+          ))}
+
+          {/* Add Item Button */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+          >
+            <Icon name="add" size={20} color={colors.primary} />
+            <Text style={styles.addButtonText}>{tr.review.addItem}</Text>
+          </TouchableOpacity>
+
+          {/* Add Item Modal */}
+          <Modal
+            visible={showAddModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowAddModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{tr.review.addItem}</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Yiyecek adı"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  value={newItemName}
+                  onChangeText={setNewItemName}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Kalori (100g)"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  keyboardType="numeric"
+                  value={newItemCalories}
+                  onChangeText={setNewItemCalories}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Protein (100g)"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  keyboardType="numeric"
+                  value={newItemProtein}
+                  onChangeText={setNewItemProtein}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Karbonhidrat (100g)"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  keyboardType="numeric"
+                  value={newItemCarbs}
+                  onChangeText={setNewItemCarbs}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Yağ (100g)"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  keyboardType="numeric"
+                  value={newItemFat}
+                  onChangeText={setNewItemFat}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Porsiyon (g)"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  keyboardType="numeric"
+                  value={newItemPortion}
+                  onChangeText={setNewItemPortion}
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.modalCancel}
+                    onPress={() => setShowAddModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>
+                      {tr.review.cancel || 'İptal'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalSave}
+                    onPress={() => {
+                      if (!newItemName.trim()) {
+                        Alert.alert('Hata', 'Yiyecek adı gerekli');
+                        return;
+                      }
+                      addItem({
+                        id: `manual-${Date.now()}`,
+                        name: newItemName.trim(),
+                        confidence: 1,
+                        estimatedPortionGrams:
+                          parseInt(newItemPortion, 10) || 100,
+                        caloriesPer100g: parseFloat(newItemCalories) || 0,
+                        proteinPer100g: parseFloat(newItemProtein) || 0,
+                        carbsPer100g: parseFloat(newItemCarbs) || 0,
+                        fatPer100g: parseFloat(newItemFat) || 0,
+                      });
+                      setNewItemName('');
+                      setNewItemCalories('');
+                      setNewItemProtein('');
+                      setNewItemCarbs('');
+                      setNewItemFat('');
+                      setNewItemPortion('100');
+                      setShowAddModal(false);
+                    }}
+                  >
+                    <Text style={styles.modalSaveText}>
+                      {tr.review.save || 'Kaydet'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </View>
       </ScrollView>
 
       {/* Sticky Bottom Summary Bar */}
@@ -181,16 +389,29 @@ export function ReviewScreen(): React.JSX.Element {
           {/* Summary Stats */}
           <View style={styles.summaryRow}>
             <View style={styles.summaryLeft}>
-              <Text style={styles.summaryLabel}>TOPLAM BESİN</Text>
+              <Text style={styles.summaryLabel}>
+                {tr.review.totalNutrition}
+              </Text>
               <View style={styles.summaryValueRow}>
-                <Text style={styles.summaryValue}>{Math.round(totals.cal)}</Text>
+                <Text style={styles.summaryValue}>
+                  {Math.round(totals.cal)}
+                </Text>
                 <Text style={styles.summaryUnit}>kcal</Text>
               </View>
             </View>
             <View style={styles.summaryRight}>
-              <MacroBento label="PRO" value={`${Math.round(totals.protein)}g`} />
-              <MacroBento label="CARB" value={`${Math.round(totals.carbs)}g`} />
-              <MacroBento label="FAT" value={`${Math.round(totals.fat)}g`} />
+              <MacroBento
+                label={tr.review.pro}
+                value={`${Math.round(totals.protein)}g`}
+              />
+              <MacroBento
+                label={tr.review.carb}
+                value={`${Math.round(totals.carbs)}g`}
+              />
+              <MacroBento
+                label={tr.review.fat}
+                value={`${Math.round(totals.fat)}g`}
+              />
             </View>
           </View>
 
@@ -198,23 +419,58 @@ export function ReviewScreen(): React.JSX.Element {
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.retakeButton}
-              onPress={() => navigation.goBack()}>
-              <Text style={styles.retakeText}>Tekrar Çek</Text>
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.retakeText}>{tr.review.retake}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.saveButton}
               onPress={handleSave}
-              testID="saveLogButton">
-              <Text style={styles.saveText}>Öğünü Kaydet</Text>
+              testID="saveLogButton"
+            >
+              <Icon name="save" size={18} color={colors.onPrimaryContainer} />
+              <Text style={styles.saveText}>{tr.review.saveMeal}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
-function MacroBadge({label, value}: {label: string; value: string}) {
+function SimpleSlider({
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+}) {
+  const pct = (value - min) / (max - min);
+  const [trackWidth, setTrackWidth] = React.useState(0);
+  return (
+    <TouchableOpacity
+      style={styles.sliderTrack}
+      activeOpacity={1}
+      onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}
+      onPress={e => {
+        const locationX = e.nativeEvent.locationX;
+        const newPct = Math.max(0, Math.min(1, locationX / trackWidth));
+        onChange(min + newPct * (max - min));
+      }}
+    >
+      <View style={[styles.sliderFill, { width: `${pct * 100}%` }]} />
+      <View
+        style={[styles.sliderThumb, { left: `${pct * 100}%`, marginLeft: -10 }]}
+      />
+    </TouchableOpacity>
+  );
+}
+
+function MacroBadge({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.macroBadge}>
       <Text style={styles.macroBadgeLabel}>{label}</Text>
@@ -223,7 +479,7 @@ function MacroBadge({label, value}: {label: string; value: string}) {
   );
 }
 
-function MacroBento({label, value}: {label: string; value: string}) {
+function MacroBento({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.macroBento}>
       <Text style={styles.macroBentoLabel}>{label}</Text>
@@ -236,7 +492,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    position: 'relative',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing['margin-mobile'],
+    height: 64,
+    backgroundColor: withAlpha(colors.surface, 0.8),
+    borderBottomWidth: 1,
+    borderBottomColor: withAlpha(colors.outlineVariant, 0.3),
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.full,
+  },
+  headerTitle: {
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: colors.primary,
+    fontFamily: fontFamily.headline,
   },
   scrollContent: {
     paddingBottom: 260,
@@ -249,8 +528,6 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     width: '100%',
-    maxWidth: 672,
-    alignSelf: 'center',
     paddingHorizontal: spacing['margin-mobile'],
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
@@ -259,57 +536,128 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainer,
     borderRadius: radii.xl,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: withAlpha(colors.outlineVariant, 0.5),
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
+    position: 'relative',
   },
   foodImage: {
     width: '100%',
     height: 256,
   },
+  placeholderImage: {
+    backgroundColor: colors.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+    fontWeight: '500',
+  },
+  matchBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: withAlpha(colors.surfaceContainer, 0.8),
+    borderRadius: radii.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 0.5,
+    borderColor: withAlpha(colors.outlineVariant, 0.5),
+  },
+  matchText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.primary,
+  },
+  categorySection: {
+    paddingHorizontal: spacing['margin-mobile'],
+    marginBottom: spacing.md,
+  },
+  categoryLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    marginBottom: spacing.sm,
+    paddingLeft: 4,
+  },
   categoryRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    paddingHorizontal: spacing['margin-mobile'],
-    paddingBottom: spacing.md,
+    paddingBottom: 4,
   },
   categoryChip: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: radii.xl,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: colors.outlineVariant,
+    borderColor: withAlpha(colors.outlineVariant, 0.5),
     backgroundColor: colors.surfaceContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   categoryChipActive: {
     backgroundColor: colors.primaryContainer,
     borderColor: colors.primary,
   },
   categoryText: {
-    ...typography.labelMd,
-    color: colors.onSurface,
+    fontSize: 12,
     fontWeight: '500',
+    color: colors.onSurface,
   },
   categoryTextActive: {
     color: colors.onPrimaryContainer,
     fontWeight: '700',
   },
+  itemsSection: {
+    paddingHorizontal: spacing['margin-mobile'],
+    gap: spacing.md,
+  },
+  itemsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  itemsLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    paddingLeft: 4,
+  },
+  itemsBadge: {
+    backgroundColor: withAlpha(colors.primaryContainer, 0.2),
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+  },
+  itemsBadgeText: {
+    fontSize: 12,
+    color: colors.primary,
+  },
   itemCard: {
-    backgroundColor: 'rgba(23,31,51,0.4)',
+    backgroundColor: withAlpha(colors.surfaceContainer, 0.4),
     borderRadius: radii.xl,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(62,73,74,0.4)',
-    flexDirection: 'column',
+    borderColor: withAlpha(colors.outlineVariant, 0.4),
     gap: spacing.md,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-    marginHorizontal: spacing['margin-mobile'],
     marginBottom: spacing.md,
   },
   itemHeader: {
@@ -330,20 +678,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(62,73,74,0.3)',
-  },
-  itemIconText: {
-    fontSize: 16,
+    borderColor: withAlpha(colors.outlineVariant, 0.3),
   },
   itemName: {
-    ...typography.bodyLg,
+    fontSize: 18,
+    lineHeight: 28,
     color: colors.onSurface,
     fontWeight: '600',
     fontFamily: fontFamily.bodyMedium,
-  },
-  deleteIcon: {
-    fontSize: 20,
-    color: colors.outline,
   },
   portionSection: {
     paddingHorizontal: 4,
@@ -354,23 +696,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   portionLabel: {
-    ...typography.labelMd,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.onSurfaceVariant,
   },
   portionValue: {
-    ...typography.labelMd,
-    color: colors.primary,
+    fontSize: 12,
     fontWeight: '700',
+    color: colors.primary,
   },
-  portionInput: {
-    backgroundColor: colors.surfaceContainerHigh,
-    color: colors.onSurface,
-    borderRadius: radii.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  sliderTrack: {
     width: '100%',
-    textAlign: 'center',
-    ...typography.bodyMd,
+    height: 4,
+    backgroundColor: colors.outlineVariant,
+    borderRadius: 2,
+    justifyContent: 'center',
+  },
+  sliderFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primaryContainer,
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 3,
   },
   macroSection: {
     flexDirection: 'row',
@@ -378,14 +737,18 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(62,73,74,0.2)',
+    borderTopColor: withAlpha(colors.outlineVariant, 0.2),
   },
   macroLeft: {
     flexDirection: 'column',
   },
   macroLabelSmall: {
-    ...typography.labelCaps,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
     marginBottom: 4,
   },
   macroValueRow: {
@@ -394,11 +757,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   macroValueLarge: {
-    ...typography.headlineMd,
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '600',
     color: colors.onSurface,
   },
   macroUnit: {
-    ...typography.labelMd,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.onSurfaceVariant,
   },
   macroRight: {
@@ -410,12 +776,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   macroBadgeLabel: {
-    ...typography.labelCaps,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
     color: colors.outline,
     marginBottom: 4,
   },
   macroBadgeValue: {
-    ...typography.bodyMd,
+    fontSize: 16,
+    lineHeight: 24,
     color: colors.onSurface,
     fontWeight: '500',
   },
@@ -426,15 +796,16 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(136,147,148,0.4)',
+    borderColor: withAlpha(colors.outline, 0.4),
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: spacing['margin-mobile'],
+    flexDirection: 'row',
+    gap: 8,
   },
   addButtonText: {
-    ...typography.labelMd,
-    color: colors.primary,
+    fontSize: 12,
     fontWeight: '600',
+    color: colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.48,
   },
@@ -443,9 +814,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(11,19,38,0.95)',
+    backgroundColor: withAlpha(colors.background, 0.95),
     borderTopWidth: 1,
-    borderTopColor: 'rgba(62,73,74,0.3)',
+    borderTopColor: withAlpha(colors.outlineVariant, 0.3),
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     zIndex: 40,
@@ -455,8 +826,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   bottomContent: {
-    maxWidth: 672,
-    alignSelf: 'center',
     paddingHorizontal: spacing['margin-mobile'],
     paddingTop: spacing.lg,
     paddingBottom: 32,
@@ -472,10 +841,13 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   summaryLabel: {
-    ...typography.labelCaps,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
     marginBottom: 4,
-    letterSpacing: 0.96,
   },
   summaryValueRow: {
     flexDirection: 'row',
@@ -483,13 +855,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   summaryValue: {
-    ...typography['headlineXlMobile'],
-    color: colors.primary,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
+    color: colors.primary,
     fontFamily: fontFamily.headline,
   },
   summaryUnit: {
-    ...typography.bodyMd,
+    fontSize: 16,
+    lineHeight: 24,
     color: colors.onSurfaceVariant,
   },
   summaryRight: {
@@ -499,7 +873,7 @@ const styles = StyleSheet.create({
   macroBento: {
     backgroundColor: colors.surfaceContainerHigh,
     borderWidth: 1,
-    borderColor: 'rgba(62,73,74,0.2)',
+    borderColor: withAlpha(colors.outlineVariant, 0.2),
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radii.lg,
@@ -507,14 +881,17 @@ const styles = StyleSheet.create({
     minWidth: 48,
   },
   macroBentoLabel: {
-    ...typography.labelCaps,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.6,
     color: colors.outline,
     marginBottom: 2,
   },
   macroBentoValue: {
-    ...typography.labelMd,
-    color: colors.onSurface,
+    fontSize: 12,
     fontWeight: '600',
+    color: colors.onSurface,
   },
   actionRow: {
     flexDirection: 'row',
@@ -527,14 +904,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     backgroundColor: colors.surfaceContainer,
     borderWidth: 1,
-    borderColor: 'rgba(62,73,74,0.5)',
+    borderColor: withAlpha(colors.outlineVariant, 0.5),
     alignItems: 'center',
     justifyContent: 'center',
   },
   retakeText: {
-    ...typography.labelMd,
-    color: colors.onSurface,
+    fontSize: 12,
     fontWeight: '600',
+    color: colors.onSurface,
   },
   saveButton: {
     flex: 2,
@@ -543,13 +920,73 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
   saveText: {
-    ...typography.labelMd,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.onPrimaryContainer,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: withAlpha(colors.background, 0.8),
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    gap: spacing.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.onSurface,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  modalInput: {
+    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.5),
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.onSurface,
+    borderWidth: 1,
+    borderColor: withAlpha(colors.outlineVariant, 0.3),
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radii.xl,
+    backgroundColor: colors.surfaceContainerHigh,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  modalSave: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radii.xl,
+    backgroundColor: colors.primaryContainer,
+    alignItems: 'center',
+  },
+  modalSaveText: {
     color: colors.onPrimaryContainer,
     fontWeight: '700',
   },

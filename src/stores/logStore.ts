@@ -1,16 +1,17 @@
-import {create} from 'zustand';
-import {persist} from 'zustand/middleware';
-import {MMKV} from 'react-native-mmkv';
-import type {LogEntry, MealCategory} from '../types';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { MMKV } from 'react-native-mmkv';
+import type { LogEntry } from '../types';
 
-const storage = new MMKV({id: 'log-storage'});
+const storage = new MMKV({ id: 'log-storage' });
 
 const mmkvStorage: any = {
   getItem: (name: string) => {
     const value = storage.getString(name);
     return value ? JSON.parse(value) : null;
   },
-  setItem: (name: string, value: unknown) => storage.set(name, JSON.stringify(value)),
+  setItem: (name: string, value: unknown) =>
+    storage.set(name, JSON.stringify(value)),
   removeItem: (name: string) => storage.delete(name),
 };
 

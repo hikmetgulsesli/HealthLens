@@ -1,14 +1,16 @@
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text, View, StyleSheet} from 'react-native';
-import {colors} from '../theme/colors';
-import {CameraScreen} from '../screens/CameraScreen';
-import {ReviewScreen} from '../screens/ReviewScreen';
-import {DashboardScreen} from '../screens/DashboardScreen';
-import {HistoryScreen} from '../screens/HistoryScreen';
-import {ProfileScreen} from '../screens/ProfileScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { colors } from '../theme/colors';
+import { tr } from '../i18n';
+import { CameraScreen } from '../screens/CameraScreen';
+import { ReviewScreen } from '../screens/ReviewScreen';
+import { DashboardScreen } from '../screens/DashboardScreen';
+import { HistoryScreen } from '../screens/HistoryScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -25,29 +27,20 @@ export type MainTabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function TabIcon({label, focused}: {label: string; focused: boolean}) {
+function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
   return (
-    <View style={styles.tabItem}>
-      <View
-        style={[
-          styles.tabDot,
-          {backgroundColor: focused ? colors.primary : colors.onSurfaceVariant},
-        ]}
-      />
-      <Text
-        style={[
-          styles.tabLabel,
-          {color: focused ? colors.primary : colors.onSurfaceVariant},
-        ]}>
-        {label}
-      </Text>
-    </View>
+    <Icon
+      name={name}
+      size={24}
+      color={focused ? colors.onPrimaryContainer : colors.onSurfaceVariant}
+      style={{ marginBottom: 2 }}
+    />
   );
 }
 
 function CameraTabStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen
         name="Review"
@@ -67,35 +60,51 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarShowLabel: false,
-      }}>
+        tabBarShowLabel: true,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarActiveTintColor: colors.onPrimaryContainer,
+        tabBarInactiveTintColor: colors.onSurfaceVariant,
+        tabBarActiveBackgroundColor: colors.primaryContainer,
+        tabBarItemStyle: styles.tabItem,
+      }}
+    >
       <Tab.Screen
         name="CameraTab"
         component={CameraScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon label="Kamera" focused={focused} />,
+          tabBarLabel: tr.tabs.camera,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="photo-camera" focused={focused} />
+          ),
         }}
       />
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon label="Özet" focused={focused} />,
+          tabBarLabel: tr.tabs.dashboard,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="dashboard" focused={focused} />
+          ),
         }}
       />
       <Tab.Screen
         name="History"
         component={HistoryScreen}
         options={{
-          tabBarIcon: ({focused}) => <TabIcon label="Geçmiş" focused={focused} />,
+          tabBarLabel: tr.tabs.library,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="folder-open" focused={focused} />
+          ),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({focused}) => (
-            <TabIcon label="Profil" focused={focused} />
+          tabBarLabel: tr.tabs.settings,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="settings" focused={focused} />
           ),
         }}
       />
@@ -116,21 +125,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLow,
     borderTopWidth: 0.5,
     borderTopColor: colors.outline,
-    height: 64,
+    height: 80,
     paddingBottom: 8,
+    paddingTop: 4,
   },
   tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  tabDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    borderRadius: 16,
+    marginHorizontal: 4,
+    paddingVertical: 4,
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: '500',
+    marginTop: 2,
   },
 });
