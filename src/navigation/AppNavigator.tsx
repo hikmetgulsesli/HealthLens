@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { colors } from '../theme/colors';
+import { colors, withAlpha } from '../theme/colors';
 import { tr } from '../i18n';
 import { CameraScreen } from '../screens/CameraScreen';
 import { ReviewScreen } from '../screens/ReviewScreen';
@@ -64,7 +64,7 @@ function MainTabs() {
         tabBarLabelStyle: styles.tabLabel,
         tabBarActiveTintColor: colors.onPrimaryContainer,
         tabBarInactiveTintColor: colors.onSurfaceVariant,
-        tabBarActiveBackgroundColor: colors.primaryContainer,
+        tabBarActiveBackgroundColor: withAlpha(colors.primaryContainer, 0.3),
         tabBarItemStyle: styles.tabItem,
       }}
     >

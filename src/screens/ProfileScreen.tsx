@@ -78,7 +78,7 @@ export function ProfileScreen(): React.JSX.Element {
         >
           <Icon name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{tr.appName}</Text>
+        <Text style={styles.headerTitle}>{tr.profile.title}</Text>
         <TouchableOpacity style={styles.iconButton}>
           <Icon name="settings" size={24} color={colors.primary} />
         </TouchableOpacity>

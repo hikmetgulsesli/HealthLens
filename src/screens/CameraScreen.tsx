@@ -112,13 +112,15 @@ export function CameraScreen(): React.JSX.Element {
   return (
     <View style={styles.container}>
       {/* Camera Viewport Background */}
-      <Camera
-        ref={cameraRef}
-        style={StyleSheet.absoluteFill}
-        cameraType={CameraType.Back}
-        flashMode={flashOn ? 'on' : 'off'}
-        testID="cameraPreview"
-      />
+      <View style={styles.cameraContainer}>
+        <Camera
+          ref={cameraRef}
+          style={styles.camera}
+          cameraType={CameraType.Back}
+          flashMode={flashOn ? 'on' : 'off'}
+          testID="cameraPreview"
+        />
+      </View>
 
       {/* Subtle dark overlay */}
       <View style={styles.overlay} />
@@ -212,6 +214,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     position: 'relative',
   },
+  cameraContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  camera: {
+    flex: 1,
+  },
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: withAlpha(colors.background, 0.2),
@@ -258,12 +271,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   reticle: {
-    width: 256,
-    height: 256,
-    borderWidth: 1.5,
-    borderColor: withAlpha(colors.primary, 0.5),
-    borderRadius: radii.xl,
+    width: 280,
+    height: 280,
     position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   corner: {
     position: 'absolute',
@@ -272,32 +284,32 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   cornerTL: {
-    top: -spacing.xs,
-    left: -spacing.xs,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderTopLeftRadius: radii.DEFAULT,
+    top: 0,
+    left: 0,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderTopLeftRadius: radii.xl,
   },
   cornerTR: {
-    top: -spacing.xs,
-    right: -spacing.xs,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-    borderTopRightRadius: radii.DEFAULT,
+    top: 0,
+    right: 0,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderTopRightRadius: radii.xl,
   },
   cornerBL: {
-    bottom: -spacing.xs,
-    left: -spacing.xs,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-    borderBottomLeftRadius: radii.DEFAULT,
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderBottomLeftRadius: radii.xl,
   },
   cornerBR: {
-    bottom: -spacing.xs,
-    right: -spacing.xs,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderBottomRightRadius: radii.DEFAULT,
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderBottomRightRadius: radii.xl,
   },
   crosshair: {
     position: 'absolute',
