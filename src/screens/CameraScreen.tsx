@@ -6,14 +6,16 @@ import {
   Text,
   Alert,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { Camera, CameraType } from 'react-native-camera-kit';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, withAlpha } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
-import { typography, fontFamily } from '../theme/typography';
+import { fontFamily } from '../theme/typography';
 import { useAnalysisStore } from '../stores/analysisStore';
 import { useOfflineQueueStore } from '../stores/offlineQueueStore';
 import { useNavigation } from '@react-navigation/native';
@@ -111,7 +113,13 @@ export function CameraScreen(): React.JSX.Element {
 
   return (
     <View style={styles.container}>
-      {/* Camera Viewport Background */}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+
+      {/* Camera Preview */}
       <View style={styles.cameraContainer}>
         <Camera
           ref={cameraRef}
@@ -122,44 +130,44 @@ export function CameraScreen(): React.JSX.Element {
         />
       </View>
 
-      {/* Subtle dark overlay */}
-      <View style={styles.overlay} />
+      {/* Dark Overlays */}
+      <View style={styles.topGradient} />
+      <View style={styles.bottomGradient} />
 
-      {/* TopAppBar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-          <Icon name="close" size={24} color={colors.primary} />
+      {/* Top Bar */}
+      <SafeAreaView style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('MainTabs')}
+        >
+          <Icon name="close" size={24} color={colors.onSurface} />
         </TouchableOpacity>
+
         <Text style={styles.title}>{tr.appName}</Text>
-        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-          <Icon name="settings" size={24} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
 
-      {/* Scanning Canvas (Middle) */}
-      <View style={styles.scanningCanvas}>
-        {/* Focus Reticle */}
+        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+          <Icon name="settings" size={24} color={colors.onSurface} />
+        </TouchableOpacity>
+      </SafeAreaView>
+
+      {/* Center Reticle */}
+      <View style={styles.reticleContainer}>
         <View style={styles.reticle}>
-          {/* Corner Brackets */}
           <View style={[styles.corner, styles.cornerTL]} />
           <View style={[styles.corner, styles.cornerTR]} />
           <View style={[styles.corner, styles.cornerBL]} />
           <View style={[styles.corner, styles.cornerBR]} />
-          {/* Crosshair center */}
-          <View style={styles.crosshair}>
-            <View style={styles.crosshairH} />
-            <View style={styles.crosshairV} />
-          </View>
         </View>
 
-        {/* Scanning Status Pill */}
+        {/* Status Pill */}
         <View style={styles.statusPill}>
           <View style={styles.statusDot} />
           <Text style={styles.statusText}>{tr.camera.alignFood}</Text>
         </View>
       </View>
 
-      {/* Bottom Controls Area */}
+      {/* Processing Overlay */}
       {isProcessing && (
         <View style={styles.processingOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -167,10 +175,10 @@ export function CameraScreen(): React.JSX.Element {
         </View>
       )}
 
-      {/* Bottom Controls Area */}
-      <View style={styles.bottomControls}>
+      {/* Bottom Controls */}
+      <SafeAreaView style={styles.bottomControls}>
         <View style={styles.controlsRow}>
-          {/* Gallery Shortcut */}
+          {/* Gallery */}
           <TouchableOpacity
             style={styles.sideButton}
             activeOpacity={0.7}
@@ -179,18 +187,17 @@ export function CameraScreen(): React.JSX.Element {
             <Icon name="photo-library" size={24} color={colors.onSurface} />
           </TouchableOpacity>
 
-          {/* Main Capture Button */}
+          {/* Capture Button */}
           <TouchableOpacity
-            style={styles.captureButtonWrap}
+            style={styles.captureButton}
             onPress={handleCapture}
             activeOpacity={0.8}
             testID="cameraCaptureButton"
           >
-            <View style={styles.captureOuterRing} />
-            <View style={styles.captureInnerFill} />
+            <View style={styles.captureInner} />
           </TouchableOpacity>
 
-          {/* Flash Toggle */}
+          {/* Flash */}
           <TouchableOpacity
             style={styles.sideButton}
             onPress={() => setFlashOn(v => !v)}
@@ -203,16 +210,18 @@ export function CameraScreen(): React.JSX.Element {
             />
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     </View>
   );
 }
+
+const RETICLE_SIZE = 280;
+const CORNER_SIZE = 24;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    position: 'relative',
   },
   cameraContainer: {
     position: 'absolute',
@@ -225,62 +234,69 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: withAlpha(colors.background, 0.2),
+  topGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    zIndex: 2,
+  },
+  bottomGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    zIndex: 2,
   },
   topBar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 50,
+    zIndex: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing['margin-mobile'],
-    paddingVertical: spacing.sm,
-    backgroundColor: withAlpha(colors.surface, 0.4),
-    borderBottomWidth: 1,
-    borderBottomColor: withAlpha('#ffffff', 0.1),
+    paddingTop: spacing.md,
   },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconText: {
-    color: colors.primary,
-    fontSize: 24,
-    fontFamily: typography['labelMd'].fontWeight,
+    backgroundColor: withAlpha(colors.surface, 0.5),
   },
   title: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 18,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
-  scanningCanvas: {
-    flex: 1,
+  reticleContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-    zIndex: 10,
   },
   reticle: {
-    width: 280,
-    height: 280,
+    width: RETICLE_SIZE,
+    height: RETICLE_SIZE,
     position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   corner: {
     position: 'absolute',
-    width: 16,
-    height: 16,
+    width: CORNER_SIZE,
+    height: CORNER_SIZE,
     borderColor: colors.primary,
   },
   cornerTL: {
@@ -288,69 +304,42 @@ const styles = StyleSheet.create({
     left: 0,
     borderTopWidth: 3,
     borderLeftWidth: 3,
-    borderTopLeftRadius: radii.xl,
+    borderTopLeftRadius: radii.lg,
   },
   cornerTR: {
     top: 0,
     right: 0,
     borderTopWidth: 3,
     borderRightWidth: 3,
-    borderTopRightRadius: radii.xl,
+    borderTopRightRadius: radii.lg,
   },
   cornerBL: {
     bottom: 0,
     left: 0,
     borderBottomWidth: 3,
     borderLeftWidth: 3,
-    borderBottomLeftRadius: radii.xl,
+    borderBottomLeftRadius: radii.lg,
   },
   cornerBR: {
     bottom: 0,
     right: 0,
     borderBottomWidth: 3,
     borderRightWidth: 3,
-    borderBottomRightRadius: radii.xl,
-  },
-  crosshair: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: 32,
-    height: 32,
-    marginLeft: -16,
-    marginTop: -16,
-    opacity: 0.4,
-  },
-  crosshairH: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: colors.primaryFixedDim,
-  },
-  crosshairV: {
-    position: 'absolute',
-    left: '50%',
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: colors.primaryFixedDim,
+    borderBottomRightRadius: radii.lg,
   },
   statusPill: {
     position: 'absolute',
-    bottom: '25%',
-    left: '50%',
-    marginLeft: -80,
-    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.8),
-    paddingHorizontal: spacing.md,
+    bottom: '30%',
+    alignSelf: 'center',
+    backgroundColor: withAlpha(colors.surface, 0.9),
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: withAlpha('#475569', 0.5),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    borderWidth: 1,
+    borderColor: withAlpha(colors.primary, 0.3),
   },
   statusDot: {
     width: 8,
@@ -359,17 +348,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   statusText: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.onSurface,
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: withAlpha(colors.background, 0.85),
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+    gap: 16,
+  },
+  processingText: {
+    fontSize: 16,
     fontWeight: '500',
     color: colors.onSurface,
   },
   bottomControls: {
-    zIndex: 20,
-    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
-    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.lg,
   },
   controlsRow: {
     flexDirection: 'row',
@@ -382,53 +386,28 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radii.full,
-    backgroundColor: withAlpha(colors.surfaceVariant, 0.4),
+    backgroundColor: withAlpha(colors.surface, 0.6),
     borderWidth: 1,
-    borderColor: withAlpha('#ffffff', 0.1),
+    borderColor: withAlpha(colors.onSurface, 0.2),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sideIcon: {
-    color: colors.onSurface,
-    fontSize: 24,
-  },
-  flashActive: {
-    color: colors.primary,
-  },
-  captureButtonWrap: {
-    position: 'relative',
-    width: 80,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captureOuterRing: {
-    position: 'absolute',
-    inset: 0,
+  captureButton: {
+    width: 72,
+    height: 72,
     borderRadius: radii.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 4,
-    borderColor: withAlpha('#ffffff', 0.8),
+    borderColor: withAlpha(colors.onSurface, 0.3),
   },
-  captureInnerFill: {
-    width: 64,
-    height: 64,
+  captureInner: {
+    width: 60,
+    height: 60,
     borderRadius: radii.full,
-    backgroundColor: colors.primaryContainer,
+    backgroundColor: colors.primary,
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  processingOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: withAlpha(colors.background, 0.8),
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 100,
-    gap: 16,
-  },
-  processingText: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400',
-    color: colors.onSurface,
+    borderColor: colors.onSurface,
   },
 });

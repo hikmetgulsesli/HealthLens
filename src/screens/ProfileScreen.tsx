@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Switch,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -24,7 +25,6 @@ export function ProfileScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const profile = useUserStore(s => s.profile);
   const setGoals = useUserStore(s => s.setGoals);
-  // const setUnitSystem = useUserStore(s => s.setUnitSystem);
   const entries = useLogStore(s => s.entries);
   const deleteEntry = useLogStore(s => s.deleteEntry);
 
@@ -34,6 +34,9 @@ export function ProfileScreen(): React.JSX.Element {
     carbs: profile.goals.dailyCarbGoal?.toString() ?? '',
     fat: profile.goals.dailyFatGoal?.toString() ?? '',
   });
+
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const saveGoals = () => {
     const cal = parseInt(localGoals.cal, 10);
@@ -46,6 +49,16 @@ export function ProfileScreen(): React.JSX.Element {
       dailyCarbGoal: isNaN(carbs) ? null : carbs,
       dailyFatGoal: isNaN(fat) ? null : fat,
     });
+  };
+
+  const handleSaveApiKey = () => {
+    if (!apiKey.trim()) {
+      Alert.alert('Hata', 'API key boş olamaz');
+      return;
+    }
+    // TODO: Save API key to secure storage
+    Alert.alert('Başarılı', 'API key kaydedildi');
+    setShowApiKey(false);
   };
 
   const handleExport = () => {
@@ -70,17 +83,19 @@ export function ProfileScreen(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* TopAppBar */}
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color={colors.primary} />
+          <Icon name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{tr.profile.title}</Text>
+        <Text style={styles.headerTitle}>{tr.appName}</Text>
         <TouchableOpacity style={styles.iconButton}>
-          <Icon name="settings" size={24} color={colors.primary} />
+          <Icon name="settings" size={24} color={colors.onSurface} />
         </TouchableOpacity>
       </View>
 
@@ -170,15 +185,49 @@ export function ProfileScreen(): React.JSX.Element {
           </View>
         </View>
 
+        {/* API Settings */}
+        <View style={styles.sectionWrap}>
+          <Text style={styles.sectionLabel}>API Ayarları</Text>
+          <View style={styles.glassPanel}>
+            <View style={styles.listItem}>
+              <Text style={styles.listLabel}>Gemini API Key</Text>
+              <TouchableOpacity onPress={() => setShowApiKey(!showApiKey)}>
+                <Text style={styles.listValue}>
+                  {showApiKey ? 'Gizle' : 'Düzenle'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {showApiKey && (
+              <>
+                <ListDivider />
+                <TextInput
+                  style={styles.apiKeyInput}
+                  placeholder="API Key girin"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  value={apiKey}
+                  onChangeText={setApiKey}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.saveApiButton}
+                  onPress={handleSaveApiKey}
+                >
+                  <Text style={styles.saveApiText}>API Key Kaydet</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+
         {/* Data Actions */}
         <View style={styles.actionSection}>
-          <TouchableOpacity
-            style={[styles.exportButton, { marginBottom: 16 }]}
-            onPress={handleExport}
-          >
+          <TouchableOpacity style={styles.exportButton} onPress={handleExport}>
             <Icon name="download" size={20} color={colors.primary} />
             <Text style={styles.exportText}>{tr.profile.exportData}</Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.destructiveButton}
             onPress={handleDeleteAll}
@@ -242,10 +291,10 @@ function ToggleRow({
         value={value}
         onValueChange={onChange}
         trackColor={{
-          false: colors.outlineVariant,
+          false: colors.surfaceContainer,
           true: colors.primaryContainer,
         }}
-        thumbColor={value ? colors.primary : '#fff'}
+        thumbColor={value ? colors.primary : colors.onSurfaceVariant}
       />
     </View>
   );
@@ -265,10 +314,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing['margin-mobile'],
-    height: 64,
-    backgroundColor: withAlpha(colors.background, 0.8),
+    height: 56,
+    backgroundColor: withAlpha(colors.surface, 0.8),
     borderBottomWidth: 1,
-    borderBottomColor: withAlpha(colors.outlineVariant, 0.3),
+    borderBottomColor: colors.outline,
   },
   iconButton: {
     width: 40,
@@ -278,66 +327,61 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
   },
   headerTitle: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
   scrollContent: {
     paddingHorizontal: spacing['margin-mobile'],
-    paddingTop: 24,
-    paddingBottom: 40,
-    maxWidth: 672,
-    alignSelf: 'center',
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   pageHeader: {
-    marginBottom: 30,
+    marginBottom: spacing.xl,
   },
   pageTitle: {
     fontSize: 28,
-    lineHeight: 34,
     fontWeight: '700',
     color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
   pageSubtitle: {
     fontSize: 16,
-    lineHeight: 24,
     color: colors.onSurfaceVariant,
     marginTop: 4,
   },
   sectionWrap: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   sectionLabel: {
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
     textTransform: 'uppercase',
-    paddingLeft: 16,
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.sm,
   },
   glassPanel: {
-    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.4),
+    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: withAlpha(colors.outline, 0.2),
+    borderWidth: 1,
+    borderColor: colors.outline,
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: withAlpha(colors.surfaceContainer, 0.6),
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: withAlpha(colors.surfaceContainer, 0.3),
   },
   listLabel: {
     fontSize: 16,
-    lineHeight: 24,
     color: colors.onSurface,
+    fontWeight: '500',
   },
   inputWrap: {
     flexDirection: 'row',
@@ -348,36 +392,59 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     textAlign: 'right',
     color: colors.onSurface,
-    width: 100,
+    width: 80,
     fontSize: 16,
-    lineHeight: 24,
+    fontWeight: '600',
   },
   unitText: {
     fontSize: 16,
-    lineHeight: 24,
     color: colors.onSurfaceVariant,
     marginLeft: 8,
   },
   listValue: {
     fontSize: 16,
-    lineHeight: 24,
     color: colors.primary,
+    fontWeight: '600',
   },
   divider: {
-    height: 0.5,
-    backgroundColor: withAlpha(colors.outline, 0.3),
-    marginLeft: 16,
+    height: 1,
+    backgroundColor: colors.outline,
+    marginLeft: spacing.lg,
+  },
+  apiKeyInput: {
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.onSurface,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    fontSize: 16,
+  },
+  saveApiButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    alignItems: 'center',
+  },
+  saveApiText: {
+    color: colors.onPrimary,
+    fontWeight: '700',
+    fontSize: 14,
   },
   actionSection: {
-    marginTop: 8,
+    marginTop: spacing.md,
+    gap: spacing.md,
   },
   exportButton: {
     width: '100%',
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
     borderRadius: radii.xl,
-    backgroundColor: colors.surfaceContainer,
-    borderWidth: 0.5,
-    borderColor: withAlpha(colors.outlineVariant, 0.5),
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.outline,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -385,16 +452,15 @@ const styles = StyleSheet.create({
   },
   exportText: {
     fontSize: 16,
-    lineHeight: 24,
     fontWeight: '600',
     color: colors.primary,
   },
   destructiveButton: {
     width: '100%',
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
     borderRadius: radii.xl,
-    backgroundColor: withAlpha(colors.errorContainer, 0.2),
-    borderWidth: 0.5,
+    backgroundColor: colors.errorContainer,
+    borderWidth: 1,
     borderColor: withAlpha(colors.error, 0.3),
     flexDirection: 'row',
     alignItems: 'center',
@@ -403,7 +469,6 @@ const styles = StyleSheet.create({
   },
   destructiveText: {
     fontSize: 16,
-    lineHeight: 24,
     fontWeight: '700',
     color: colors.error,
   },

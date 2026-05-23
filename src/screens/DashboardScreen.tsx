@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors, withAlpha } from '../theme/colors';
+import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
 import { fontFamily } from '../theme/typography';
 import { useLogStore } from '../stores/logStore';
@@ -19,23 +21,7 @@ import { useAnalysisStore } from '../stores/analysisStore';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-
 import { tr } from '../i18n';
-
-const C = colors;
-const D = {
-  bg: C.dashboardBackground,
-  surface: C.dashboardSurface,
-  surfaceContainer: C.dashboardSurfaceContainer,
-  surfaceContainerHigh: C.dashboardSurfaceContainerHigh,
-  surfaceVariant: C.dashboardSurfaceVariant,
-  onSurface: C.dashboardOnSurface,
-  onSurfaceVariant: C.dashboardOnSurfaceVariant,
-  primary: C.dashboardPrimary,
-  secondary: C.dashboardSecondary,
-  tertiary: C.dashboardTertiary,
-  outline: C.dashboardOutline,
-};
 
 export function DashboardScreen(): React.JSX.Element {
   const navigation =
@@ -68,26 +54,30 @@ export function DashboardScreen(): React.JSX.Element {
   const remaining = Math.max(goalCal - totals.cal, 0);
 
   // SVG ring math
-  const size = 280;
-  const strokeWidth = 8;
+  const size = 240;
+  const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - calPercent);
 
+  const hasEntries = todayEntries.length > 0;
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* TopAppBar */}
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-            <Icon name="person" size={18} color={D.onSurfaceVariant} />
+            <Icon name="person" size={18} color={colors.onSurfaceVariant} />
           </View>
           <Text style={styles.headerTitle}>{tr.appName}</Text>
         </View>
         <View style={styles.headerRight}>
           <Text style={styles.todayLabel}>{tr.dashboard.today}</Text>
           <TouchableOpacity activeOpacity={0.7}>
-            <Icon name="calendar-today" size={20} color={D.primary} />
+            <Icon name="calendar-today" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -110,7 +100,7 @@ export function DashboardScreen(): React.JSX.Element {
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
-                stroke={D.surfaceContainerHigh}
+                stroke={colors.surfaceContainer}
                 strokeWidth={strokeWidth}
                 fill="none"
               />
@@ -118,7 +108,7 @@ export function DashboardScreen(): React.JSX.Element {
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
-                stroke={D.primary}
+                stroke={colors.primary}
                 strokeWidth={strokeWidth}
                 fill="none"
                 strokeLinecap="round"
@@ -147,29 +137,43 @@ export function DashboardScreen(): React.JSX.Element {
             label={tr.dashboard.protein}
             current={totals.protein}
             goal={goals.dailyProteinGoal ?? 120}
-            barColor={D.primary}
+            barColor={colors.primary}
           />
           <MacroBar
             label={tr.dashboard.carbs}
             current={totals.carbs}
             goal={goals.dailyCarbGoal ?? 200}
-            barColor={D.secondary}
+            barColor={colors.secondary}
           />
           <MacroBar
             label={tr.dashboard.fat}
             current={totals.fat}
             goal={goals.dailyFatGoal ?? 65}
-            barColor={D.tertiary}
+            barColor={colors.tertiary}
           />
         </View>
 
         {/* Today's Meals */}
         <View style={styles.mealsSection}>
           <Text style={styles.mealsTitle}>{tr.dashboard.todaysMeals}</Text>
-          {todayEntries.length === 0 ? (
+
+          {!hasEntries ? (
             <View style={styles.emptyCard}>
-              <Icon name="no-meals" size={40} color={D.onSurfaceVariant} />
+              <View style={styles.emptyIconContainer}>
+                <Icon
+                  name="no-meals"
+                  size={48}
+                  color={colors.onSurfaceVariant}
+                />
+              </View>
               <Text style={styles.emptyText}>{tr.dashboard.emptyMeals}</Text>
+              <TouchableOpacity
+                style={styles.emptyCta}
+                onPress={() => navigation.navigate('CameraTab')}
+              >
+                <Icon name="photo-camera" size={16} color={colors.onPrimary} />
+                <Text style={styles.emptyCtaText}>İlk öğünü fotoğraflayın</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <>
@@ -222,8 +226,8 @@ export function DashboardScreen(): React.JSX.Element {
                         size={20}
                         color={
                           entry.mealCategory === 'breakfast'
-                            ? D.primary
-                            : D.secondary
+                            ? colors.primary
+                            : colors.secondary
                         }
                       />
                     </View>
@@ -261,6 +265,15 @@ export function DashboardScreen(): React.JSX.Element {
           )}
         </View>
       </ScrollView>
+
+      {/* FAB Camera Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('CameraTab')}
+        activeOpacity={0.8}
+      >
+        <Icon name="photo-camera" size={24} color={colors.onPrimary} />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -301,15 +314,17 @@ function MacroBar({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: D.bg,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing['margin-mobile'],
     height: 56,
-    backgroundColor: withAlpha(D.surface, 0.8),
+    backgroundColor: withAlpha(colors.surface, 0.8),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outline,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -319,17 +334,16 @@ const styles = StyleSheet.create({
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radii.full,
     overflow: 'hidden',
-    backgroundColor: D.surfaceContainer,
+    backgroundColor: colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 20,
     fontWeight: '700',
-    color: D.onSurface,
+    color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
   headerRight: {
@@ -339,48 +353,41 @@ const styles = StyleSheet.create({
   },
   todayLabel: {
     fontSize: 13,
-    lineHeight: 18,
     fontWeight: '500',
-    color: D.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 24,
-    paddingBottom: 140,
+    paddingHorizontal: spacing['margin-mobile'],
+    paddingVertical: spacing.lg,
+    gap: spacing.lg,
+    paddingBottom: 100,
   },
   ringSection: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: radii.xl,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radii['2xl'],
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: colors.outline,
   },
   ringTitle: {
     fontSize: 22,
-    lineHeight: 28,
     fontWeight: '700',
-    color: D.onSurface,
+    color: colors.onSurface,
     marginBottom: 4,
     alignSelf: 'flex-start',
   },
   ringTarget: {
     fontSize: 15,
-    lineHeight: 20,
-    color: D.onSurfaceVariant,
-    marginBottom: 16,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.lg,
     alignSelf: 'flex-start',
   },
   ringContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    width: 280,
-    height: 280,
+    width: 240,
+    height: 240,
   },
   ringCenter: {
     position: 'absolute',
@@ -389,16 +396,14 @@ const styles = StyleSheet.create({
   },
   ringValue: {
     fontSize: 28,
-    lineHeight: 34,
     fontWeight: '700',
-    color: D.onSurface,
+    color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
   ringLabel: {
     fontSize: 11,
-    lineHeight: 13,
     fontWeight: '600',
-    color: D.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: 4,
@@ -406,40 +411,34 @@ const styles = StyleSheet.create({
   ringDivider: {
     width: 48,
     height: 1,
-    backgroundColor: D.surfaceContainerHigh,
+    backgroundColor: colors.surfaceContainer,
     marginVertical: 8,
   },
   ringRemaining: {
     fontSize: 22,
-    lineHeight: 28,
     fontWeight: '700',
-    color: D.primary,
+    color: colors.primary,
     fontFamily: fontFamily.headline,
   },
   ringRemainingLabel: {
     fontSize: 11,
-    lineHeight: 13,
     fontWeight: '600',
-    color: withAlpha(D.primary, 0.7),
+    color: withAlpha(colors.primary, 0.7),
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   macroSection: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: radii.xl,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radii['2xl'],
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    gap: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: colors.outline,
+    gap: spacing.md,
   },
   macroTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    color: D.onSurface,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.onSurface,
     marginBottom: 4,
   },
   macroRow: {
@@ -451,10 +450,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   macroLabel: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
     fontWeight: '500',
-    color: D.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
   },
   macroValueRow: {
     flexDirection: 'row',
@@ -463,17 +461,16 @@ const styles = StyleSheet.create({
   },
   macroValue: {
     fontSize: 15,
-    lineHeight: 20,
-    color: D.onSurface,
+    fontWeight: '600',
+    color: colors.onSurface,
   },
   macroTarget: {
-    fontSize: 11,
-    lineHeight: 13,
-    color: D.onSurfaceVariant,
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
   },
   barTrack: {
     width: '100%',
-    backgroundColor: D.surfaceContainerHigh,
+    backgroundColor: colors.surfaceContainer,
     borderRadius: radii.full,
     height: 8,
     overflow: 'hidden',
@@ -483,40 +480,59 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
   },
   mealsSection: {
-    gap: 12,
+    gap: spacing.md,
   },
   mealsTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 20,
     fontWeight: '700',
-    color: D.onSurface,
+    color: colors.onSurface,
     paddingLeft: 4,
   },
   emptyCard: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: radii.lg,
-    padding: 40,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    padding: spacing.xl,
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.outline,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyText: {
     fontSize: 14,
     lineHeight: 20,
-    color: D.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
+  emptyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.full,
+    marginTop: spacing.sm,
+  },
+  emptyCtaText: {
+    color: colors.onPrimary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
   mealCard: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: radii.lg,
-    padding: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: colors.outline,
+    marginBottom: spacing.sm,
   },
   mealRow: {
     flexDirection: 'row',
@@ -527,7 +543,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radii.lg,
-    backgroundColor: D.surfaceContainer,
+    backgroundColor: colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -536,44 +552,56 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   mealName: {
-    fontSize: 17,
-    lineHeight: 22,
-    color: D.onSurface,
+    fontSize: 16,
     fontWeight: '600',
+    color: colors.onSurface,
   },
   mealTime: {
-    fontSize: 11,
-    lineHeight: 13,
-    color: D.onSurfaceVariant,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    fontWeight: '500',
     marginTop: 2,
   },
   mealCal: {
     fontSize: 15,
-    lineHeight: 20,
-    color: D.primary,
     fontWeight: '700',
+    color: colors.primary,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
-    marginTop: 4,
+    borderTopColor: colors.outline,
+    marginTop: spacing.sm,
   },
   totalLabel: {
     fontSize: 15,
-    lineHeight: 20,
-    color: D.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
+    fontWeight: '500',
   },
   totalValue: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 20,
     fontWeight: '700',
-    color: D.onSurface,
+    color: colors.onSurface,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: radii.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    zIndex: 100,
   },
 });

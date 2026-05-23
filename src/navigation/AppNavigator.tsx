@@ -15,6 +15,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 export type RootStackParamList = {
   MainTabs: undefined;
   Review: undefined;
+  CameraTab: undefined;
 };
 
 export type MainTabParamList = {

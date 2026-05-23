@@ -1,7 +1,11 @@
-// Generated from Stitch HTML files — DO NOT EDIT MANUALLY
+// HealthLens Design System — Border Radius Tokens
 export const radii = {
   DEFAULT: 4,
-  lg: 8,
-  xl: 12,
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  '2xl': 20,
+  '3xl': 24,
   full: 9999,
 } as const;

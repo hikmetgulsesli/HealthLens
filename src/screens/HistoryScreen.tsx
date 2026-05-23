@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -21,7 +22,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { tr } from '../i18n';
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
 export function HistoryScreen(): React.JSX.Element {
   const navigation =
@@ -61,19 +62,21 @@ export function HistoryScreen(): React.JSX.Element {
   const goalCarbs = goals.dailyCarbGoal ?? 200;
   const goalFat = goals.dailyFatGoal ?? 65;
 
-  // Mock 7-day trend data
+  // 7-day trend data (mock for now)
   const trendData = [60, 75, 85, 50, 70, 65, 80];
-  const trendLabels = ['F', 'S', 'S', 'M', 'T', 'W', 'T'];
+  const trendLabels = ['P', 'S', 'Ç', 'P', 'C', 'C', 'P'];
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* TopAppBar */}
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color={colors.primary} />
+          <Icon name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{tr.history.title}</Text>
         <View style={{ width: 40 }} />
@@ -338,10 +341,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing['margin-mobile'],
-    height: 64,
+    height: 56,
     backgroundColor: withAlpha(colors.surface, 0.8),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(71,89,105,0.1)',
+    borderBottomColor: colors.outline,
   },
   backButton: {
     width: 40,
@@ -350,19 +353,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 18,
     fontWeight: '600',
     color: colors.onSurface,
     fontFamily: fontFamily.headline,
-    flex: 1,
-    textAlign: 'center',
-    paddingRight: 40,
   },
   scrollContent: {
     paddingHorizontal: spacing['margin-mobile'],
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.lg,
   },
   calendarRow: {
@@ -376,9 +375,9 @@ const styles = StyleSheet.create({
     minWidth: 56,
     height: 72,
     borderRadius: radii.xl,
-    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.4),
-    borderWidth: 0.5,
-    borderColor: withAlpha(colors.outline, 0.2),
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.outline,
     gap: 4,
   },
   dayCellActive: {
@@ -387,7 +386,6 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
@@ -395,11 +393,11 @@ const styles = StyleSheet.create({
   },
   dayNumber: {
     fontSize: 18,
-    lineHeight: 28,
+    fontWeight: '600',
     color: colors.onSurface,
   },
   dayTextActive: {
-    color: colors.onPrimaryContainer,
+    color: colors.onPrimary,
     fontWeight: '700',
   },
   dayDot: {
@@ -409,11 +407,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   glassPanel: {
-    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.4),
+    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.md,
-    borderWidth: 0.5,
-    borderColor: withAlpha(colors.outline, 0.2),
+    borderWidth: 1,
+    borderColor: colors.outline,
     gap: spacing.md,
   },
   totalsHeader: {
@@ -421,25 +419,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(71,89,105,0.3)',
+    borderBottomColor: colors.outline,
     paddingBottom: spacing.sm,
   },
   totalsTitle: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 18,
     fontWeight: '600',
     color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
   badge: {
-    backgroundColor: withAlpha(colors.primaryContainer, 0.2),
-    paddingHorizontal: 8,
+    backgroundColor: withAlpha(colors.primary, 0.15),
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radii.full,
   },
   badgeText: {
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 0.6,
     color: colors.primary,
@@ -448,13 +444,15 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing['gutter-mobile'],
+    gap: spacing.md,
   },
   macroCard: {
-    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.5),
+    backgroundColor: colors.surfaceContainer,
     borderRadius: radii.lg,
     padding: spacing.sm,
     width: '47%',
+    borderWidth: 1,
+    borderColor: colors.outline,
   },
   macroCardHeader: {
     flexDirection: 'row',
@@ -463,23 +461,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   macroCardLabel: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
     textTransform: 'uppercase',
   },
   macroCardValue: {
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 22,
     fontWeight: '600',
     color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
   macroCardBarTrack: {
     width: '100%',
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: colors.surfaceContainerHigh,
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
@@ -492,7 +488,6 @@ const styles = StyleSheet.create({
   },
   goalsTitle: {
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
@@ -503,16 +498,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   goalLabel: {
     fontSize: 14,
-    lineHeight: 20,
     color: colors.onSurface,
     width: 64,
+    fontWeight: '500',
   },
   goalBarTrack: {
     flex: 1,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: colors.surfaceContainer,
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
@@ -526,21 +522,20 @@ const styles = StyleSheet.create({
   },
   goalBarRemain: {
     height: '100%',
-    backgroundColor: colors.outlineVariant,
+    backgroundColor: colors.surfaceContainerHigh,
   },
   goalValue: {
     fontSize: 14,
-    lineHeight: 20,
     color: colors.onSurfaceVariant,
-    width: 64,
+    width: 48,
     textAlign: 'right',
+    fontWeight: '600',
   },
   logSection: {
     gap: spacing.sm,
   },
   logTitle: {
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 0.6,
     color: colors.onSurfaceVariant,
@@ -549,26 +544,26 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    lineHeight: 20,
     color: colors.onSurfaceVariant,
     textAlign: 'center',
     marginTop: 20,
   },
   mealItem: {
-    backgroundColor: withAlpha(colors.surfaceContainerHigh, 0.4),
+    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderWidth: 0.5,
-    borderColor: withAlpha(colors.outline, 0.2),
+    borderWidth: 1,
+    borderColor: colors.outline,
+    marginBottom: spacing.sm,
   },
   mealThumb: {
     width: 48,
     height: 48,
     borderRadius: radii.lg,
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -580,9 +575,8 @@ const styles = StyleSheet.create({
   },
   mealName: {
     fontSize: 16,
-    lineHeight: 24,
-    color: colors.onSurface,
     fontWeight: '600',
+    color: colors.onSurface,
   },
   mealTimeRow: {
     flexDirection: 'row',
@@ -591,13 +585,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   mealTime: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
     color: colors.onSurfaceVariant,
   },
   mealCal: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 18,
     fontWeight: '600',
     color: colors.onSurface,
   },
@@ -608,13 +600,11 @@ const styles = StyleSheet.create({
   },
   trendTitle: {
     fontSize: 16,
-    lineHeight: 24,
     fontWeight: '600',
     color: colors.onSurface,
   },
   trendSubtitle: {
     fontSize: 14,
-    lineHeight: 20,
     color: colors.onSurfaceVariant,
   },
   trendChart: {
