@@ -11,11 +11,16 @@ import { ReviewScreen } from '../screens/ReviewScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { PaywallScreen } from '../screens/PaywallScreen';
+import { useUserStore } from '../stores/userStore';
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Review: undefined;
   CameraTab: undefined;
+  Onboarding: undefined;
+  Paywall: undefined;
 };
 
 export type MainTabParamList = {
@@ -34,23 +39,55 @@ function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
       name={name}
       size={24}
       color={focused ? colors.onPrimaryContainer : colors.onSurfaceVariant}
-      style={{ marginBottom: 2 }}
+      style={styles.tabIcon}
     />
   );
 }
 
+const CameraIcon = ({ focused }: { focused: boolean }) => (
+  <TabBarIcon name="photo-camera" focused={focused} />
+);
+
+const DashboardIcon = ({ focused }: { focused: boolean }) => (
+  <TabBarIcon name="dashboard" focused={focused} />
+);
+
+const HistoryIcon = ({ focused }: { focused: boolean }) => (
+  <TabBarIcon name="folder-open" focused={focused} />
+);
+
+const ProfileIcon = ({ focused }: { focused: boolean }) => (
+  <TabBarIcon name="settings" focused={focused} />
+);
+
 function CameraTabStack() {
+  const isFirstLaunch = useUserStore(s => s.profile.isFirstLaunch);
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MainTabs" component={MainTabs} />
-      <Stack.Screen
-        name="Review"
-        component={ReviewScreen}
-        options={{
-          presentation: 'fullScreenModal',
-          animation: 'slide_from_bottom',
-        }}
-      />
+      {isFirstLaunch ? (
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      ) : (
+        <>
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen
+            name="Review"
+            component={ReviewScreen}
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="Paywall"
+            component={PaywallScreen}
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 }
@@ -74,9 +111,7 @@ function MainTabs() {
         component={CameraScreen}
         options={{
           tabBarLabel: tr.tabs.camera,
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="photo-camera" focused={focused} />
-          ),
+          tabBarIcon: CameraIcon,
         }}
       />
       <Tab.Screen
@@ -84,9 +119,7 @@ function MainTabs() {
         component={DashboardScreen}
         options={{
           tabBarLabel: tr.tabs.dashboard,
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="dashboard" focused={focused} />
-          ),
+          tabBarIcon: DashboardIcon,
         }}
       />
       <Tab.Screen
@@ -94,9 +127,7 @@ function MainTabs() {
         component={HistoryScreen}
         options={{
           tabBarLabel: tr.tabs.library,
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="folder-open" focused={focused} />
-          ),
+          tabBarIcon: HistoryIcon,
         }}
       />
       <Tab.Screen
@@ -104,9 +135,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: tr.tabs.settings,
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="settings" focused={focused} />
-          ),
+          tabBarIcon: ProfileIcon,
         }}
       />
     </Tab.Navigator>
@@ -114,6 +143,12 @@ function MainTabs() {
 }
 
 export function AppNavigator() {
+  const syncKeychainLimit = useUserStore(s => s.syncKeychainLimit);
+
+  React.useEffect(() => {
+    syncKeychainLimit();
+  }, [syncKeychainLimit]);
+
   return (
     <NavigationContainer>
       <CameraTabStack />
@@ -139,5 +174,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     marginTop: 2,
+  },
+  tabIcon: {
+    marginBottom: 2,
   },
 });

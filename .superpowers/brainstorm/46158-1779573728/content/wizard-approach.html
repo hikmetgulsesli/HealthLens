@@ -1,0 +1,98 @@
+<h2>Sağlık Odaklı Sihirbaz & Hedef Akışı (Onboarding & Paywall Flow)</h2>
+<p class="subtitle">HealthLens uygulamasının ilk açılışta kullanıcıyı karşılayacağı sağlık odaklı sihirbaz ve premium ödeme duvarı için 2 farklı yaklaşım hazırladım. İnceleyip seçiminizi yapabilirsiniz.</p>
+
+<div class="options">
+  <div class="option" data-choice="approach_a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Yaklaşım A: Klinik Sağlık Profilleyici (🩺 Önerilen)</h3>
+      <p>Kullanıcıyı doğrudan kalori saymak yerine sağlık problemlerini (Hipertansiyon, Diyabet, Hassas Bağırsak vb.) çözmeye odaklayan eğitici ve klinik ağırlıklı akış.</p>
+      <ul>
+        <li><strong>Adım 1:</strong> Sağlık Odak / Motivasyon Seçimi (Tansiyon, Kan Şekeri, Sindirim Sağlığı).</li>
+        <li><strong>Adım 2:</strong> Fizyolojik Bilgiler (Yaş, Kilo, Boy, Aktivite Seviyesi).</li>
+        <li><strong>Adım 3:</strong> Kişisel Sağlık Projeksiyonu ve Dinamik Başarı Tarihi Öngörüsü ("Sodyum kısıtlamasıyla tansiyonunuzu 24 Temmuz'a kadar dengeleyebiliriz!").</li>
+        <li><strong>Adım 4:</strong> Sağlık Problemini Çözmeye Odaklı Şık Pro Ödeme Duvarı (Premium Paywall).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="approach_b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Yaklaşım B: Hızlı Hedef & Makro Kalibrasyonu (⚡ Hızlı Akış)</h3>
+      <p>Daha hızlı ve doğrudan sayısal hedeflere odaklanan, kullanıcının hızlıca günlük takibe başlamasını amaçlayan pratik akış.</p>
+      <ul>
+        <li><strong>Adım 1:</strong> Temel Kilo ve Yaş hedefleri.</li>
+        <li><strong>Adım 2:</strong> Mikro Besin İzleme Seçenekleri (Sodyum, Lif, Şeker aç/kapat).</li>
+        <li><strong>Adım 3:</strong> Standart Pro Satın Alma Ekranı (Basit özellik listesi).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Yaklaşım A (Klinik Sağlık) Avantajları</h4>
+    <ul>
+      <li>Kullanıcıya "sadece bir diyet uygulaması değil, tıbbi bir asistan" hissi verir.</li>
+      <li>Hipertansiyon, Şeker gibi gerçek sağlık sorunlarına doğrudan çözüm sunduğu için Premium dönüşüm oranları (Paywall Conversion) rakiplerde bu akışla %40 daha yüksektir.</li>
+      <li>Dinamik tarih öngörüsü (Success Forecast Chart) kullanıcıda güçlü bir merak ve motivasyon uyandırır.</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Yaklaşım B (Hızlı Akış) Dezavantajları</h4>
+    <ul>
+      <li>Genel kalori uygulamalarından (MyFitnessPal gibi) farkı az kalır.</li>
+      <li>Kullanıcının tansiyon veya şeker gibi sağlık problemlerini çözme konusundaki motivasyonunu tam tetiklemez, premium özelliklerin klinik değerini geri planda bırakır.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">🩺 Klinik Profilleyici Paywall Arayüzü Önizleme Tasarımı</div>
+  <div class="mockup-body" style="background: #09121f; color: #e2e8f0; padding: 25px; border-radius: 12px; font-family: sans-serif;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Kişiselleştirilmiş Sağlık Raporu Hazır</span>
+      <h3 style="color: #ffffff; margin-top: 10px; margin-bottom: 5px;">HealthLens Pro ile Sağlığınıza Kavuşun</h3>
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">Hipertansiyon ve Sodyum Kontrol Planınız Oluşturuldu</p>
+    </div>
+
+    <!-- Başarı Öngörü Grafik Kartı -->
+    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8;">Öngörülen İyileşme Başarı Tarihi</div>
+      <div style="font-size: 28px; font-weight: bold; color: #10b981; margin: 8px 0;">24 Temmuz 2026</div>
+      <p style="font-size: 12px; color: #cbd5e1; margin: 0; line-height: 1.5;">Günlük <strong>&lt; 1500mg Sodyum</strong> hedefi ve AI Yemek Derecelendirmeleri ile tansiyon dengenizi kontrol altına alabilirsiniz.</p>
+    </div>
+
+    <!-- Premium Avantajlar Listesi -->
+    <div style="margin-bottom: 25px;">
+      <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+        <span style="color: #10b981; font-weight: bold; margin-right: 10px; font-size: 16px;">✓</span>
+        <div>
+          <strong style="color: #ffffff; font-size: 13px;">AI Scanner & Besin Puanlama</strong>
+          <div style="color: #94a3b8; font-size: 11px;">Tabağınızın fotoğrafından sodyum, şeker ve lif oranlarını anında tespit edip derecelendirir.</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+        <span style="color: #10b981; font-weight: bold; margin-right: 10px; font-size: 16px;">✓</span>
+        <div>
+          <strong style="color: #ffffff; font-size: 13px;">Klinik PDF İhracatı</strong>
+          <div style="color: #94a3b8; font-size: 11px;">Diyetisyeniniz veya kardiyoloğunuzla paylaşabileceğiniz 7 günlük resmi besin trend raporu.</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start;">
+        <span style="color: #10b981; font-weight: bold; margin-right: 10px; font-size: 16px;">✓</span>
+        <div>
+          <strong style="color: #ffffff; font-size: 13px;">NLP Sesli & Hızlı Günlük</strong>
+          <div style="color: #94a3b8; font-size: 11px;">"Bir kase mercimek çorbası ve salata yedim" diyerek saniyeler içinde tüm makroları loglayın.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Satın Alma Butonu -->
+    <div style="text-align: center;">
+      <button style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 12px 30px; font-weight: bold; font-size: 14px; border-radius: 25px; width: 100%; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">3 Günlük Denemeyi Başlat</button>
+      <div style="margin-top: 10px; font-size: 11px; color: #64748b;">Deneme süresi sonunda yıllık ₺499/yıl. İstediğiniz an iptal edin.</div>
+    </div>
+  </div>
+</div>

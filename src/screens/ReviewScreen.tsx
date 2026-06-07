@@ -20,8 +20,11 @@ import { radii } from '../theme/radii';
 import { fontFamily } from '../theme/typography';
 import { useAnalysisStore } from '../stores/analysisStore';
 import { useLogStore } from '../stores/logStore';
+import { useUserStore } from '../stores/userStore';
 import type { MealCategory } from '../types';
 import { tr } from '../i18n';
+import { searchFoods, LocalFood } from '../db/localFoods';
+import { calculateHealthGrade } from '../utils/healthGrader';
 
 const MEAL_CATEGORIES: { label: string; value: MealCategory }[] = [
   { label: tr.review.breakfast, value: 'breakfast' },
@@ -33,11 +36,19 @@ const MEAL_CATEGORIES: { label: string; value: MealCategory }[] = [
 export function ReviewScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const analysis = useAnalysisStore(s => s.currentAnalysis);
+  const imageUris = useAnalysisStore(s => s.imageUris);
   const updateItemPortion = useAnalysisStore(s => s.updateItemPortion);
   const removeItem = useAnalysisStore(s => s.removeItem);
   const setMealCategory = useAnalysisStore(s => s.setMealCategory);
   const addItem = useAnalysisStore(s => s.addItem);
+  
   const addEntry = useLogStore(s => s.addEntry);
+  const updateEntry = useLogStore(s => s.updateEntry);
+  const deleteEntry = useLogStore(s => s.deleteEntry);
+
+  const healthGoal = useUserStore(s => s.profile.healthGoal);
+
+  const isEditMode = !!analysis?.id;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -46,6 +57,16 @@ export function ReviewScreen(): React.JSX.Element {
   const [newItemCarbs, setNewItemCarbs] = useState('');
   const [newItemFat, setNewItemFat] = useState('');
   const [newItemPortion, setNewItemPortion] = useState('100');
+  
+  // Autocomplete search states
+  const [searchResults, setSearchResults] = useState<LocalFood[]>([]);
+  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
+
+  // Portion edit modal states
+  const [portionModalVisible, setPortionModalVisible] = useState(false);
+  const [portionValue, setPortionValue] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemName, setEditingItemName] = useState('');
 
   const totals = useMemo(() => {
     if (!analysis) return { cal: 0, protein: 0, carbs: 0, fat: 0 };
@@ -62,6 +83,23 @@ export function ReviewScreen(): React.JSX.Element {
     );
   }, [analysis]);
 
+  const handleAddHiddenIngredient = (name: string, portion: number, calories: number, pro: number, carb: number, fat: number, sodium = 0) => {
+    addItem({
+      id: `hidden-${Date.now()}-${name.replace(/\s+/g, '')}`,
+      name: name,
+      confidence: 1.0,
+      estimatedPortionGrams: portion,
+      caloriesPer100g: Math.round((calories * 100) / portion),
+      proteinPer100g: Math.round((pro * 100) / portion),
+      carbsPer100g: Math.round((carb * 100) / portion),
+      fatPer100g: Math.round((fat * 100) / portion),
+      fiberPer100g: 0,
+      sugarPer100g: 0,
+      sodiumPer100g: sodium ? Math.round((sodium * 100) / portion) : 0,
+      isVerified: true,
+    });
+  };
+
   if (!analysis) {
     return (
       <SafeAreaView style={styles.container}>
@@ -75,22 +113,93 @@ export function ReviewScreen(): React.JSX.Element {
       Alert.alert('Hata', tr.review.errorNoItems);
       return;
     }
+    
     const dateKey = new Date().toISOString().split('T')[0];
-    addEntry({
-      id: Math.random().toString(36).substring(7),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      dateKey,
-      mealCategory: analysis.mealCategory,
-      imageUri: analysis.imageUri,
-      items: analysis.items,
-      totalCalories: Math.round(totals.cal),
-      totalProtein: Math.round(totals.protein),
-      totalCarbs: Math.round(totals.carbs),
-      totalFat: Math.round(totals.fat),
-    });
-    useAnalysisStore.getState().setAnalysis(null);
+    
+    if (isEditMode && analysis.id) {
+      // Edit Mode: Overwrite saved log entry
+      updateEntry({
+        id: analysis.id,
+        createdAt: new Date().toISOString(), // keep or update timestamp
+        updatedAt: new Date().toISOString(),
+        dateKey,
+        mealCategory: analysis.mealCategory,
+        imageUri: imageUris[0] || '',
+        items: analysis.items,
+        totalCalories: Math.round(totals.cal),
+        totalProtein: Math.round(totals.protein),
+        totalCarbs: Math.round(totals.carbs),
+        totalFat: Math.round(totals.fat),
+      });
+      Alert.alert('Başarılı', 'Öğün başarıyla güncellendi.', [{ text: 'Tamam' }]);
+    } else {
+      // New Mode: Create new log entry
+      addEntry({
+        id: Math.random().toString(36).substring(7),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        dateKey,
+        mealCategory: analysis.mealCategory,
+        imageUri: imageUris[0] || '',
+        items: analysis.items,
+        totalCalories: Math.round(totals.cal),
+        totalProtein: Math.round(totals.protein),
+        totalCarbs: Math.round(totals.carbs),
+        totalFat: Math.round(totals.fat),
+      });
+      
+      // Charge a scan token if it is a camera scan and user is not premium
+      const userProfile = useUserStore.getState().profile;
+      if (imageUris.length > 0 && !userProfile.isPremium) {
+        useUserStore.getState().incrementFreeScans();
+      }
+      
+      Alert.alert('Başarılı', 'Öğün başarıyla kaydedildi.', [{ text: 'Tamam' }]);
+    }
+
+    useAnalysisStore.getState().reset();
     navigation.goBack();
+  };
+
+  const handleDelete = () => {
+    if (!analysis.id) return;
+    
+    Alert.alert(
+      'Öğünü Sil',
+      'Bu kaydı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: () => {
+            const dateKey = new Date().toISOString().split('T')[0];
+            deleteEntry(dateKey, analysis.id!);
+            useAnalysisStore.getState().reset();
+            navigation.goBack();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSearchTextChange = (text: string) => {
+    setNewItemName(text);
+    if (text.trim().length > 1) {
+      const results = searchFoods(text);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleSelectAutofill = (food: LocalFood) => {
+    setNewItemName(food.name);
+    setNewItemCalories(food.caloriesPer100g.toString());
+    setNewItemProtein(food.proteinPer100g.toString());
+    setNewItemCarbs(food.carbsPer100g.toString());
+    setNewItemFat(food.fatPer100g.toString());
+    setSearchResults([]);
   };
 
   return (
@@ -101,40 +210,113 @@ export function ReviewScreen(): React.JSX.Element {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            useAnalysisStore.getState().reset();
+            navigation.goBack();
+          }}
         >
           <Icon name="close" size={24} color={colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{tr.appName}</Text>
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="settings" size={24} color={colors.onSurface} />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {isEditMode ? 'Öğünü Düzenle' : tr.appName}
+        </Text>
+        {isEditMode ? (
+          <TouchableOpacity style={styles.iconButton} onPress={handleDelete}>
+            <Icon name="delete" size={24} color={colors.error} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.headerRightSpacer} />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Image Card */}
-        <View style={styles.imageCard}>
-          {analysis.imageUri && !analysis.imageUri.startsWith('mock://') ? (
-            <Image
-              source={{ uri: analysis.imageUri }}
-              style={styles.foodImage}
-              resizeMode="cover"
-            />
-          ) : (
+        {/* Multimodal Carousel / Image View */}
+        {imageUris.length > 0 ? (
+          <View style={styles.imageCard}>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContainer}
+            >
+              {imageUris.map((uri, idx) => (
+                <View key={idx} style={styles.carouselImageWrapper}>
+                  {uri.startsWith('barcode://') ? (
+                    <View style={[styles.foodImage, styles.placeholderImage]}>
+                      <Icon name="qr-code" size={48} color={colors.primary} />
+                      <Text style={styles.placeholderText}>Barkod Taraması</Text>
+                    </View>
+                  ) : (
+                    <Image source={{ uri }} style={styles.foodImage} resizeMode="cover" />
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Glowing computer-vision pointer scanner dots */}
+            {analysis.items.map((item, idx) => {
+              const dotStyle = idx === 0 ? styles.scannerDotPos0 : (idx === 1 ? styles.scannerDotPos1 : (idx === 2 ? styles.scannerDotPos2 : styles.scannerDotPos3));
+              const isActive = activeTooltipIndex === idx;
+              return (
+                <View
+                  key={`dot-${item.id}`}
+                  style={[styles.scannerDotContainer, dotStyle]}
+                >
+                  <TouchableOpacity
+                    style={[styles.scannerDot, isActive && styles.scannerDotActive]}
+                    activeOpacity={0.8}
+                    onPress={() => setActiveTooltipIndex(isActive ? null : idx)}
+                  >
+                    <View style={styles.scannerDotInner} />
+                    <Text style={styles.scannerDotText}>{idx + 1}</Text>
+                  </TouchableOpacity>
+                  
+                  {isActive && (
+                    <View style={styles.scannerTooltip}>
+                      <Text style={styles.tooltipName}>{item.name}</Text>
+                      <Text style={styles.tooltipCal}>
+                        {item.estimatedPortionGrams}g • {Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)} kcal
+                      </Text>
+                      <Text style={styles.tooltipMacros}>
+                        P: {Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)}g • Y: {Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)}g
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+
+            {imageUris.length > 1 && (
+              <View style={styles.carouselPageIndicator}>
+                <Text style={styles.carouselPageText}>
+                  1/{imageUris.length} Görsel (Kaydırın)
+                </Text>
+              </View>
+            )}
+            <View style={styles.matchBadge}>
+              <Icon name="check-circle" size={16} color={colors.primary} />
+              <Text style={styles.matchText}>98% {tr.review.match}</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.imageCard}>
             <View style={[styles.foodImage, styles.placeholderImage]}>
-              <Icon
-                name="restaurant"
-                size={48}
-                color={colors.onSurfaceVariant}
-              />
+              <Icon name="restaurant" size={48} color={colors.onSurfaceVariant} />
               <Text style={styles.placeholderText}>{tr.review.noAnalysis}</Text>
             </View>
-          )}
-          <View style={styles.matchBadge}>
-            <Icon name="check-circle" size={16} color={colors.primary} />
-            <Text style={styles.matchText}>98% {tr.review.match}</Text>
           </View>
-        </View>
+        )}
+
+        {/* AI Smart Insight Card (Klinik Tavsiye Kartı) */}
+        {analysis.smartInsight && (
+          <View style={styles.insightCard}>
+            <View style={styles.insightHeader}>
+              <Icon name="spa" size={18} color={colors.primary} />
+              <Text style={styles.insightTitle}>Sağlık İpucu</Text>
+            </View>
+            <Text style={styles.insightContent}>{analysis.smartInsight}</Text>
+          </View>
+        )}
 
         {/* Meal Category */}
         <View style={styles.categorySection}>
@@ -149,16 +331,14 @@ export function ReviewScreen(): React.JSX.Element {
                 key={cat.value}
                 style={[
                   styles.categoryChip,
-                  analysis.mealCategory === cat.value &&
-                    styles.categoryChipActive,
+                  analysis.mealCategory === cat.value && styles.categoryChipActive,
                 ]}
                 onPress={() => setMealCategory(cat.value)}
               >
                 <Text
                   style={[
                     styles.categoryText,
-                    analysis.mealCategory === cat.value &&
-                      styles.categoryTextActive,
+                    analysis.mealCategory === cat.value && styles.categoryTextActive,
                   ]}
                 >
                   {cat.label}
@@ -186,14 +366,47 @@ export function ReviewScreen(): React.JSX.Element {
                   <View style={styles.itemIcon}>
                     <Icon name="restaurant" size={20} color={colors.primary} />
                   </View>
-                  <Text style={styles.itemName}>{item.name}</Text>
+                  <View style={styles.itemHeaderInfo}>
+                    <View style={styles.itemNameRow}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      {(() => {
+                        const scoreInfo = calculateHealthGrade(
+                          item.caloriesPer100g,
+                          item.proteinPer100g,
+                          item.carbsPer100g,
+                          item.fatPer100g,
+                          item.fiberPer100g ?? 0,
+                          item.sugarPer100g ?? 0,
+                          item.sodiumPer100g ?? 0,
+                          healthGoal,
+                        );
+                        const gradeClass = scoreInfo.grade.startsWith('A') ? 'A' : (scoreInfo.grade as 'B' | 'C' | 'D');
+                        const badgeStyle = gradeClass === 'A' ? styles.gradeBadgeA : (gradeClass === 'B' ? styles.gradeBadgeB : (gradeClass === 'C' ? styles.gradeBadgeC : styles.gradeBadgeD));
+                        const textStyle = gradeClass === 'A' ? styles.gradeTextA : (gradeClass === 'B' ? styles.gradeTextB : (gradeClass === 'C' ? styles.gradeTextC : styles.gradeTextD));
+                        return (
+                          <View style={[styles.itemGradeBadge, badgeStyle]}>
+                            <Text style={[styles.itemGradeText, textStyle]}>
+                              {scoreInfo.grade}
+                            </Text>
+                          </View>
+                        );
+                      })()}
+                    </View>
+                    {item.isVerified ? (
+                      <View style={styles.verifiedBadge}>
+                        <Icon name="verified" size={10} color="#00e676" />
+                        <Text style={styles.verifiedText}>Doğrulanmış Besin</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.aiEstimatedBadge}>
+                        <Icon name="psychology" size={10} color="#90caf9" />
+                        <Text style={styles.aiEstimatedText}>Yapay Zeka Tahmini</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
                 <TouchableOpacity onPress={() => removeItem(item.id)}>
-                  <Icon
-                    name="delete"
-                    size={20}
-                    color={colors.onSurfaceVariant}
-                  />
+                  <Icon name="delete" size={20} color={colors.onSurfaceVariant} />
                 </TouchableOpacity>
               </View>
 
@@ -201,9 +414,20 @@ export function ReviewScreen(): React.JSX.Element {
               <View style={styles.portionSection}>
                 <View style={styles.portionLabelRow}>
                   <Text style={styles.portionLabel}>{tr.review.portion}</Text>
-                  <Text style={styles.portionValue}>
-                    {item.estimatedPortionGrams}g
-                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setEditingItemId(item.id);
+                      setEditingItemName(item.name);
+                      setPortionValue(item.estimatedPortionGrams.toString());
+                      setPortionModalVisible(true);
+                    }}
+                  >
+                    <View style={styles.portionValueContainer}>
+                      <Text style={styles.portionValueInteractive}>{item.estimatedPortionGrams}g</Text>
+                      <Icon name="edit" size={10} color={colors.primaryLight} style={styles.portionEditIcon} />
+                    </View>
+                  </TouchableOpacity>
                 </View>
                 <SimpleSlider
                   value={item.estimatedPortionGrams}
@@ -219,10 +443,7 @@ export function ReviewScreen(): React.JSX.Element {
                   <Text style={styles.macroLabelSmall}>{tr.review.energy}</Text>
                   <View style={styles.macroValueRow}>
                     <Text style={styles.macroValueLarge}>
-                      {Math.round(
-                        (item.caloriesPer100g * item.estimatedPortionGrams) /
-                          100,
-                      )}
+                      {Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)}
                     </Text>
                     <Text style={styles.macroUnit}>kcal</Text>
                   </View>
@@ -230,26 +451,66 @@ export function ReviewScreen(): React.JSX.Element {
                 <View style={styles.macroRight}>
                   <MacroBadge
                     label={tr.review.pro}
-                    value={`${Math.round(
-                      (item.proteinPer100g * item.estimatedPortionGrams) / 100,
-                    )}g`}
+                    value={`${Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)}g`}
                   />
                   <MacroBadge
                     label={tr.review.carb}
-                    value={`${Math.round(
-                      (item.carbsPer100g * item.estimatedPortionGrams) / 100,
-                    )}g`}
+                    value={`${Math.round((item.carbsPer100g * item.estimatedPortionGrams) / 100)}g`}
                   />
                   <MacroBadge
                     label={tr.review.fat}
-                    value={`${Math.round(
-                      (item.fatPer100g * item.estimatedPortionGrams) / 100,
-                    )}g`}
+                    value={`${Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)}g`}
                   />
                 </View>
               </View>
             </View>
           ))}
+
+          {/* Gizli Yağlar & Soslar (Ekstra Kalori Ekle) Çubuğu */}
+          <View style={styles.hiddenIngredientsSection}>
+            <Text style={styles.hiddenLabel}>Gizli Yağlar, Soslar & Ekstralar</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hiddenScroll}
+            >
+              <TouchableOpacity
+                style={styles.hiddenChip}
+                onPress={() => handleAddHiddenIngredient('Zeytinyağı (1 YK)', 10, 90, 0, 0, 10)}
+              >
+                <Icon name="opacity" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Text style={styles.hiddenChipText}>+ Zeytinyağı (90 kcal)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.hiddenChip}
+                onPress={() => handleAddHiddenIngredient('Tereyağı (1 TK)', 5, 36, 0, 0, 4)}
+              >
+                <Icon name="layers" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Text style={styles.hiddenChipText}>+ Tereyağı (36 kcal)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.hiddenChip}
+                onPress={() => handleAddHiddenIngredient('Mayonez (1 YK)', 15, 100, 0, 0, 11)}
+              >
+                <Icon name="lens" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Text style={styles.hiddenChipText}>+ Mayonez (100 kcal)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.hiddenChip}
+                onPress={() => handleAddHiddenIngredient('Ketçap (1 YK)', 15, 15, 0, 4, 0)}
+              >
+                <Icon name="adjust" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Text style={styles.hiddenChipText}>+ Ketçap (15 kcal)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.hiddenChip}
+                onPress={() => handleAddHiddenIngredient('İlave Tuz (1g)', 1, 0, 0, 0, 0, 0.4)}
+              >
+                <Icon name="grain" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Text style={styles.hiddenChipText}>+ İlave Tuz (Sodyum)</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
 
           {/* Add Item Button */}
           <TouchableOpacity
@@ -267,38 +528,28 @@ export function ReviewScreen(): React.JSX.Element {
         <View style={styles.bottomContent}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryLeft}>
-              <Text style={styles.summaryLabel}>
-                {tr.review.totalNutrition}
-              </Text>
+              <Text style={styles.summaryLabel}>{tr.review.totalNutrition}</Text>
               <View style={styles.summaryValueRow}>
-                <Text style={styles.summaryValue}>
-                  {Math.round(totals.cal)}
-                </Text>
+                <Text style={styles.summaryValue}>{Math.round(totals.cal)}</Text>
                 <Text style={styles.summaryUnit}>kcal</Text>
               </View>
             </View>
             <View style={styles.summaryRight}>
-              <MacroBento
-                label={tr.review.pro}
-                value={`${Math.round(totals.protein)}g`}
-              />
-              <MacroBento
-                label={tr.review.carb}
-                value={`${Math.round(totals.carbs)}g`}
-              />
-              <MacroBento
-                label={tr.review.fat}
-                value={`${Math.round(totals.fat)}g`}
-              />
+              <MacroBento label={tr.review.pro} value={`${Math.round(totals.protein)}g`} />
+              <MacroBento label={tr.review.carb} value={`${Math.round(totals.carbs)}g`} />
+              <MacroBento label={tr.review.fat} value={`${Math.round(totals.fat)}g`} />
             </View>
           </View>
 
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.retakeButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => {
+                useAnalysisStore.getState().reset();
+                navigation.goBack();
+              }}
             >
-              <Text style={styles.retakeText}>{tr.review.retake}</Text>
+              <Text style={styles.retakeText}>{tr.review.cancel}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.saveButton}
@@ -306,29 +557,56 @@ export function ReviewScreen(): React.JSX.Element {
               testID="saveLogButton"
             >
               <Icon name="save" size={18} color={colors.onPrimary} />
-              <Text style={styles.saveText}>{tr.review.saveMeal}</Text>
+              <Text style={styles.saveText}>
+                {isEditMode ? 'Öğünü Güncelle' : tr.review.saveMeal}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* Add Item Modal */}
+      {/* Add Item Modal with Smart Autocomplete Search */}
       <Modal
         visible={showAddModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowAddModal(false)}
+        onRequestClose={() => {
+          setShowAddModal(false);
+          setSearchResults([]);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{tr.review.addItem}</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Yiyecek adı"
-              placeholderTextColor={colors.onSurfaceVariant}
-              value={newItemName}
-              onChangeText={setNewItemName}
-            />
+            
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Yiyecek adı arayın (Örn: Köfte)"
+                placeholderTextColor={colors.onSurfaceVariant}
+                value={newItemName}
+                onChangeText={handleSearchTextChange}
+              />
+              
+              {/* Autocomplete dropdown results */}
+              {searchResults.length > 0 && (
+                <View style={styles.autocompleteDropdown}>
+                  <ScrollView style={styles.dropdownScroll} keyboardShouldPersistTaps="handled">
+                    {searchResults.map((food, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={styles.dropdownItem}
+                        onPress={() => handleSelectAutofill(food)}
+                      >
+                        <Text style={styles.dropdownItemText}>{food.name}</Text>
+                        <Text style={styles.dropdownItemSub}>{food.caloriesPer100g} kcal/100g</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+
             <TextInput
               style={styles.modalInput}
               placeholder="Kalori (100g)"
@@ -372,7 +650,10 @@ export function ReviewScreen(): React.JSX.Element {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalCancel}
-                onPress={() => setShowAddModal(false)}
+                onPress={() => {
+                  setShowAddModal(false);
+                  setSearchResults([]);
+                }}
               >
                 <Text style={styles.modalCancelText}>{tr.review.cancel}</Text>
               </TouchableOpacity>
@@ -399,10 +680,59 @@ export function ReviewScreen(): React.JSX.Element {
                   setNewItemCarbs('');
                   setNewItemFat('');
                   setNewItemPortion('100');
+                  setSearchResults([]);
                   setShowAddModal(false);
                 }}
               >
                 <Text style={styles.modalSaveText}>{tr.review.save}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Portion Edit Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={portionModalVisible}
+        onRequestClose={() => setPortionModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Miktar Düzenle</Text>
+            <Text style={styles.modalSubtitle}>
+              {editingItemName} için porsiyon miktarını (gram) yazın:
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={portionValue}
+              onChangeText={setPortionValue}
+              placeholder="Gram"
+              placeholderTextColor={colors.onSurfaceVariant}
+              keyboardType="number-pad"
+              autoFocus={true}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={() => setPortionModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalConfirmButton]}
+                onPress={() => {
+                  const val = parseInt(portionValue || '', 10);
+                  if (!isNaN(val) && val > 0 && val <= 5000 && editingItemId) {
+                    updateItemPortion(editingItemId, val);
+                    setPortionModalVisible(false);
+                  } else {
+                    Alert.alert('Hata', 'Lütfen 1 ile 5000 gram arasında geçerli bir değer girin.');
+                  }
+                }}
+              >
+                <Text style={styles.modalConfirmText}>Güncelle</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -437,9 +767,7 @@ function SimpleSlider({
       }}
     >
       <View style={[styles.sliderFill, { width: `${pct * 100}%` }]} />
-      <View
-        style={[styles.sliderThumb, { left: `${pct * 100}%`, marginLeft: -10 }]}
-      />
+      <View style={[styles.sliderThumb, { left: `${pct * 100}%` }]} />
     </TouchableOpacity>
   );
 }
@@ -490,6 +818,9 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
     fontFamily: fontFamily.headline,
   },
+  headerRightSpacer: {
+    width: 40,
+  },
   scrollContent: {
     paddingBottom: 280,
   },
@@ -508,15 +839,38 @@ const styles = StyleSheet.create({
     borderColor: colors.outline,
     position: 'relative',
   },
+  carouselContainer: {
+    flexDirection: 'row',
+  },
+  carouselImageWrapper: {
+    width: 350,
+    height: 200,
+  },
   foodImage: {
     width: '100%',
-    height: 200,
+    height: '100%',
+  },
+  carouselPageIndicator: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    borderRadius: radii.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  carouselPageText: {
+    fontSize: 11,
+    color: colors.onSurface,
+    fontWeight: '600',
   },
   placeholderImage: {
     backgroundColor: colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
+    width: '100%',
+    height: '100%',
   },
   placeholderText: {
     fontSize: 14,
@@ -536,11 +890,40 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
     borderColor: colors.outline,
+    zIndex: 20,
   },
   matchText: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.primary,
+  },
+  insightCard: {
+    marginHorizontal: spacing['margin-mobile'],
+    marginBottom: spacing.md,
+    backgroundColor: withAlpha(colors.primaryContainer, 0.25),
+    borderRadius: radii.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: withAlpha(colors.primary, 0.3),
+    gap: 6,
+  },
+  insightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  insightTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  insightContent: {
+    fontSize: 14,
+    color: colors.onSurface,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
   categorySection: {
     paddingHorizontal: spacing['margin-mobile'],
@@ -652,6 +1035,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
+  portionValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: withAlpha(colors.primary, 0.1),
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    borderWidth: 0.5,
+    borderColor: withAlpha(colors.primary, 0.3),
+  },
+  portionValueInteractive: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primaryLight,
+  },
+  portionEditIcon: {
+    marginLeft: 2,
+  },
   sliderTrack: {
     width: '100%',
     height: 4,
@@ -677,6 +1079,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 5,
     elevation: 3,
+    marginLeft: -10,
   },
   macroSection: {
     flexDirection: 'row',
@@ -885,6 +1288,48 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
+  searchInputContainer: {
+    position: 'relative',
+    width: '100%',
+    zIndex: 100,
+  },
+  autocompleteDropdown: {
+    position: 'absolute',
+    top: 52,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    maxHeight: 180,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  dropdownScroll: {
+    padding: spacing.xs,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outline,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  dropdownItemSub: {
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+  },
   modalInput: {
     backgroundColor: colors.surfaceContainer,
     borderRadius: radii.lg,
@@ -894,11 +1339,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.outline,
     fontSize: 16,
+    width: '100%',
   },
   modalButtons: {
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.sm,
+    width: '100%',
   },
   modalCancel: {
     flex: 1,
@@ -923,5 +1370,236 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
     fontWeight: '700',
     fontSize: 14,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0, 230, 118, 0.08)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    alignSelf: 'flex-start',
+  },
+  verifiedText: {
+    fontSize: 10,
+    color: '#00e676',
+    fontWeight: '600',
+    fontFamily: fontFamily.body,
+  },
+  aiEstimatedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(144, 202, 249, 0.08)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    alignSelf: 'flex-start',
+  },
+  aiEstimatedText: {
+    fontSize: 10,
+    color: '#90caf9',
+    fontWeight: '600',
+    fontFamily: fontFamily.body,
+  },
+  hiddenIngredientsSection: {
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: radii.xl,
+    padding: spacing.md,
+  },
+  hiddenLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: spacing.sm,
+    fontFamily: fontFamily.bodyMedium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  hiddenScroll: {
+    gap: spacing.sm,
+    paddingVertical: 4,
+  },
+  hiddenChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+  },
+  hiddenChipText: {
+    fontSize: 12,
+    color: colors.onSurface,
+    fontWeight: '500',
+    fontFamily: fontFamily.bodyMedium,
+  },
+  itemHeaderInfo: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 4,
+  },
+  chipIcon: {
+    marginRight: 4,
+  },
+  itemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  itemGradeBadge: {
+    borderWidth: 1,
+    borderRadius: radii.md,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemGradeText: {
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  gradeBadgeA: {
+    backgroundColor: 'rgba(0, 230, 118, 0.12)',
+    borderColor: 'rgba(0, 230, 118, 0.35)',
+  },
+  gradeTextA: {
+    color: '#00E676',
+  },
+  gradeBadgeB: {
+    backgroundColor: 'rgba(20, 184, 166, 0.12)',
+    borderColor: 'rgba(20, 184, 166, 0.35)',
+  },
+  gradeTextB: {
+    color: '#14B8A6',
+  },
+  gradeBadgeC: {
+    backgroundColor: 'rgba(255, 167, 38, 0.12)',
+    borderColor: 'rgba(255, 167, 38, 0.35)',
+  },
+  gradeTextC: {
+    color: '#FFA726',
+  },
+  gradeBadgeD: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239, 68, 68, 0.35)',
+  },
+  gradeTextD: {
+    color: '#EF4444',
+  },
+  scannerDotContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 50,
+  },
+  scannerDot: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    backgroundColor: withAlpha(colors.primary, 0.25),
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+  },
+  scannerDotActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.onPrimary,
+    transform: [{ scale: 1.15 }],
+  },
+  scannerDotInner: {
+    position: 'absolute',
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: withAlpha(colors.primary, 0.4),
+    opacity: 0.7,
+  },
+  scannerDotText: {
+    color: colors.onSurface,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  scannerTooltip: {
+    position: 'absolute',
+    bottom: 34,
+    backgroundColor: withAlpha(colors.surface, 0.95),
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    padding: 10,
+    width: 140,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  tooltipName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.onSurface,
+    marginBottom: 2,
+  },
+  tooltipCal: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 2,
+  },
+  tooltipMacros: {
+    fontSize: 9,
+    color: colors.onSurfaceVariant,
+  },
+  scannerDotPos0: {
+    top: '40%',
+    left: '30%',
+  },
+  scannerDotPos1: {
+    top: '25%',
+    left: '60%',
+  },
+  scannerDotPos2: {
+    top: '65%',
+    left: '50%',
+  },
+  scannerDotPos3: {
+    top: '55%',
+    left: '15%',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+  },
+  modalCancelButton: {
+    backgroundColor: colors.surfaceContainer,
+  },
+  modalConfirmButton: {
+    backgroundColor: colors.primary,
+  },
+  modalConfirmText: {
+    color: colors.onPrimary,
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

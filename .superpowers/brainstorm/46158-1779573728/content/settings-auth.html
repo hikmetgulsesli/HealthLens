@@ -1,0 +1,55 @@
+<h2>📱 Ayarlar Ekranında Giriş/Çıkış ve Sihirbaz Yeniden Başlatma Tasarımı</h2>
+<p class="subtitle">Kullanıcıların Google/Apple ile Giriş Yapabileceği, Çıkış Yapabileceği ve Sağlık Hedeflerini Sıfırlamak İçin Sihirbazı Yeniden Başlatabileceği Premium Tasarım Alternatifleri.</p>
+
+<div class="mockup" style="max-width: 600px; margin: 0 auto 30px auto;">
+  <div class="mockup-header">⚙️ HealthLens Ayarlar: Giriş & Profil Sıfırlama Alanı</div>
+  <div class="mockup-body" style="background: #0b1528; padding: 25px; border-radius: 12px; font-family: sans-serif; color: #f1f5f9;">
+    
+    <!-- Profil Durumu (Giriş Yapılmamışsa) -->
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <strong style="color: #ffffff; font-size: 14px; display: block;">Profil Bulut Senkronizasyonu</strong>
+        <span style="color: #94a3b8; font-size: 11px;">Verilerinizi güvenceye almak için giriş yapın.</span>
+      </div>
+      <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 10px;">BULUT ÇEVRİMDIŞI</span>
+    </div>
+
+    <!-- Sosyal Giriş Butonları -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;">
+      <button style="background: #ffffff; color: #1e293b; border: none; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+        <span style="font-size: 16px;">G</span> Google ile Giriş
+      </button>
+      <button style="background: #000000; color: #ffffff; border: 1px solid rgba(255,255,255,0.15); padding: 12px; font-weight: bold; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span style="font-size: 16px;"></span> Apple ile Giriş
+      </button>
+    </div>
+
+    <!-- Sihirbazı Sıfırla & Hedef Değiştir Alanı -->
+    <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
+      <h4 style="color: #ffffff; margin-top: 0; margin-bottom: 8px; font-size: 13px;">🩺 Sağlık Programı & Sihirbaz Kalibrasyonu</h4>
+      <p style="color: #94a3b8; font-size: 11px; margin-bottom: 15px; line-height: 1.4;">
+        Mevcut sağlık durumunuz, tansiyon/şeker alarm limitleriniz veya hedefleriniz değiştiyse, Onboarding Sihirbazını baştan başlatarak tüm diyet planınızı yeniden kalibre edebilirsiniz.
+      </p>
+
+      <button style="background: rgba(20, 184, 166, 0.1); color: #14b8a6; border: 1px solid #14b8a6; padding: 12px; font-weight: bold; width: 100%; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        🔄 Sağlık Sihirbazını Baştan Başlat
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>🩺 Klinik Yeniden Başlatma Avantajları</h4>
+    <ul>
+      <li>Kullanıcılar diyet programlarını (örn. kilo verme aşamasından hipertansiyon kontrolüne geçiş) verilerini kaybetmeden dinamik olarak güncelleyebilir.</li>
+      <li>Onboarding wizard adımlarında dynamic başarı projeksiyon tarihi yeni güncel kilo ve değerlere göre yeniden hesaplanır.</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>🔐 Google/Apple Login Güvenlik Hususları</h4>
+    <ul>
+      <li>Local MMKV verileri, bulut girişi yapıldığında güvenli bir şekilde senkronize edilmeli, çıkış yapıldığında ise güvenlik nedeniyle cihazdan soft-delete yapılabilmelidir.</li>
+    </ul>
+  </div>
+</div>

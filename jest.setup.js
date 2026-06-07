@@ -47,3 +47,9 @@ jest.mock('react-native-mmkv', () => ({
     delete: jest.fn(),
   })),
 }));
+
+jest.mock('react-native-keychain', () => ({
+  setGenericPassword: jest.fn(() => Promise.resolve(true)),
+  getGenericPassword: jest.fn(() => Promise.resolve({ password: '0' })),
+  resetGenericPassword: jest.fn(() => Promise.resolve(true)),
+}));

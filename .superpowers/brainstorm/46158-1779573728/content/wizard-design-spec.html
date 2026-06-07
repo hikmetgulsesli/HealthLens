@@ -1,0 +1,75 @@
+<h2>🩺 Sağlık Odaklı Sihirbaz, Kalibrasyon & Premium Limit Sistemi Mimari Tasarımı</h2>
+<p class="subtitle">Seçtiğimiz Yaklaşım A ve Ömür Boyu 5 Hak (Seçenek A) modeline göre oluşturulan teknik tasarım mimarisini aşağıda inceleyebilirsiniz.</p>
+
+<div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 12px; font-family: sans-serif; color: #e2e8f0; line-height: 1.6; margin-bottom: 25px;">
+  <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 8px;">1. Zustand & MMKV Kalıcı Depolama Güncellemeleri</h3>
+  <p><code>userStore.ts</code> modeline eklenecek yeni parametreler ve varsayılan durumlar:</p>
+  <pre style="background: #09121f; padding: 12px; border-radius: 8px; font-size: 11px; overflow-x: auto; color: #a7f3d0; border: 1px solid rgba(255, 255, 255, 0.05);">
+interface UserProfile {
+  isFirstLaunch: boolean;     // Varsayılan: true (Sihirbazı tetikler)
+  isPremium: boolean;         // Varsayılan: false (Satın alımla true olur)
+  freeScansUsed: number;      // Varsayılan: 0 (Maksimum 5 adet)
+  healthGoal: 'hypertension' | 'diabetes' | 'gut_health' | 'weight_management' | null;
+  // Fizyolojik veriler
+  age?: number;
+  height?: number;
+  weight?: number;
+  gender?: 'male' | 'female' | 'other';
+  goals: NutritionGoals;      // Sihirbaza göre dinamik doldurulacak hedefler
+}
+  </pre>
+</div>
+
+<div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 12px; font-family: sans-serif; color: #e2e8f0; line-height: 1.6; margin-bottom: 25px;">
+  <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 8px;">2. Sağlık Problemlerine Göre Dinamik Hedef Sistemi</h3>
+  <p>Sihirbazda seçilen sağlık hedefine göre sistem hedefleri ve kuralları dinamik olarak kalibre eder:</p>
+  <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; margin-bottom: 15px;">
+    <thead>
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.15); color: #10b981;">
+        <th style="padding: 8px 4px;">Seçilen Sağlık Hedefi</th>
+        <th style="padding: 8px 4px;">Dinamik Makro / Mikro Hedefler</th>
+        <th style="padding: 8px 4px;">🩺 Klinik Puanlama Algoritması Puan Cezaları (healthGrader.ts)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+        <td style="padding: 8px 4px; font-weight: bold;">Tansiyon & Kalp (Hipertansiyon)</td>
+        <td style="padding: 8px 4px;">Sodyum takibi aktifleşir, sodyum hedefi <strong>&lt; 1500mg/gün</strong> olarak sınırlandırılır.</td>
+        <td style="padding: 8px 4px; color: #f87171;">Tuz oranı yüksek (100g'da &gt;300mg sodyum) besinler anında <strong>C veya D</strong> derecesine düşürülür.</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+        <td style="padding: 8px 4px; font-weight: bold;">Kan Şekeri Kontrolü (Diyabet)</td>
+        <td style="padding: 8px 4px;">Şeker takibi aktifleşir, ilave şeker limiti <strong>&lt; 35g/gün</strong> olarak set edilir.</td>
+        <td style="padding: 8px 4px; color: #f87171;">Glisemik indeksi yüksek (100g'da &gt;12g şeker/karbonhidrat) gıdalar puanlamada cezalandırılır.</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+        <td style="padding: 8px 4px; font-weight: bold;">Sindirim & Bağırsak (Hassas Bağırsak)</td>
+        <td style="padding: 8px 4px;">Lif takibi aktifleşir, lif hedefi <strong>&gt; 35g/gün</strong> seviyesine yükseltilir.</td>
+        <td style="padding: 8px 4px; color: #34d399;">Lif oranı yüksek (100g'da &gt;3g lif) besinler ekstra puan alarak <strong>A+ / A</strong> sınıfına yükselir.</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+        <td style="padding: 8px 4px; font-weight: bold;">Kilo Yönetimi & Kas Sağlığı</td>
+        <td style="padding: 8px 4px;">Standart kalori formülü aktifleşir, protein hedefi <strong>&gt; 1.5g x Ağırlık</strong> seviyesine ayarlanır.</td>
+        <td style="padding: 8px 4px; color: #34d399;">Protein yoğunluğu yüksek olan gıdalar ödüllendirilir.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 12px; font-family: sans-serif; color: #e2e8f0; line-height: 1.6; margin-bottom: 25px;">
+  <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 8px;">3. AI Taraması Kısıt Kapısı (Scan Lock Gate) & Manuel Arama Fallback</h3>
+  <ul>
+    <li>Kullanıcı kamera ile tarama başlattığında veya albümden fotoğraf seçtiğinde <code>user.isPremium</code> kontrol edilir.</li>
+    <li>Kullanıcı Premium değilse ve <code>freeScansUsed &gt;= 5</code> ise, tarama işlemi <strong>bloklanır</strong> ve doğrudan Premium Paywall ekranı açılır.</li>
+    <li>Kullanıcı premium değilse fakat hakkı varsa, tarama sonrası Review ekranında kaydettiğinde <code>freeScansUsed</code> değeri 1 artırılır.</li>
+    <li><strong>Sınırsız Manuel Arama:</strong> Premium olmayan ve hakkı biten kullanıcılara, kilit ekranında veya kamerada belirgin bir <em>"Manuel Ekle / Ara"</em> butonu sunulur. Böylece kullanıcı uygulamayı tamamen terk etmek yerine elle gıda aratıp ekleyebilir.</li>
+  </ul>
+</div>
+
+<div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 12px; font-family: sans-serif; color: #e2e8f0; line-height: 1.6; margin-bottom: 25px; text-align: center;">
+  <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 10px;">Tasarım Onayı</h3>
+  <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Yukarıda detaylandırdığım klinik veri modellerini, dinamik ceza/ödül algoritmalarını ve 5 hak kısıt mekanizmasını onaylıyor musunuz?</p>
+  <div style="display: inline-flex; gap: 15px;">
+    <button class="option" data-choice="approve_design" onclick="toggleSelect(this)" style="background: #10b981; color: white; border: none; padding: 10px 24px; font-weight: bold; border-radius: 6px; cursor: pointer;">Tasarımı Onayla ve Devam Et</button>
+  </div>
+</div>

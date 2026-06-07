@@ -6,6 +6,7 @@ export const spacing = {
   md: 16,
   lg: 24,
   xl: 32,
+  xxl: 48,
   'margin-mobile': 20,
   'gutter-mobile': 12,
   'stack-sm': 4,

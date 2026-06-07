@@ -1,19 +1,21 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { MMKV } from 'react-native-mmkv';
 import type { OfflineQueueItem } from '../types';
+import { analyzeFoodImage } from '../services/aiService';
+import { useLogStore } from './logStore';
 
 const storage = new MMKV({ id: 'offline-queue-storage' });
 
-const mmkvStorage: any = {
+const mmkvStorage = createJSONStorage(() => ({
   getItem: (name: string) => {
     const value = storage.getString(name);
-    return value ? JSON.parse(value) : null;
+    return value ?? null;
   },
-  setItem: (name: string, value: unknown) =>
-    storage.set(name, JSON.stringify(value)),
+  setItem: (name: string, value: string) =>
+    storage.set(name, value),
   removeItem: (name: string) => storage.delete(name),
-};
+}));
 
 interface OfflineQueueState {
   queue: OfflineQueueItem[];
@@ -66,22 +68,59 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
         })),
       processQueue: async () => {
         const { queue, isProcessing } = get();
-        if (isProcessing || queue.length === 0) return;
+        const pendingItems = queue.filter(
+          item =>
+            (item.status === 'pending' || item.status === 'failed') &&
+            item.retryCount < 3,
+        );
+
+        if (isProcessing || pendingItems.length === 0) return;
 
         set({ isProcessing: true });
 
         try {
-          for (const item of queue) {
-            if (item.status === 'pending' && item.retryCount < 3) {
-              try {
-                get().updateStatus(item.id, 'uploading');
-                // Retry logic will be handled by the caller
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                get().updateStatus(item.id, 'pending');
-              } catch {
-                get().incrementRetry(item.id);
-                get().updateStatus(item.id, 'failed');
-              }
+          for (const item of pendingItems) {
+            try {
+              get().updateStatus(item.id, 'uploading');
+              
+              // Run real food analysis
+              const result = await analyzeFoodImage(item.imageUri);
+              
+              // Calculate macro totals from analysis result
+              const totals = result.items.reduce(
+                (acc, food) => {
+                  const ratio = food.estimatedPortionGrams / 100;
+                  acc.cal += food.caloriesPer100g * ratio;
+                  acc.protein += food.proteinPer100g * ratio;
+                  acc.carbs += food.carbsPer100g * ratio;
+                  acc.fat += food.fatPer100g * ratio;
+                  return acc;
+                },
+                { cal: 0, protein: 0, carbs: 0, fat: 0 },
+              );
+
+              // Add successful entry to logStore
+              const dateKey = new Date().toISOString().split('T')[0];
+              useLogStore.getState().addEntry({
+                id: Math.random().toString(36).substring(7),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                dateKey,
+                mealCategory: item.mealCategory,
+                imageUri: item.imageUri,
+                items: result.items,
+                totalCalories: Math.round(totals.cal),
+                totalProtein: Math.round(totals.protein),
+                totalCarbs: Math.round(totals.carbs),
+                totalFat: Math.round(totals.fat),
+              });
+
+              // Remove successfully processed item from queue
+              get().removeFromQueue(item.id);
+            } catch (error) {
+              console.error(`Failed to process queue item ${item.id}:`, error);
+              get().incrementRetry(item.id);
+              get().updateStatus(item.id, 'failed');
             }
           }
         } finally {

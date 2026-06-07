@@ -1,0 +1,6 @@
+{"type":"server-started","port":62989,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:62989","screen_dir":"/Users/setrox/ai/developer-mobile/ReactNative-dev/HealthLens/.superpowers/brainstorm/46158-1779573728/content","state_dir":"/Users/setrox/ai/developer-mobile/ReactNative-dev/HealthLens/.superpowers/brainstorm/46158-1779573728/state"}
+{"type":"screen-added","file":"/Users/setrox/ai/developer-mobile/ReactNative-dev/HealthLens/.superpowers/brainstorm/46158-1779573728/content/wizard-approach.html"}
+{"type":"screen-added","file":"/Users/setrox/ai/developer-mobile/ReactNative-dev/HealthLens/.superpowers/brainstorm/46158-1779573728/content/wizard-steps.html"}
+{"type":"screen-added","file":"/Users/setrox/ai/developer-mobile/ReactNative-dev/HealthLens/.superpowers/brainstorm/46158-1779573728/content/wizard-design-spec.html"}
+{"type":"screen-added","file":"/Users/setrox/ai/developer-mobile/ReactNative-dev/HealthLens/.superpowers/brainstorm/46158-1779573728/content/settings-auth.html"}
+{"type":"server-stopped","reason":"idle timeout"}

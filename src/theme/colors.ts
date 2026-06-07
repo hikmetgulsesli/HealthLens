@@ -89,7 +89,7 @@ export const colors = {
 
 export const withAlpha = (hex: string, alpha: number): string => {
   if (hex.startsWith('rgba')) {
-    return hex.replace(/[\)]/g, '').replace(/[^,]+$/g, `${alpha})`);
+    return hex.replace(/[)]/g, '').replace(/[^,]+$/g, `${alpha})`);
   }
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);

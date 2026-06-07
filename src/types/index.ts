@@ -12,6 +12,7 @@ export interface FoodItem {
   fiberPer100g?: number;
   sugarPer100g?: number;
   sodiumPer100g?: number;
+  isVerified?: boolean;
 }
 
 export interface LogEntry {
@@ -39,12 +40,24 @@ export interface NutritionGoals {
   showSugar: boolean;
 }
 
+export type HealthGoal = 'hypertension' | 'diabetes' | 'gut_health' | 'weight_management' | null;
+
 export interface UserProfile {
   id: string;
   createdAt: string;
   updatedAt: string;
   goals: NutritionGoals;
   unitSystem: 'metric' | 'imperial';
+  isFirstLaunch: boolean;
+  isPremium: boolean;
+  freeScansUsed: number;
+  healthGoal: HealthGoal;
+  age?: number;
+  height?: number;
+  weight?: number;
+  gender?: 'male' | 'female' | 'other';
+  email?: string | null;
+  loginMethod?: 'google' | 'apple' | null;
 }
 
 export interface OfflineQueueItem {
@@ -57,7 +70,10 @@ export interface OfflineQueueItem {
 }
 
 export interface AnalysisResult {
+  id?: string;
   items: FoodItem[];
   mealCategory: MealCategory;
-  imageUri: string;
+  imageUri?: string;
+  imageUris?: string[];
+  smartInsight?: string;
 }

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   StatusBar,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -18,6 +19,7 @@ import { useLogStore } from '../stores/logStore';
 import { useUserStore } from '../stores/userStore';
 import { useAnalysisStore } from '../stores/analysisStore';
 import { useNavigation } from '@react-navigation/native';
+import { getMealHealthGrade } from '../utils/healthGrader';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { tr } from '../i18n';
@@ -33,6 +35,7 @@ export function HistoryScreen(): React.JSX.Element {
   const dateKey = selectedDate.toISOString().split('T')[0];
   const dayEntries = useMemo(() => entries[dateKey] ?? [], [entries, dateKey]);
   const goals = useUserStore(s => s.profile.goals);
+  const healthGoal = useUserStore(s => s.profile.healthGoal);
   const setAnalysis = useAnalysisStore(s => s.setAnalysis);
 
   const totals = useMemo(() => {
@@ -62,9 +65,16 @@ export function HistoryScreen(): React.JSX.Element {
   const goalCarbs = goals.dailyCarbGoal ?? 200;
   const goalFat = goals.dailyFatGoal ?? 65;
 
-  // 7-day trend data (mock for now)
-  const trendData = [60, 75, 85, 50, 70, 65, 80];
+  // 7-day trend data calculated dynamically from logs
   const trendLabels = ['P', 'S', 'Ç', 'P', 'C', 'C', 'P'];
+  const trendData = useMemo(() => {
+    return weekDays.map(d => {
+      const key = d.toISOString().split('T')[0];
+      const dailyEntries = entries[key] ?? [];
+      const total = dailyEntries.reduce((sum, e) => sum + e.totalCalories, 0);
+      return Math.round(Math.min((total / goalCal) * 100, 100));
+    });
+  }, [weekDays, entries, goalCal]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -79,7 +89,7 @@ export function HistoryScreen(): React.JSX.Element {
           <Icon name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{tr.history.title}</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.headerRightSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -127,25 +137,25 @@ export function HistoryScreen(): React.JSX.Element {
           <View style={styles.grid}>
             <MacroCard
               icon="local-fire-department"
-              label="Calories"
+              label={tr.history.calories}
               value={`${totals.cal}`}
               pct={totals.cal / goalCal}
             />
             <MacroCard
               icon="egg-alt"
-              label="Protein"
+              label={tr.dashboard.protein}
               value={`${totals.protein}g`}
               pct={totals.protein / goalProtein}
             />
             <MacroCard
               icon="grain"
-              label="Carbs"
+              label={tr.dashboard.carbs}
               value={`${totals.carbs}g`}
               pct={totals.carbs / goalCarbs}
             />
             <MacroCard
               icon="water-drop"
-              label="Fat"
+              label={tr.dashboard.fat}
               value={`${totals.fat}g`}
               pct={totals.fat / goalFat}
             />
@@ -155,9 +165,9 @@ export function HistoryScreen(): React.JSX.Element {
         {/* Compare to Goals */}
         <View style={styles.glassPanel}>
           <Text style={styles.goalsTitle}>{tr.history.compareGoals}</Text>
-          <GoalBar label="Calories" current={totals.cal} goal={goalCal} />
+          <GoalBar label={tr.history.calories} current={totals.cal} goal={goalCal} />
           <GoalBar
-            label="Protein"
+            label={tr.dashboard.protein}
             current={totals.protein}
             goal={goalProtein}
           />
@@ -175,6 +185,7 @@ export function HistoryScreen(): React.JSX.Element {
                 style={styles.mealItem}
                 onPress={() => {
                   setAnalysis({
+                    id: entry.id,
                     imageUri: entry.imageUri || '',
                     mealCategory: entry.mealCategory,
                     items: entry.items,
@@ -190,6 +201,7 @@ export function HistoryScreen(): React.JSX.Element {
                         text: 'Düzenle',
                         onPress: () => {
                           setAnalysis({
+                            id: entry.id,
                             imageUri: entry.imageUri || '',
                             mealCategory: entry.mealCategory,
                             items: entry.items,
@@ -208,7 +220,15 @@ export function HistoryScreen(): React.JSX.Element {
                 }}
               >
                 <View style={styles.mealThumb}>
-                  <Icon name="restaurant" size={20} color={colors.primary} />
+                  {entry.imageUri && !entry.imageUri.startsWith('barcode://') ? (
+                    <Image
+                      source={{ uri: entry.imageUri }}
+                      style={styles.mealImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Icon name="restaurant" size={20} color={colors.primary} />
+                  )}
                 </View>
                 <View style={styles.mealInfo}>
                   <Text style={styles.mealName}>
@@ -229,7 +249,24 @@ export function HistoryScreen(): React.JSX.Element {
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.mealCal}>{entry.totalCalories}</Text>
+                {(() => {
+                  const mealGrade = getMealHealthGrade(entry.items, healthGoal);
+                  const gradeClass = mealGrade.grade.startsWith('A') ? 'A' : (mealGrade.grade as 'B' | 'C' | 'D');
+                  const badgeStyle = gradeClass === 'A' ? styles.gradeBadgeA : (gradeClass === 'B' ? styles.gradeBadgeB : (gradeClass === 'C' ? styles.gradeBadgeC : styles.gradeBadgeD));
+                  const textStyle = gradeClass === 'A' ? styles.gradeTextA : (gradeClass === 'B' ? styles.gradeTextB : (gradeClass === 'C' ? styles.gradeTextC : styles.gradeTextD));
+                  return (
+                    <View style={styles.mealCalSection}>
+                      <View style={[styles.gradeBadge, badgeStyle]}>
+                        <Text style={[styles.gradeBadgeText, textStyle]}>
+                          {mealGrade.grade}
+                        </Text>
+                      </View>
+                      <Text style={styles.mealCal}>
+                        {entry.totalCalories} kcal
+                      </Text>
+                    </View>
+                  );
+                })()}
               </TouchableOpacity>
             ))
           )}
@@ -242,30 +279,34 @@ export function HistoryScreen(): React.JSX.Element {
             <Text style={styles.trendSubtitle}>{tr.history.calories}</Text>
           </View>
           <View style={styles.trendChart}>
-            {trendData.map((h, i) => (
-              <View key={i} style={styles.trendBarWrap}>
-                <View
-                  style={[
-                    styles.trendBar,
-                    {
-                      height: `${h}%`,
-                      backgroundColor:
-                        i === 6
+            {trendData.map((h, i) => {
+              const d = weekDays[i];
+              const key = d.toISOString().split('T')[0];
+              const isSelected = key === dateKey;
+              return (
+                <View key={i} style={styles.trendBarWrap}>
+                  <View
+                    style={[
+                      styles.trendBar,
+                      {
+                        height: `${Math.max(h, 2)}%`,
+                        backgroundColor: isSelected
                           ? colors.primary
                           : withAlpha(colors.primary, 0.3),
-                    },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.trendLabel,
-                    i === 6 && { color: colors.primary },
-                  ]}
-                >
-                  {trendLabels[i]}
-                </Text>
-              </View>
-            ))}
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.trendLabel,
+                      isSelected && { color: colors.primary },
+                    ]}
+                  >
+                    {trendLabels[i]}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -351,6 +392,9 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerRightSpacer: {
+    width: 40,
   },
   headerTitle: {
     fontSize: 18,
@@ -630,5 +674,55 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontWeight: '600',
     letterSpacing: 0.6,
+  },
+  mealImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: radii.lg,
+  },
+  mealCalSection: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  gradeBadge: {
+    borderWidth: 1,
+    borderRadius: radii.md,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradeBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  gradeBadgeA: {
+    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    borderColor: 'rgba(0, 230, 118, 0.4)',
+  },
+  gradeTextA: {
+    color: '#00E676',
+  },
+  gradeBadgeB: {
+    backgroundColor: 'rgba(20, 184, 166, 0.15)',
+    borderColor: 'rgba(20, 184, 166, 0.4)',
+  },
+  gradeTextB: {
+    color: '#14B8A6',
+  },
+  gradeBadgeC: {
+    backgroundColor: 'rgba(255, 167, 38, 0.15)',
+    borderColor: 'rgba(255, 167, 38, 0.4)',
+  },
+  gradeTextC: {
+    color: '#FFA726',
+  },
+  gradeBadgeD: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+  },
+  gradeTextD: {
+    color: '#EF4444',
   },
 });

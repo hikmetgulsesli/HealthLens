@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HealthLens - Fotoğraf çekerek yemeğinizin kalori, makro ve mikro besin değerlerini yapay zeka ile anında analiz edin. Klinik odaklı akıllı diyet yardımcınız.">
+  <meta name="keywords" content="besin analizi, kalori takibi, diyet uygulaması, yapay zeka kalori, diyetisyen raporu, tansiyon, diyabet diyet">
+  <meta name="author" content="HealthLens Inc.">
+  <title>HealthLens — Yapay Zeka Odaklı Klinik Beslenme Asistanı</title>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Material Icons for Premium Look -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Ambient Glowing Orbs -->
+  <div class="ambient-orb orb-primary"></div>
+  <div class="ambient-orb orb-blue"></div>
+
+  <!-- Header Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="material-icons logo-icon">psychology</span>
+        <span class="logo-text">HealthLens</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Özellikler</a>
+        <a href="#how-it-works">Nasıl Çalışır</a>
+        <a href="#support">Destek</a>
+        <a href="#" class="btn-download-nav">Hemen İndir</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="clinical-badge">
+          <span class="material-icons">verified</span> KLİNİK HEDEF ODAKLI YAPAY ZEKA
+        </div>
+        <h1 class="hero-title">Yemeklerinizi Fotoğraflayın, <span class="glow-text">Sağlığınızı</span> Yönetin.</h1>
+        <p class="hero-desc">HealthLens, tabaklarınızı tek bir fotoğrafla saniyeler içinde analiz eder. Şeker, sodyum ve lif alımınızı klinik hedeflerinize (Diyabet, Tansiyon, Sindirim) göre otomatik kalibre eder.</p>
+        
+        <div class="download-badges">
+          <a href="#" class="badge-button">
+            <span class="material-icons badge-icon">apple</span>
+            <div class="badge-text">
+              <span class="badge-sub">App Store'dan</span>
+              <span class="badge-main">İndirin</span>
+            </div>
+          </a>
+          <a href="#" class="badge-button badge-play">
+            <span class="material-icons badge-icon">android</span>
+            <div class="badge-text">
+              <span class="badge-sub">Google Play'den</span>
+              <span class="badge-main">Alın</span>
+            </div>
+          </a>
+        </div>
+      </div>
+      
+      <div class="hero-visual">
+        <div class="mockup-frame">
+          <div class="mockup-screen">
+            <!-- Simulated App Interface -->
+            <div class="app-header">
+              <span class="material-icons">arrow_back</span>
+              <span class="app-title">Klinik Analiz</span>
+              <span class="material-icons text-primary">verified</span>
+            </div>
+            
+            <div class="app-image-container">
+              <div class="app-food-overlay">
+                <span class="food-label">Mercimek Çorbası (250g)</span>
+                <span class="food-confidence">94% Eşleşme</span>
+              </div>
+            </div>
+            
+            <div class="app-badge-row">
+              <div class="grade-badge">A+</div>
+              <div>
+                <div class="badge-title">Optimal Klinik Skor</div>
+                <div class="badge-sub">Sindirim sisteminiz için mükemmel lif oranı!</div>
+              </div>
+            </div>
+            
+            <div class="app-slider-container">
+              <div class="slider-header">
+                <span>Porsiyon Miktarı</span>
+                <span class="text-primary">250g</span>
+              </div>
+              <div class="slider-track">
+                <div class="slider-fill"></div>
+                <div class="slider-thumb"></div>
+              </div>
+            </div>
+            
+            <div class="app-macros">
+              <div class="macro-box">
+                <span class="macro-label">ENERJİ</span>
+                <span class="macro-val">212 kcal</span>
+              </div>
+              <div class="macro-box">
+                <span class="macro-label">PROTEİN</span>
+                <span class="macro-val">11.2g</span>
+              </div>
+              <div class="macro-box">
+                <span class="macro-label">KARB</span>
+                <span class="macro-val">30g</span>
+              </div>
+              <div class="macro-box">
+                <span class="macro-label">YAĞ</span>
+                <span class="macro-val">5.2g</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section (Bento Grid) -->
+  <section id="features" class="features">
+    <div class="section-header">
+      <h2 class="section-title">Neden HealthLens?</h2>
+      <p class="section-subtitle">Geleneksel kalori sayıcıları unutun. Sağlık hedeflerinizle tam eş zamanlı akıllı bir klinik asistan deneyimi.</p>
+    </div>
+    
+    <div class="bento-grid">
+      <!-- Bento Card 1 -->
+      <div class="bento-card card-large">
+        <div class="bento-icon-container bg-emerald">
+          <span class="material-icons">photo_camera</span>
+        </div>
+        <h3 class="bento-title">Yapay Zeka Destekli Fotoğraf Analizi</h3>
+        <p class="bento-desc">Yemeklerinizi aratarak zaman kaybetmeyin. Tabağınızın fotoğrafını çekin; yapay zekamız tekli ve çoklu besinleri saniyeler içinde tespit edip porsiyon ağırlıklarını tahmin etsin.</p>
+      </div>
+
+      <!-- Bento Card 2 -->
+      <div class="bento-card">
+        <div class="bento-icon-container bg-orange">
+          <span class="material-icons">health_and_safety</span>
+        </div>
+        <h3 class="bento-title">Dinamik Klinik Hedefler</h3>
+        <p class="bento-desc">Tansiyon, Diyabet veya Sindirim odaklı hedefler belirleyin. Sistem, sodyum, şeker ve lif alım limitlerinizi klinik ihtiyaçlarınıza göre otomatik olarak kısıtlasın veya teşvik etsin.</p>
+      </div>
+
+      <!-- Bento Card 3 -->
+      <div class="bento-card">
+        <div class="bento-icon-container bg-blue">
+          <span class="material-icons">cloud_queue</span>
+        </div>
+        <h3 class="bento-title">Lüks Bulut Senkronizasyonu</h3>
+        <p class="bento-desc">Apple veya Google hesaplarınızla anında entegre olun. Verileriniz cihazlar arasında güvenle senkronize edilirken anında Premium Pro özelliklerine erişim kazanın.</p>
+      </div>
+
+      <!-- Bento Card 4 -->
+      <div class="bento-card card-large">
+        <div class="bento-icon-container bg-purple">
+          <span class="material-icons">picture_as_pdf</span>
+        </div>
+        <h3 class="bento-title">Diyetisyeniniz İçin Klinik PDF Raporu</h3>
+        <p class="bento-desc">Son 7 günlük beslenme alışkanlıklarınızı, makro dengenizi ve mikro alarm limitlerinizin detaylarını içeren klinik düzeyde şık bir HTML ve PDF beslenme raporunu tek tıkla dışa aktarın.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support Section (Required by Apple) -->
+  <section id="support" class="support">
+    <div class="support-container">
+      <div class="support-content">
+        <h2 class="section-title">Müşteri Destek & İletişim</h2>
+        <p class="support-desc">Sorularınız, teknik destek talepleriniz veya kişisel veri silme istekleriniz için bizimle iletişime geçin. Destek ekibimiz 24 saat içinde yanıt sağlayacaktır.</p>
+        
+        <div class="contact-info">
+          <div class="contact-item">
+            <span class="material-icons text-primary">email</span>
+            <span>support@healthlens.app</span>
+          </div>
+          <div class="contact-item">
+            <span class="material-icons text-primary">place</span>
+            <span>Istanbul, Türkiye</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="support-form-container">
+        <!-- Compliant Form -->
+        <form class="support-form" onsubmit="event.preventDefault(); alert('Talebiniz başarıyla alındı. Destek ekibimiz en kısa sürede iletişime geçecektir.');">
+          <div class="form-group">
+            <label for="name">Adınız Soyadınız</label>
+            <input type="text" id="name" required placeholder="Hikmet Gülsesli">
+          </div>
+          <div class="form-group">
+            <label for="email">E-posta Adresiniz</label>
+            <input type="email" id="email" required placeholder="hikmet@example.com">
+          </div>
+          <div class="form-group">
+            <label for="subject">Konu</label>
+            <select id="subject" required>
+              <option value="technical">Teknik Destek / Hata Bildirimi</option>
+              <option value="account">Hesap / Veri Silme Talebi</option>
+              <option value="premium">Premium Abonelik İşlemleri</option>
+              <option value="other">Diğer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">Mesajınız</label>
+            <textarea id="message" rows="4" required placeholder="Destek almak istediğiniz konuyu detaylıca yazınız..."></textarea>
+          </div>
+          <button type="submit" class="btn-submit">Destek Talebi Gönder</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer with Mandatory Policies -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <div class="logo">
+          <span class="material-icons logo-icon">psychology</span>
+          <span class="logo-text">HealthLens</span>
+        </div>
+        <p class="footer-copyright">© 2026 HealthLens Inc. Tüm Hakları Saklıdır.</p>
+        <p class="footer-disclaimer">Yasal Uyarı: HealthLens tıbbi bir cihaz değildir. Sunulan beslenme analizleri ve puanlamaları yalnızca bilgilendirme amaçlıdır; hekim teşhisi veya tıbbi tedavi yerine geçemez.</p>
+      </div>
+      
+      <div class="footer-right">
+        <h4>Yasal Bağlantılar</h4>
+        <div class="policy-links">
+          <a href="#privacy-modal" class="modal-trigger">Gizlilik Politikası (Privacy Policy)</a>
+          <a href="#eula-modal" class="modal-trigger">Kullanım Şartları (EULA / Terms)</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Privacy Policy Overlay Modal (Opened via pure CSS :target) -->
+  <div id="privacy-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Gizlilik Politikası (Privacy Policy)</h3>
+        <a href="#" class="modal-close"><span class="material-icons">close</span></a>
+      </div>
+      <div class="modal-body">
+        <p><strong>Son Güncelleme: 24 Mayıs 2026</strong></p>
+        <p>HealthLens olarak kişisel gizliliğinize son derece önem veriyoruz. Bu politika, mobil uygulamamız ve web hizmetlerimiz üzerinden toplanan verilerin saklanma ve işlenme yöntemlerini şeffaf bir şekilde açıklar.</p>
+        
+        <h4>1. Verilerin Saklanması ve Yerel Güvenlik</h4>
+        <p>HealthLens, yemek günlüğünüzü, fiziksel ölçümlerinizi (yaş, boy, kilo) ve sağlık hedeflerinizi yerel cihazınızın güvenli sandığı içerisindeki MMKV yerel veri tabanında saklar. Bu veriler cihazınızın dışına siz istemedikçe çıkmaz ve standart iOS/iCloud yedekleme mekanizmalarıyla şifrelenerek yedeklenir.</p>
+        
+        <h4>2. Yemek Fotoğraflarının İşlenmesi ve AI Servisi</h4>
+        <p>Yemek tanıma özelliğini kullandığınızda, çektiğiniz veya galeriden yüklediğiniz fotoğraflar besin analizi yapılması amacıyla güvenli HTTPS protokolü üzerinden yapay zeka servisine (Gemini / Claude API) gönderilir. Bu fotoğraflar hiçbir şekilde reklam amaçlı kullanılmaz, üçüncü şahıslarla paylaşılmaz ve analiz tamamlandıktan sonra sunucu belleklerinden güvenle silinir.</p>
+
+        <h4>3. Hesap ve Veri Silme Hakları</h4>
+        <p>Apple ve KVKK / GDPR kuralları gereği, uygulamanın Ayarlar panelindeki "Geçmişi Sil" butonuna tıklayarak yerel cihazınızda kayıtlı olan tüm verileri tek bir saniyede kalıcı olarak silebilirsiniz. Ayrıca yukarıdaki teknik destek formu üzerinden hesap silme talebi ilettiğinizde, kayıtlı bulut profiliniz 24 saat içinde sunucularımızdan tamamen silinecektir.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- EULA Terms Overlay Modal -->
+  <div id="eula-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Kullanım Koşulları (EULA / Terms)</h3>
+        <a href="#" class="modal-close"><span class="material-icons">close</span></a>
+      </div>
+      <div class="modal-body">
+        <p><strong>Son Güncelleme: 24 Mayıs 2026</strong></p>
+        <p>Bu Kullanım Şartları ("EULA"), HealthLens mobil uygulamasının kullanım koşullarını belirleyen, kullanıcı ve HealthLens Inc. arasındaki yasal sözleşmedir.</p>
+        
+        <h4>1. Lisans Hakkı ve Sınırlamalar</h4>
+        <p>HealthLens, kullanıcıya kişisel ve ticari olmayan amaçlarla uygulamayı indirme, kurma ve kullanma konusunda sınırlı, devredilemez ve iptal edilebilir bir lisans hakkı sunar. Uygulamanın tersine mühendislik yöntemleriyle kopyalanması, kaynak kodlarının çözülmesi kesinlikle yasaktır.</p>
+        
+        <h4>2. Tıbbi Sorumluluk Reddi (Medical Disclaimer)</h4>
+        <p>Uygulama tarafından sağlanan besin analizleri, derecelendirme notları, sodyum/lif/şeker hedefleri ve diyet PDF çıktıları yalnızca bilgilendirme amaçlıdır. HealthLens bir sağlık kuruluşu değildir ve hiçbir tıbbi teşhis koyamaz. Kullanıcılar, beslenme programlarında veya klinik hedeflerinde majör değişiklik yapmadan önce mutlaka uzman bir hekime veya sertifikalı bir diyetisyene danışmalıdır.</p>
+
+        <h4>3. Abonelik ve Otomatik Yenileme Şartları</h4>
+        <p>HealthLens Premium Pro abonelikleri iTunes hesabınız üzerinden tahsil edilir. Abonelikler, cari dönemin bitiminden en az 24 saat önce otomatik yenileme özelliği kapatılmadığı sürece seçilen paket (aylık 299 TL / $9.99 veya yıllık) üzerinden otomatik olarak yenilenir. Abonelik iptalleri ve iade talepleri doğrudan Apple App Store abonelik yönetim ekranından kullanıcı tarafından yönetilir.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

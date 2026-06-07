@@ -1,19 +1,19 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { MMKV } from 'react-native-mmkv';
 import type { LogEntry } from '../types';
 
 const storage = new MMKV({ id: 'log-storage' });
 
-const mmkvStorage: any = {
+const mmkvStorage = createJSONStorage(() => ({
   getItem: (name: string) => {
     const value = storage.getString(name);
-    return value ? JSON.parse(value) : null;
+    return value ?? null;
   },
-  setItem: (name: string, value: unknown) =>
-    storage.set(name, JSON.stringify(value)),
+  setItem: (name: string, value: string) =>
+    storage.set(name, value),
   removeItem: (name: string) => storage.delete(name),
-};
+}));
 
 interface LogState {
   entries: Record<string, LogEntry[]>;
@@ -68,3 +68,30 @@ export const useLogStore = create<LogState>()(
     },
   ),
 );
+
+/**
+ * Dynamically calculates the consecutive logging streak of days from the entries record.
+ * Keeps streak active if logged today or yesterday.
+ */
+export function getStreakForEntries(entries: Record<string, LogEntry[]>): number {
+  let streak = 0;
+  const today = new Date();
+
+  const checkDate = new Date(today);
+  let key = checkDate.toISOString().split('T')[0];
+
+  // If no entries today, check yesterday to keep the streak alive
+  if (!entries[key] || entries[key].length === 0) {
+    checkDate.setDate(checkDate.getDate() - 1);
+    key = checkDate.toISOString().split('T')[0];
+  }
+
+  // Count backwards consecutively
+  while (entries[key] && entries[key].length > 0) {
+    streak++;
+    checkDate.setDate(checkDate.getDate() - 1);
+    key = checkDate.toISOString().split('T')[0];
+  }
+
+  return streak;
+}

@@ -16,7 +16,10 @@ export const typography = {
 export const fontFamily = {
   headline: 'HankenGrotesk-Bold',
   headlineSemi: 'HankenGrotesk-SemiBold',
+  headlineSmall: 'HankenGrotesk-SemiBold',
   body: 'Inter-Regular',
   bodyMedium: 'Inter-Medium',
   bodyBold: 'Inter-Bold',
+  bodySmall: 'Inter-Regular',
+  sans: 'Inter-Regular',
 } as const;
