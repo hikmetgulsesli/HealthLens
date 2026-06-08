@@ -30,7 +30,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { tr } from '../i18n';
 
-const emptyPlateImage = require('../../design/stitch/assets/empty_plate_illustration.png');
+import { Illustrations } from '../assets/illustrations';
+const emptyPlateImage = Illustrations.emptyPlate;
 
 export function DashboardScreen(): React.JSX.Element {
   const navigation =
