@@ -42,6 +42,8 @@ export interface NutritionGoals {
 
 export type HealthGoal = 'hypertension' | 'diabetes' | 'gut_health' | 'weight_management' | null;
 
+export type PlanTier = 'free' | 'pro' | 'pro_plus';
+
 export interface UserProfile {
   id: string;
   createdAt: string;
@@ -49,7 +51,12 @@ export interface UserProfile {
   goals: NutritionGoals;
   unitSystem: 'metric' | 'imperial';
   isFirstLaunch: boolean;
+  /** @deprecated Use `plan` instead. Kept for backward compatibility. */
   isPremium: boolean;
+  /** Current plan tier — controls AI quota and feature gates. */
+  plan: PlanTier;
+  /** Active trial expiry. While in the future, user has full Pro+ access. */
+  trialEndsAt: string | null;
   freeScansUsed: number;
   healthGoal: HealthGoal;
   age?: number;

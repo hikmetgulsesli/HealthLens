@@ -34,6 +34,8 @@ const defaultProfile: UserProfile = {
   unitSystem: 'metric',
   isFirstLaunch: true,
   isPremium: false,
+  plan: 'free',
+  trialEndsAt: null,
   freeScansUsed: 0,
   healthGoal: null,
   email: null,
@@ -47,9 +49,12 @@ interface UserState {
   setProfile: (profile: Partial<UserProfile>) => void;
   incrementFreeScans: () => void;
   completeOnboarding: (data: Partial<UserProfile>, dynamicGoals: NutritionGoals) => void;
+  startTrial: (durationDays: number) => void;
   loginUser: (email: string, method: 'google' | 'apple') => void;
   logoutUser: () => void;
   resetOnboarding: () => void;
+  /** Returns true if the user can do one more AI scan under their current plan. */
+  canScan: (freeQuotaPerDay: number, proQuotaPerDay: number) => { allowed: boolean; reason?: string };
   syncKeychainLimit: () => Promise<void>;
 }
 
@@ -111,6 +116,25 @@ export const useUserStore = create<UserState>()(
             updatedAt: new Date().toISOString(),
           },
         })),
+      startTrial: (durationDays) =>
+        set(state => {
+          if (state.profile.trialEndsAt && new Date(state.profile.trialEndsAt) > new Date()) {
+            return state; // Already in active trial
+          }
+          if (state.profile.plan !== 'free') {
+            return state; // Already paid user
+          }
+          const trialEndsAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+          return {
+            profile: {
+              ...state.profile,
+              isPremium: true,
+              plan: 'pro_plus', // Trial unlocks Pro+ features
+              trialEndsAt,
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
       loginUser: (email, method) =>
         set(state => ({
           profile: {
@@ -137,11 +161,36 @@ export const useUserStore = create<UserState>()(
               email: null,
               loginMethod: null,
               isPremium: false,
+              plan: 'free',
+              trialEndsAt: null,
               freeScansUsed: 0,
               updatedAt: new Date().toISOString(),
             },
           };
         }),
+      canScan: (freeQuotaPerDay, proQuotaPerDay) => {
+        const state = get();
+        const profile = state.profile;
+        const now = new Date();
+        const isInTrial = !!profile.trialEndsAt && new Date(profile.trialEndsAt) > now;
+        const effectiveTier = isInTrial ? 'pro_plus' : profile.plan;
+
+        // pro_plus = unlimited
+        if (effectiveTier === 'pro_plus') {
+          return { allowed: true };
+        }
+
+        const limit = effectiveTier === 'pro' ? proQuotaPerDay : freeQuotaPerDay;
+        if (limit < 0) return { allowed: true };
+
+        if (profile.freeScansUsed >= limit) {
+          const upgradeMsg = effectiveTier === 'free'
+            ? `Günlük ücretsiz ${limit} analiz hakkınız doldu. Pro'ya geçerek sınırsız analiz yapabilirsiniz!`
+            : `Günlük Pro limitiniz (${limit}) doldu. Pro+ ile sınırsız analiz yapabilirsiniz!`;
+          return { allowed: false, reason: upgradeMsg };
+        }
+        return { allowed: true };
+      },
       resetOnboarding: () =>
         set(state => ({
           profile: {

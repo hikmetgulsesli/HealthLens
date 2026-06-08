@@ -39,14 +39,26 @@ export function CameraScreen(): React.JSX.Element {
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceText, setVoiceText] = useState('');
 
-  const profile = useUserStore(s => s.profile);
+  const canScan = useUserStore(s => s.canScan);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  // Tier-based quota:
+  //   free:     3 AI scans / day
+  //   pro:      100 AI scans / day (soft cap, abuse guard)
+  //   pro_plus: unlimited (and active trial)
+  //   trial:    treated as pro_plus
   const checkPremiumLimit = (): boolean => {
-    if (profile.isPremium) return true;
-    if (profile.freeScansUsed >= 5) {
-      navigation.navigate('Paywall');
+    const result = canScan(3, 100);
+    if (!result.allowed) {
+      Alert.alert(
+        'Günlük Limit Doldu',
+        result.reason ?? 'Günlük AI tarama limitinize ulaştınız.',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Pro\'ya Geç', onPress: () => navigation.navigate('Paywall') },
+        ],
+      );
       return false;
     }
     return true;

@@ -60,6 +60,7 @@ const GOAL_OPTIONS: GoalOption[] = [
 
 export function OnboardingScreen(): React.JSX.Element {
   const completeOnboarding = useUserStore(s => s.completeOnboarding);
+  const startTrial = useUserStore(s => s.startTrial);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedGoal, setSelectedGoal] = useState<HealthGoal>(null);
@@ -116,7 +117,25 @@ export function OnboardingScreen(): React.JSX.Element {
   };
 
   const handleStartSubscription = () => {
-    // Pro Subscription logic
+    // Pro Subscription logic (this is a demo build — no real StoreKit call)
+    const dynamicGoals = getDynamicGoals();
+    completeOnboarding(
+      {
+        healthGoal: selectedGoal,
+        age: parseInt(age, 10),
+        height: parseInt(height, 10),
+        weight: parseInt(weight, 10),
+        gender: gender || 'other',
+        isPremium: true,
+        plan: 'pro',
+      },
+      dynamicGoals,
+    );
+    Alert.alert('Hoş Geldiniz!', 'HealthLens Pro üyeliğiniz başlatıldı ve sağlık planınız kuruldu.', [{ text: 'Tamam' }]);
+  };
+
+  const handleStartTrial = () => {
+    // 7-day Pro+ trial — full feature access, no charge
     const dynamicGoals = getDynamicGoals();
     completeOnboarding(
       {
@@ -129,11 +148,16 @@ export function OnboardingScreen(): React.JSX.Element {
       },
       dynamicGoals,
     );
-    Alert.alert('Hoş Geldiniz!', 'HealthLens Premium Pro üyeliğiniz başlatıldı ve sağlık planınız kuruldu.', [{ text: 'Tamam' }]);
+    startTrial(7);
+    Alert.alert(
+      '7 Gün Ücretsiz Deneme Başladı! 🎉',
+      'Pro+ özelliklerine 7 gün boyunca ücretsiz erişim kazandınız. İstediğiniz zaman iptal edebilirsiniz.',
+      [{ text: 'Başla' }],
+    );
   };
 
   const handleSkipToFree = () => {
-    // Free Scan Limit logic
+    // Free Scan Limit logic — 3/day
     const dynamicGoals = getDynamicGoals();
     completeOnboarding(
       {
@@ -143,6 +167,7 @@ export function OnboardingScreen(): React.JSX.Element {
         weight: parseInt(weight, 10),
         gender: gender || 'other',
         isPremium: false,
+        plan: 'free',
         freeScansUsed: 0,
       },
       dynamicGoals,
@@ -343,17 +368,35 @@ export function OnboardingScreen(): React.JSX.Element {
               Yapay zeka asistanı, klinik analiz notları ve limitsiz PDF diyetisyen raporları ile sağlığınızı koruyun.
             </Text>
 
-            {/* Premium Package Options */}
+            {/* 7-day trial CTA (primary) */}
+            <View style={styles.trialHeroCard}>
+              <View style={styles.trialBadgeTop}>
+                <Icon name="schedule" size={14} color={colors.primary} />
+                <Text style={styles.trialBadgeTopText}>7 GÜN ÜCRETSİZ</Text>
+              </View>
+              <Text style={styles.trialTitle}>Tüm Pro+ özelliklerini dene</Text>
+              <Text style={styles.trialSubtitle}>
+                Limitsiz AI analiz, klinik hedef alarmları, diyetisyen modu ve daha fazlası. Süre sonunda otomatik ücretlendirme yok.
+              </Text>
+              <TouchableOpacity style={styles.trialCtaButton} onPress={handleStartTrial}>
+                <Text style={styles.trialCtaText}>Şimdi Dene — ₺0</Text>
+                <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
+              </TouchableOpacity>
+              <Text style={styles.trialFineprint}>İstediğiniz an iptal edin. Ücretlendirme yok.</Text>
+            </View>
+
+            {/* Pricing cards (compact) */}
+            <Text style={styles.pricingHeader}>veya abonelikle başla</Text>
             <View style={styles.pricingContainer}>
               <TouchableOpacity
                 style={[styles.priceCard, selectedPackage === 'monthly' && styles.priceCardActive]}
                 onPress={() => setSelectedPackage('monthly')}
               >
                 <View style={styles.priceRow}>
-                  <Text style={styles.pricePeriod}>Klinik Pro — Aylık Plan</Text>
-                  <Text style={styles.priceValue}>$9.99 / ay</Text>
+                  <Text style={styles.pricePeriod}>Pro Aylık</Text>
+                  <Text style={styles.priceValue}>₺49.99 / ay</Text>
                 </View>
-                <Text style={styles.priceInfo}>Aylık otomatik yenilenir. İstediğiniz an iptal edebilirsiniz.</Text>
+                <Text style={styles.priceInfo}>İstediğiniz an iptal edebilirsiniz.</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -361,43 +404,27 @@ export function OnboardingScreen(): React.JSX.Element {
                 onPress={() => setSelectedPackage('yearly')}
               >
                 <View style={styles.badgeLabel}>
-                  <Text style={styles.badgeText}>3 GÜN ÜCRETSİZ</Text>
+                  <Text style={styles.badgeText}>%50 İNDİRİM</Text>
                 </View>
                 <View style={styles.priceRow}>
-                  <Text style={styles.pricePeriod}>Yıllık Plan (3 Gün Trial)</Text>
-                  <Text style={styles.priceValue}>$79.99 / yıl</Text>
+                  <Text style={styles.pricePeriod}>Pro Yıllık</Text>
+                  <Text style={styles.priceValue}>₺599.99 / yıl</Text>
                 </View>
-                <Text style={styles.priceInfo}>Deneme sonu ₺2400/yıl. İptal edilmezse yenilenir.</Text>
+                <Text style={styles.priceInfo}>Aylık ₺49.99 yerine yıllık ₺49.99/ay</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Pro Features Grid */}
-            <View style={styles.featuresPanel}>
-              <View style={styles.featureRow}>
-                <Icon name="center-focus-weak" size={22} color={colors.primary} style={styles.featureIcon} />
-                <View>
-                  <Text style={styles.featureHeader}>Yapay Zeka Görsel Analiz (Scan)</Text>
-                  <Text style={styles.featureSub}>Yemeğinizin fotoğrafından anında besin ve porsiyon teşhisi.</Text>
-                </View>
-              </View>
-
-              <View style={styles.featureRow}>
-                <Icon name="verified" size={22} color={colors.success} style={styles.featureIcon} />
-                <View>
-                  <Text style={styles.featureHeader}>Klinik Derecelendirme (A+ to D)</Text>
-                  <Text style={styles.featureSub}>Sağlık hedefinize özel tuz, şeker ve lif alarm katsayıları.</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Action Buttons */}
-            <TouchableOpacity style={styles.subscribeButton} onPress={handleStartSubscription}>
-              <Text style={styles.subscribeButtonText}>Premium Pro Üyeliği Başlat</Text>
-              <Icon name="payment" size={20} color={colors.onPrimary} />
-            </TouchableOpacity>
+            {selectedPackage === 'monthly' || selectedPackage === 'yearly' ? (
+              <TouchableOpacity style={styles.subscribeButton} onPress={handleStartSubscription}>
+                <Text style={styles.subscribeButtonText}>
+                  {selectedPackage === 'yearly' ? '₺599.99 / yıl Öde' : '₺49.99 / ay Öde'}
+                </Text>
+                <Icon name="payment" size={20} color={colors.onPrimary} />
+              </TouchableOpacity>
+            ) : null}
 
             <TouchableOpacity style={styles.skipLink} onPress={handleSkipToFree}>
-              <Text style={styles.skipLinkText}>Kısıtlı Sürümü Dene (5 Ücretsiz AI Tarama)</Text>
+              <Text style={styles.skipLinkText}>Kısıtlı Sürümle Devam Et (3 Ücretsiz AI Tarama)</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -757,5 +784,73 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  trialHeroCard: {
+    backgroundColor: withAlpha(colors.primary, 0.08),
+    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    position: 'relative',
+  },
+  trialBadgeTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: withAlpha(colors.primary, 0.2),
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: radii.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  trialBadgeTopText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: colors.primary,
+    letterSpacing: 0.5,
+  },
+  trialTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  trialSubtitle: {
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 17,
+    marginBottom: spacing.md,
+  },
+  trialCtaButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    paddingVertical: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  trialCtaText: {
+    color: colors.onPrimary,
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  trialFineprint: {
+    fontSize: 10,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  pricingHeader: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
   },
 });

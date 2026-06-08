@@ -21,6 +21,8 @@ describe('userStore actions', () => {
         unitSystem: 'metric',
         isFirstLaunch: true,
         isPremium: false,
+        plan: 'free',
+        trialEndsAt: null,
         freeScansUsed: 0,
         healthGoal: null,
         email: null,
@@ -47,6 +49,7 @@ describe('userStore actions', () => {
         email: 'test@example.com',
         loginMethod: 'apple',
         isPremium: true,
+        plan: 'pro',
         freeScansUsed: 3,
       },
     });
@@ -58,6 +61,8 @@ describe('userStore actions', () => {
     expect(updatedProfile.email).toBeNull();
     expect(updatedProfile.loginMethod).toBeNull();
     expect(updatedProfile.isPremium).toBe(false);
+    expect(updatedProfile.plan).toBe('free');
+    expect(updatedProfile.trialEndsAt).toBeNull();
     expect(updatedProfile.freeScansUsed).toBe(0);
   });
 
