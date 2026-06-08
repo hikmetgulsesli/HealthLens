@@ -22,8 +22,13 @@ interface ParsedItem {
 }
 const FORCE_MOCK = false; // Set to false to use the live Kimi Claude API!
 
+// We use Kimi (first-party) as primary and Gemini as opt-in fallback.
+// Gemini is a Google-backed third-party — we don't enable it by default
+// to keep economics in our favor. Set USE_GEMINI=true in .env to opt in.
+const USE_GEMINI = process.env.USE_GEMINI === 'true';
+
 let geminiClient: GoogleGenAI | null = null;
-if (!FORCE_MOCK && GEMINI_API_KEY) {
+if (!FORCE_MOCK && USE_GEMINI && GEMINI_API_KEY) {
   try {
     geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   } catch (err) {
