@@ -13,32 +13,54 @@
 		10546DBADA9AC071DC04BBEB /* libPods-HealthLens.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BD795E81D67592610CC8DAB0 /* libPods-HealthLens.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		164A9DA99E9D4470A8457EC0 /* HankenGrotesk-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A7578D58E9541628B9EF6AE /* HankenGrotesk-SemiBold.ttf */; };
+		204A90E0A45E7A970310F7A4 /* goal_weight.imageset in Resources */ = {isa = PBXBuildFile; fileRef = F2C3D3BEE806DCB93DD81941 /* goal_weight.imageset */; };
+		2474675E0C7C8888F6B11839 /* ai_scanning.imageset in Resources */ = {isa = PBXBuildFile; fileRef = CD89E0764612FCDB8259C7E3 /* ai_scanning.imageset */; };
 		3416FF7C893B4377B9C5D9C1 /* Inter-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C48B1E9001914AAEB9116199 /* Inter-Medium.ttf */; };
+		478181637A2507A33671B7B3 /* water_tracking.imageset in Resources */ = {isa = PBXBuildFile; fileRef = F744AF0556000432690C9EAE /* water_tracking.imageset */; };
+		490BD4AF8E7C51B587909BF2 /* splash_logo.imageset in Resources */ = {isa = PBXBuildFile; fileRef = 7DDFD1082E9FFFC2A2D4A0E9 /* splash_logo.imageset */; };
 		5054D63DFE1A4AC8B4F45506 /* HankenGrotesk-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 72D056F211BD4FD1922EDDBB /* HankenGrotesk-Bold.ttf */; };
+		5588E978A3714936D759B750 /* goal_hypertension.imageset in Resources */ = {isa = PBXBuildFile; fileRef = 37BD25A4FC5E76545DAD9910 /* goal_hypertension.imageset */; };
+		68082FB3CE617295217976B0 /* goal_gut_health.imageset in Resources */ = {isa = PBXBuildFile; fileRef = 443618247417B46BEBA3B017 /* goal_gut_health.imageset */; };
 		6CB558DCECACC74A2DDE33A9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		82883BAA9DFA475685BEE698 /* MaterialIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 035E1B29CDA642BF821CACBA /* MaterialIcons.ttf */; };
+		A931576243C02151E932BEDA /* empty_history.imageset in Resources */ = {isa = PBXBuildFile; fileRef = BD4E8EDB179BC2A81AFF96F1 /* empty_history.imageset */; };
+		B94F0D232B0CF892707ACB39 /* goal_diabetes.imageset in Resources */ = {isa = PBXBuildFile; fileRef = E201FAFD5FEDE128038A857B /* goal_diabetes.imageset */; };
+		CEE989FE3AA56458EAB3E528 /* grade_a_plus.imageset in Resources */ = {isa = PBXBuildFile; fileRef = 53A0DB319B8EC59EACCDEB50 /* grade_a_plus.imageset */; };
+		D2AE4535E194F27A2B80FACF /* app_icon_grade.imageset in Resources */ = {isa = PBXBuildFile; fileRef = 835E3B6D7F1C50B90387FE3C /* app_icon_grade.imageset */; };
+		E7865D65FB1F238FCE117B0A /* empty_plate.imageset in Resources */ = {isa = PBXBuildFile; fileRef = 04F76369A25FEA52A6DD741A /* empty_plate.imageset */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		035E1B29CDA642BF821CACBA /* MaterialIcons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = MaterialIcons.ttf; path = ../assets/fonts/MaterialIcons.ttf; sourceTree = "<group>"; };
+		04F76369A25FEA52A6DD741A /* empty_plate.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = empty_plate.imageset; path = Images.xcassets/empty_plate.imageset; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* HealthLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = HealthLens/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = HealthLens/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = HealthLens/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1A8D5740459E4183ACEF816A /* Inter-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Bold.ttf"; path = "../assets/fonts/Inter-Bold.ttf"; sourceTree = "<group>"; };
+		37BD25A4FC5E76545DAD9910 /* goal_hypertension.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = goal_hypertension.imageset; path = Images.xcassets/goal_hypertension.imageset; sourceTree = "<group>"; };
 		39DBF5D4B977F8D65D6FE8EB /* Pods-HealthLens.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HealthLens.release.xcconfig"; path = "Target Support Files/Pods-HealthLens/Pods-HealthLens.release.xcconfig"; sourceTree = "<group>"; };
+		443618247417B46BEBA3B017 /* goal_gut_health.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = goal_gut_health.imageset; path = Images.xcassets/goal_gut_health.imageset; sourceTree = "<group>"; };
+		53A0DB319B8EC59EACCDEB50 /* grade_a_plus.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = grade_a_plus.imageset; path = Images.xcassets/grade_a_plus.imageset; sourceTree = "<group>"; };
 		6A7578D58E9541628B9EF6AE /* HankenGrotesk-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "HankenGrotesk-SemiBold.ttf"; path = "../assets/fonts/HankenGrotesk-SemiBold.ttf"; sourceTree = "<group>"; };
 		72D056F211BD4FD1922EDDBB /* HankenGrotesk-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "HankenGrotesk-Bold.ttf"; path = "../assets/fonts/HankenGrotesk-Bold.ttf"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = HealthLens/AppDelegate.swift; sourceTree = "<group>"; };
+		7DDFD1082E9FFFC2A2D4A0E9 /* splash_logo.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = splash_logo.imageset; path = Images.xcassets/splash_logo.imageset; sourceTree = "<group>"; };
 		80FFD34536FE16FD1C03B920 /* Pods-HealthLens.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HealthLens.debug.xcconfig"; path = "Target Support Files/Pods-HealthLens/Pods-HealthLens.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = HealthLens/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		835E3B6D7F1C50B90387FE3C /* app_icon_grade.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = app_icon_grade.imageset; path = Images.xcassets/app_icon_grade.imageset; sourceTree = "<group>"; };
 		A484682468834B86B97D282A /* Inter-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Regular.ttf"; path = "../assets/fonts/Inter-Regular.ttf"; sourceTree = "<group>"; };
 		AF3456564CF2414C879EBFF5 /* MaterialCommunityIcons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = MaterialCommunityIcons.ttf; path = ../assets/fonts/MaterialCommunityIcons.ttf; sourceTree = "<group>"; };
+		BD4E8EDB179BC2A81AFF96F1 /* empty_history.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = empty_history.imageset; path = Images.xcassets/empty_history.imageset; sourceTree = "<group>"; };
 		BD795E81D67592610CC8DAB0 /* libPods-HealthLens.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-HealthLens.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C48B1E9001914AAEB9116199 /* Inter-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.ttf"; path = "../assets/fonts/Inter-Medium.ttf"; sourceTree = "<group>"; };
+		CD89E0764612FCDB8259C7E3 /* ai_scanning.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = ai_scanning.imageset; path = Images.xcassets/ai_scanning.imageset; sourceTree = "<group>"; };
+		E201FAFD5FEDE128038A857B /* goal_diabetes.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = goal_diabetes.imageset; path = Images.xcassets/goal_diabetes.imageset; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F2C3D3BEE806DCB93DD81941 /* goal_weight.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = goal_weight.imageset; path = Images.xcassets/goal_weight.imageset; sourceTree = "<group>"; };
+		F744AF0556000432690C9EAE /* water_tracking.imageset */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = water_tracking.imageset; path = Images.xcassets/water_tracking.imageset; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +83,17 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				04F76369A25FEA52A6DD741A /* empty_plate.imageset */,
+				BD4E8EDB179BC2A81AFF96F1 /* empty_history.imageset */,
+				CD89E0764612FCDB8259C7E3 /* ai_scanning.imageset */,
+				53A0DB319B8EC59EACCDEB50 /* grade_a_plus.imageset */,
+				F744AF0556000432690C9EAE /* water_tracking.imageset */,
+				37BD25A4FC5E76545DAD9910 /* goal_hypertension.imageset */,
+				E201FAFD5FEDE128038A857B /* goal_diabetes.imageset */,
+				443618247417B46BEBA3B017 /* goal_gut_health.imageset */,
+				F2C3D3BEE806DCB93DD81941 /* goal_weight.imageset */,
+				7DDFD1082E9FFFC2A2D4A0E9 /* splash_logo.imageset */,
+				835E3B6D7F1C50B90387FE3C /* app_icon_grade.imageset */,
 			);
 			name = HealthLens;
 			sourceTree = "<group>";
@@ -198,6 +231,17 @@
 				164A9DA99E9D4470A8457EC0 /* HankenGrotesk-SemiBold.ttf in Resources */,
 				05A323E090C94C01B08CA480 /* MaterialCommunityIcons.ttf in Resources */,
 				82883BAA9DFA475685BEE698 /* MaterialIcons.ttf in Resources */,
+				E7865D65FB1F238FCE117B0A /* empty_plate.imageset in Resources */,
+				A931576243C02151E932BEDA /* empty_history.imageset in Resources */,
+				2474675E0C7C8888F6B11839 /* ai_scanning.imageset in Resources */,
+				CEE989FE3AA56458EAB3E528 /* grade_a_plus.imageset in Resources */,
+				478181637A2507A33671B7B3 /* water_tracking.imageset in Resources */,
+				5588E978A3714936D759B750 /* goal_hypertension.imageset in Resources */,
+				B94F0D232B0CF892707ACB39 /* goal_diabetes.imageset in Resources */,
+				68082FB3CE617295217976B0 /* goal_gut_health.imageset in Resources */,
+				204A90E0A45E7A970310F7A4 /* goal_weight.imageset in Resources */,
+				490BD4AF8E7C51B587909BF2 /* splash_logo.imageset in Resources */,
+				D2AE4535E194F27A2B80FACF /* app_icon_grade.imageset in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

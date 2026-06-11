@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   StatusBar,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -16,6 +17,7 @@ import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
 import { fontFamily } from '../theme/typography';
 import { useUserStore } from '../stores/userStore';
+import { Illustrations } from '../assets/illustrations';
 import type { HealthGoal } from '../types';
 
 
@@ -25,6 +27,7 @@ interface GoalOption {
   title: string;
   description: string;
   color: string;
+  image: any;
 }
 
 const GOAL_OPTIONS: GoalOption[] = [
@@ -34,6 +37,7 @@ const GOAL_OPTIONS: GoalOption[] = [
     title: 'Tansiyon & Kalp Sağlığı',
     description: 'Sodyum kısıtlamasıyla tansiyon dengesini koruyun.',
     color: '#EF4444',
+    image: Illustrations.goalHypertension,
   },
   {
     id: 'diabetes',
@@ -41,6 +45,7 @@ const GOAL_OPTIONS: GoalOption[] = [
     title: 'Kan Şekeri Kontrolü',
     description: 'Şeker ve karbonhidratı kısıtlayarak glisemik yükü azaltın.',
     color: '#FB923C',
+    image: Illustrations.goalDiabetes,
   },
   {
     id: 'gut_health',
@@ -48,6 +53,7 @@ const GOAL_OPTIONS: GoalOption[] = [
     title: 'Sindirim & Bağırsak Sağlığı',
     description: 'Yüksek lifli prebiyotik oranlarıyla şişkinliği önleyin.',
     color: '#22C55E',
+    image: Illustrations.goalGutHealth,
   },
   {
     id: 'weight_management',
@@ -55,6 +61,7 @@ const GOAL_OPTIONS: GoalOption[] = [
     title: 'Kilo Yönetimi & Kas Sağlığı',
     description: 'Kalori dengesini koruyarak kas kütlenizi artırın.',
     color: '#14B8A6',
+    image: Illustrations.goalWeight,
   },
 ];
 
@@ -230,7 +237,11 @@ export function OnboardingScreen(): React.JSX.Element {
                     onPress={() => setSelectedGoal(opt.id)}
                   >
                     <View style={[styles.iconWrapper, { backgroundColor: withAlpha(opt.color, 0.15) }]}>
-                      <Icon name={opt.icon} size={28} color={opt.color} />
+                      <Image
+                        source={opt.image}
+                        style={styles.goalImage}
+                        resizeMode="contain"
+                      />
                     </View>
                     <View style={styles.goalInfo}>
                       <Text style={styles.goalTitle}>{opt.title}</Text>
@@ -506,6 +517,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  goalImage: {
+    width: 44,
+    height: 44,
   },
   goalInfo: {
     flex: 1,
