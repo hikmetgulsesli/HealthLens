@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import type { ImageSourcePropType } from 'react-native';
 import { colors, withAlpha } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
@@ -20,14 +21,13 @@ import { useUserStore } from '../stores/userStore';
 import { Illustrations } from '../assets/illustrations';
 import type { HealthGoal } from '../types';
 
-
 interface GoalOption {
   id: HealthGoal;
   icon: string;
   title: string;
   description: string;
   color: string;
-  image: any;
+  image: ImageSourcePropType;
 }
 
 const GOAL_OPTIONS: GoalOption[] = [
@@ -71,19 +71,26 @@ export function OnboardingScreen(): React.JSX.Element {
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedGoal, setSelectedGoal] = useState<HealthGoal>(null);
-  
+
   // Stats
   const [age, setAge] = useState('');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(null);
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(
+    null,
+  );
 
   // Paywall Option
-  const [selectedPackage, setSelectedPackage] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedPackage, setSelectedPackage] = useState<'monthly' | 'yearly'>(
+    'monthly',
+  );
 
   const handleNextFromGoal = () => {
     if (!selectedGoal) {
-      Alert.alert('Hedef Seçin', 'Lütfen devam etmeden önce bir sağlık odağı seçin.');
+      Alert.alert(
+        'Hedef Seçin',
+        'Lütfen devam etmeden önce bir sağlık odağı seçin.',
+      );
       return;
     }
     setStep(2);
@@ -138,7 +145,11 @@ export function OnboardingScreen(): React.JSX.Element {
       },
       dynamicGoals,
     );
-    Alert.alert('Hoş Geldiniz!', 'HealthLens Pro üyeliğiniz başlatıldı ve sağlık planınız kuruldu.', [{ text: 'Tamam' }]);
+    Alert.alert(
+      'Hoş Geldiniz!',
+      'HealthLens Pro üyeliğiniz başlatıldı ve sağlık planınız kuruldu.',
+      [{ text: 'Tamam' }],
+    );
   };
 
   const handleStartTrial = () => {
@@ -175,11 +186,16 @@ export function OnboardingScreen(): React.JSX.Element {
         gender: gender || 'other',
         isPremium: false,
         plan: 'free',
+        freeScansDateKey: new Date().toISOString().split('T')[0],
         freeScansUsed: 0,
       },
       dynamicGoals,
     );
-    Alert.alert('Hoş Geldiniz!', 'Ücretsiz sürüm 5 tarama hakkınızla aktif edildi.', [{ text: 'Tamam' }]);
+    Alert.alert(
+      'Hoş Geldiniz!',
+      'Ücretsiz sürüm günlük 3 tarama hakkınızla aktif edildi.',
+      [{ text: 'Tamam' }],
+    );
   };
 
   const getDynamicGoals = () => {
@@ -199,7 +215,7 @@ export function OnboardingScreen(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      
+
       {/* Upper Navigation Indicator */}
       <View style={styles.topBar}>
         <View style={styles.indicatorContainer}>
@@ -221,7 +237,8 @@ export function OnboardingScreen(): React.JSX.Element {
           <View style={styles.stepContainer}>
             <Text style={styles.title}>Sağlık Odağınız Nedir?</Text>
             <Text style={styles.subtitle}>
-              Sizin için oluşturulacak klinik diyet puanlamasını ve alarm kısıtlarını bu seçime göre kalibre edeceğiz.
+              Sizin için oluşturulacak klinik diyet puanlamasını ve alarm
+              kısıtlarını bu seçime göre kalibre edeceğiz.
             </Text>
 
             <View style={styles.optionsList}>
@@ -232,11 +249,19 @@ export function OnboardingScreen(): React.JSX.Element {
                     key={opt.id}
                     style={[
                       styles.goalCard,
-                      isSelected && { borderColor: opt.color, backgroundColor: withAlpha(opt.color, 0.08) },
+                      isSelected && {
+                        borderColor: opt.color,
+                        backgroundColor: withAlpha(opt.color, 0.08),
+                      },
                     ]}
                     onPress={() => setSelectedGoal(opt.id)}
                   >
-                    <View style={[styles.iconWrapper, { backgroundColor: withAlpha(opt.color, 0.15) }]}>
+                    <View
+                      style={[
+                        styles.iconWrapper,
+                        { backgroundColor: withAlpha(opt.color, 0.15) },
+                      ]}
+                    >
                       <Image
                         source={opt.image}
                         style={styles.goalImage}
@@ -252,7 +277,10 @@ export function OnboardingScreen(): React.JSX.Element {
               })}
             </View>
 
-            <TouchableOpacity style={styles.nextButton} onPress={handleNextFromGoal}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNextFromGoal}
+            >
               <Text style={styles.nextButtonText}>Devam Et</Text>
               <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
             </TouchableOpacity>
@@ -263,7 +291,8 @@ export function OnboardingScreen(): React.JSX.Element {
           <View style={styles.stepContainer}>
             <Text style={styles.title}>Kendinizden Bahsedin</Text>
             <Text style={styles.subtitle}>
-              Günlük kalori ve makro limitlerinizi tam hesaplayabilmek için fizyolojik verilerinizi alıyoruz.
+              Günlük kalori ve makro limitlerinizi tam hesaplayabilmek için
+              fizyolojik verilerinizi alıyoruz.
             </Text>
 
             <View style={styles.formContainer}>
@@ -300,15 +329,24 @@ export function OnboardingScreen(): React.JSX.Element {
               <Text style={styles.inputLabel}>Cinsiyet</Text>
               <View style={styles.genderRow}>
                 {(['male', 'female', 'other'] as const).map(g => {
-                  const label = g === 'male' ? 'Erkek' : g === 'female' ? 'Kadın' : 'Diğer';
+                  const label =
+                    g === 'male' ? 'Erkek' : g === 'female' ? 'Kadın' : 'Diğer';
                   const isSel = gender === g;
                   return (
                     <TouchableOpacity
                       key={g}
-                      style={[styles.genderButton, isSel && styles.genderButtonActive]}
+                      style={[
+                        styles.genderButton,
+                        isSel && styles.genderButtonActive,
+                      ]}
                       onPress={() => setGender(g)}
                     >
-                      <Text style={[styles.genderText, isSel && styles.genderTextActive]}>
+                      <Text
+                        style={[
+                          styles.genderText,
+                          isSel && styles.genderTextActive,
+                        ]}
+                      >
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -318,11 +356,17 @@ export function OnboardingScreen(): React.JSX.Element {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setStep(1)}
+              >
                 <Icon name="arrow-back" size={20} color={colors.onSurface} />
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.nextButton, styles.flexButton]} onPress={handleNextFromStats}>
+              <TouchableOpacity
+                style={[styles.nextButton, styles.flexButton]}
+                onPress={handleNextFromStats}
+              >
                 <Text style={styles.nextButtonText}>Profili Analiz Et</Text>
                 <Icon name="psychology" size={22} color={colors.onPrimary} />
               </TouchableOpacity>
@@ -334,37 +378,65 @@ export function OnboardingScreen(): React.JSX.Element {
           <View style={styles.stepContainer}>
             <Text style={styles.title}>Klinik Başarı Projeksiyonu</Text>
             <Text style={styles.subtitle}>
-              HealthLens veri motoru, verdiğiniz bilgilere göre iyileşme ve hedefe ulaşma takviminizi modelledi:
+              HealthLens veri motoru, verdiğiniz bilgilere göre iyileşme ve
+              hedefe ulaşma takviminizi modelledi:
             </Text>
 
             <View style={styles.glassProjectionCard}>
               <Text style={styles.projTitle}>Öngörülen Başarı Takvimi</Text>
               <Text style={styles.projDate}>{calculateSuccessDate()}</Text>
-              <Text style={styles.projHighlight}>8 Hafta İçinde Dengelenme Hedefi</Text>
-              
+              <Text style={styles.projHighlight}>
+                8 Hafta İçinde Dengelenme Hedefi
+              </Text>
+
               <View style={styles.adviceBubble}>
-                <Icon name="lightbulb" size={20} color={colors.primary} style={styles.adviceIcon} />
+                <Icon
+                  name="lightbulb"
+                  size={20}
+                  color={colors.primary}
+                  style={styles.adviceIcon}
+                />
                 <Text style={styles.adviceText}>{getDynamicAdvice()}</Text>
               </View>
             </View>
 
             <View style={styles.bulletsList}>
               <View style={styles.bulletItem}>
-                <Icon name="check-circle" size={18} color={colors.success} style={styles.bulletIcon} />
-                <Text style={styles.bulletText}>Klinik derecelendirme puanlamaları kuruldu.</Text>
+                <Icon
+                  name="check-circle"
+                  size={18}
+                  color={colors.success}
+                  style={styles.bulletIcon}
+                />
+                <Text style={styles.bulletText}>
+                  Klinik derecelendirme puanlamaları kuruldu.
+                </Text>
               </View>
               <View style={styles.bulletItem}>
-                <Icon name="check-circle" size={18} color={colors.success} style={styles.bulletIcon} />
-                <Text style={styles.bulletText}>Tuz, şeker ve lif alarm limitleri kilitlendi.</Text>
+                <Icon
+                  name="check-circle"
+                  size={18}
+                  color={colors.success}
+                  style={styles.bulletIcon}
+                />
+                <Text style={styles.bulletText}>
+                  Tuz, şeker ve lif alarm limitleri kilitlendi.
+                </Text>
               </View>
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.backButton} onPress={() => setStep(2)}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setStep(2)}
+              >
                 <Icon name="arrow-back" size={20} color={colors.onSurface} />
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.nextButton, styles.flexButton]} onPress={() => setStep(4)}>
+              <TouchableOpacity
+                style={[styles.nextButton, styles.flexButton]}
+                onPress={() => setStep(4)}
+              >
                 <Text style={styles.nextButtonText}>Planı Etkinleştir</Text>
                 <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
@@ -376,7 +448,8 @@ export function OnboardingScreen(): React.JSX.Element {
           <View style={styles.stepContainer}>
             <Text style={styles.title}>HealthLens Pro</Text>
             <Text style={styles.subtitle}>
-              Yapay zeka asistanı, klinik analiz notları ve limitsiz PDF diyetisyen raporları ile sağlığınızı koruyun.
+              Yapay zeka asistanı, klinik analiz notları ve limitsiz PDF
+              diyetisyen raporları ile sağlığınızı koruyun.
             </Text>
 
             {/* 7-day trial CTA (primary) */}
@@ -387,31 +460,45 @@ export function OnboardingScreen(): React.JSX.Element {
               </View>
               <Text style={styles.trialTitle}>Tüm Pro+ özelliklerini dene</Text>
               <Text style={styles.trialSubtitle}>
-                Limitsiz AI analiz, klinik hedef alarmları, diyetisyen modu ve daha fazlası. Süre sonunda otomatik ücretlendirme yok.
+                Limitsiz AI analiz, klinik hedef alarmları, diyetisyen modu ve
+                daha fazlası. Süre sonunda otomatik ücretlendirme yok.
               </Text>
-              <TouchableOpacity style={styles.trialCtaButton} onPress={handleStartTrial}>
+              <TouchableOpacity
+                style={styles.trialCtaButton}
+                onPress={handleStartTrial}
+              >
                 <Text style={styles.trialCtaText}>Şimdi Dene — ₺0</Text>
                 <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
-              <Text style={styles.trialFineprint}>İstediğiniz an iptal edin. Ücretlendirme yok.</Text>
+              <Text style={styles.trialFineprint}>
+                İstediğiniz an iptal edin. Ücretlendirme yok.
+              </Text>
             </View>
 
             {/* Pricing cards (compact) */}
             <Text style={styles.pricingHeader}>veya abonelikle başla</Text>
             <View style={styles.pricingContainer}>
               <TouchableOpacity
-                style={[styles.priceCard, selectedPackage === 'monthly' && styles.priceCardActive]}
+                style={[
+                  styles.priceCard,
+                  selectedPackage === 'monthly' && styles.priceCardActive,
+                ]}
                 onPress={() => setSelectedPackage('monthly')}
               >
                 <View style={styles.priceRow}>
                   <Text style={styles.pricePeriod}>Pro Aylık</Text>
                   <Text style={styles.priceValue}>₺49.99 / ay</Text>
                 </View>
-                <Text style={styles.priceInfo}>İstediğiniz an iptal edebilirsiniz.</Text>
+                <Text style={styles.priceInfo}>
+                  İstediğiniz an iptal edebilirsiniz.
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.priceCard, selectedPackage === 'yearly' && styles.priceCardActive]}
+                style={[
+                  styles.priceCard,
+                  selectedPackage === 'yearly' && styles.priceCardActive,
+                ]}
                 onPress={() => setSelectedPackage('yearly')}
               >
                 <View style={styles.badgeLabel}>
@@ -421,21 +508,33 @@ export function OnboardingScreen(): React.JSX.Element {
                   <Text style={styles.pricePeriod}>Pro Yıllık</Text>
                   <Text style={styles.priceValue}>₺599.99 / yıl</Text>
                 </View>
-                <Text style={styles.priceInfo}>Aylık ₺49.99 yerine yıllık ₺49.99/ay</Text>
+                <Text style={styles.priceInfo}>
+                  Aylık ₺49.99 yerine yıllık ₺49.99/ay
+                </Text>
               </TouchableOpacity>
             </View>
 
             {selectedPackage === 'monthly' || selectedPackage === 'yearly' ? (
-              <TouchableOpacity style={styles.subscribeButton} onPress={handleStartSubscription}>
+              <TouchableOpacity
+                style={styles.subscribeButton}
+                onPress={handleStartSubscription}
+              >
                 <Text style={styles.subscribeButtonText}>
-                  {selectedPackage === 'yearly' ? '₺599.99 / yıl Öde' : '₺49.99 / ay Öde'}
+                  {selectedPackage === 'yearly'
+                    ? '₺599.99 / yıl Öde'
+                    : '₺49.99 / ay Öde'}
                 </Text>
                 <Icon name="payment" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
             ) : null}
 
-            <TouchableOpacity style={styles.skipLink} onPress={handleSkipToFree}>
-              <Text style={styles.skipLinkText}>Kısıtlı Sürümle Devam Et (3 Ücretsiz AI Tarama)</Text>
+            <TouchableOpacity
+              style={styles.skipLink}
+              onPress={handleSkipToFree}
+            >
+              <Text style={styles.skipLinkText}>
+                Kısıtlı Sürümle Devam Et (3 Ücretsiz AI Tarama)
+              </Text>
             </TouchableOpacity>
           </View>
         )}

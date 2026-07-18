@@ -16,70 +16,8 @@ import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
 import { fontFamily } from '../theme/typography';
 import { useUserStore } from '../stores/userStore';
-
-type PlanTier = 'free' | 'pro' | 'pro_plus';
-type Period = 'monthly' | 'yearly';
-
-interface PlanDef {
-  tier: PlanTier;
-  displayName: string;
-  tagline: string;
-  monthlyCents: number;
-  yearlyCents: number;
-  dailyAiQuota: number; // -1 = unlimited
-  features: { icon: string; title: string; sub: string }[];
-  isPopular?: boolean;
-}
-
-const PLANS: PlanDef[] = [
-  {
-    tier: 'free',
-    displayName: 'Ücretsiz',
-    tagline: 'Başlamak için ideal',
-    monthlyCents: 0,
-    yearlyCents: 0,
-    dailyAiQuota: 3,
-    features: [
-      { icon: 'photo-camera', title: '3 AI tarama / gün', sub: 'Klinik besin analizi, porsiyon tespiti' },
-      { icon: 'insights', title: 'Temel makro takibi', sub: 'Kalori, protein, karb, yağ' },
-      { icon: 'water-drop', title: 'Su tüketimi', sub: 'Dalga animasyonlu günlük hedef' },
-      { icon: 'history', title: '7 günlük geçmiş', sub: 'Geçmiş öğünlere erişim' },
-    ],
-  },
-  {
-    tier: 'pro',
-    displayName: 'Pro',
-    tagline: 'Ciddi sağlık takibi için',
-    monthlyCents: 499,   // $4.99
-    yearlyCents: 5999,   // $59.99
-    dailyAiQuota: 100,
-    features: [
-      { icon: 'all-inclusive', title: 'Sınırsız AI tarama', sub: 'Multi-AI ensemble ile doğruluk' },
-      { icon: 'health-and-safety', title: 'Klinik hedef alarmları', sub: 'Tansiyon, diyabet, bağırsak için özel' },
-      { icon: 'grade', title: 'A+ → D puanlama', sub: 'Her yemeğe klinik sağlık notu' },
-      { icon: 'cloud-sync', title: 'Bulut senkronizasyon', sub: 'Tüm cihazlarda verilerin' },
-      { icon: 'picture-as-pdf', title: 'PDF diyetisyen raporu', sub: '7/30 günlük resmi çıktı' },
-      { icon: 'history', title: 'Sınırsız geçmiş', sub: 'Tüm öğünlerini ara' },
-    ],
-    isPopular: true,
-  },
-  {
-    tier: 'pro_plus',
-    displayName: 'Pro+',
-    tagline: 'Profesyoneller için',
-    monthlyCents: 999,    // $9.99
-    yearlyCents: 11999,   // $119.99
-    dailyAiQuota: -1,
-    features: [
-      { icon: 'workspace-premium', title: 'Pro\'nun tüm özellikleri', sub: 'Sınırsız AI, klinik alarm, sync' },
-      { icon: 'medical-services', title: 'Diyetisyen modu', sub: 'Hedef bazlı profesyonel planlama' },
-      { icon: 'bolt', title: 'Öncelikli AI işleme', sub: 'Ortalama 2 sn analiz' },
-      { icon: 'notifications-active', title: 'Push bildirimler', sub: 'Su hatırlatıcı, öğün hatırlatıcı' },
-      { icon: 'show-chart', title: 'Gelişmiş 90 günlük trendler', sub: 'Uzun dönem analiz' },
-      { icon: 'support-agent', title: 'Öncelikli destek', sub: '7/24 yanıt garantisi' },
-    ],
-  },
-];
+import type { PlanTier } from '../types';
+import { PLANS, type PlanDef, type Period } from '../config/plans';
 
 const formatPrice = (cents: number): string => {
   if (cents === 0) return '₺0';
@@ -106,15 +44,20 @@ export function PaywallScreen(): React.JSX.Element {
   const [selectedTier, setSelectedTier] = useState<PlanTier>('pro');
   const [isStartingTrial, setIsStartingTrial] = useState(false);
 
-  const hasExhaustedFree = !profile.isPremium && profile.freeScansUsed >= 5;
-  const isInTrial = !!profile.trialEndsAt && new Date(profile.trialEndsAt) > new Date();
+  const todayKey = new Date().toISOString().split('T')[0];
+  const scansUsedToday =
+    profile.freeScansDateKey === todayKey ? profile.freeScansUsed : 0;
+  const hasExhaustedFree = !profile.isPremium && scansUsedToday >= 3;
+  const isInTrial =
+    !!profile.trialEndsAt && new Date(profile.trialEndsAt) > new Date();
 
   const selectedPlan = PLANS.find(p => p.tier === selectedTier)!;
 
   const handleSubscribe = () => {
-    const priceLabel = selectedPeriod === 'yearly'
-      ? `${formatPrice(selectedPlan.yearlyCents)}/yıl`
-      : `${formatPrice(selectedPlan.monthlyCents)}/ay`;
+    const priceLabel =
+      selectedPeriod === 'yearly'
+        ? `${formatPrice(selectedPlan.yearlyCents)}/yıl`
+        : `${formatPrice(selectedPlan.monthlyCents)}/ay`;
 
     Alert.alert(
       'Satın Alma Onayı',
@@ -131,8 +74,15 @@ export function PaywallScreen(): React.JSX.Element {
             });
             Alert.alert(
               'Hoş Geldiniz!',
-              `${selectedPlan.displayName} üyeliğiniz başarıyla aktif edildi. ${selectedPeriod === 'yearly' ? 'Yıllık' : 'Aylık'} fatura dönemi başladı.`,
-              [{ text: 'Harika', onPress: () => navigation.canGoBack() && navigation.goBack() }],
+              `${selectedPlan.displayName} üyeliğiniz başarıyla aktif edildi. ${
+                selectedPeriod === 'yearly' ? 'Yıllık' : 'Aylık'
+              } fatura dönemi başladı.`,
+              [
+                {
+                  text: 'Harika',
+                  onPress: () => navigation.canGoBack() && navigation.goBack(),
+                },
+              ],
             );
           },
         },
@@ -145,7 +95,9 @@ export function PaywallScreen(): React.JSX.Element {
     try {
       // 7 gün Pro+ trial — backend'e trial başlatma isteği atılır (prod'da)
       // Burada local state'i güncelliyoruz; backend bağlandığında API call yapılacak
-      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const trialEndsAt = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       setProfile({
         isPremium: true,
         plan: 'pro_plus',
@@ -153,8 +105,17 @@ export function PaywallScreen(): React.JSX.Element {
       });
       Alert.alert(
         '7 Gün Ücretsiz Deneme Başladı!',
-        `Pro+ özelliklerine 7 gün boyunca ücretsiz erişim kazandınız. ${new Date(trialEndsAt).toLocaleDateString('tr-TR')} tarihinden sonra otomatik ücretlendirme yapılmaz. İstediğiniz zaman iptal edebilirsiniz.`,
-        [{ text: 'Başla', onPress: () => navigation.canGoBack() && navigation.goBack() }],
+        `Pro+ özelliklerine 7 gün boyunca ücretsiz erişim kazandınız. ${new Date(
+          trialEndsAt,
+        ).toLocaleDateString(
+          'tr-TR',
+        )} tarihinden sonra otomatik ücretlendirme yapılmaz. İstediğiniz zaman iptal edebilirsiniz.`,
+        [
+          {
+            text: 'Başla',
+            onPress: () => navigation.canGoBack() && navigation.goBack(),
+          },
+        ],
       );
     } catch {
       Alert.alert('Hata', 'Deneme başlatılamadı. Lütfen tekrar deneyin.');
@@ -164,7 +125,10 @@ export function PaywallScreen(): React.JSX.Element {
   };
 
   const handleRestore = () => {
-    Alert.alert('Bilgi', 'Satın alımlarınız kontrol ediliyor. Daha önce alınmış bir Premium üyelik bulunamadı.');
+    Alert.alert(
+      'Bilgi',
+      'Satın alımlarınız kontrol ediliyor. Daha önce alınmış bir Premium üyelik bulunamadı.',
+    );
   };
 
   const handleManualFallback = () => {
@@ -180,7 +144,10 @@ export function PaywallScreen(): React.JSX.Element {
       {/* Header bar */}
       <View style={styles.header}>
         {navigation.canGoBack() && !hasExhaustedFree && (
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => navigation.goBack()}
+          >
             <Icon name="close" size={24} color={colors.onSurface} />
           </TouchableOpacity>
         )}
@@ -190,7 +157,10 @@ export function PaywallScreen(): React.JSX.Element {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero section */}
         <View style={styles.heroContainer}>
           <View style={styles.glowingOrb} />
@@ -200,23 +170,31 @@ export function PaywallScreen(): React.JSX.Element {
 
           {hasExhaustedFree ? (
             <>
-              <Text style={styles.heroTitle}>Ücretsiz Tarama Hakkınız Doldu</Text>
+              <Text style={styles.heroTitle}>
+                Ücretsiz Tarama Hakkınız Doldu
+              </Text>
               <Text style={styles.heroDesc}>
-                Tabağınızın fotoğrafından sodyum, şeker ve lif oranlarını anında tespit eden yapay zeka analizi için 5 adet ücretsiz deneme hakkınızı tamamladınız.
+                Tabağınızın fotoğrafından sodyum, şeker ve lif oranlarını anında
+                tespit eden yapay zeka analizi için 3 adet ücretsiz deneme
+                hakkınızı tamamladınız.
               </Text>
             </>
           ) : isInTrial ? (
             <>
               <Text style={styles.heroTitle}>Deneme Süreniz Aktif</Text>
               <Text style={styles.heroDesc}>
-                {new Date(profile.trialEndsAt!).toLocaleDateString('tr-TR')} tarihine kadar Pro+ özelliklerini ücretsiz kullanıyorsunuz.
+                {new Date(profile.trialEndsAt!).toLocaleDateString('tr-TR')}{' '}
+                tarihine kadar Pro+ özelliklerini ücretsiz kullanıyorsunuz.
               </Text>
             </>
           ) : (
             <>
-              <Text style={styles.heroTitle}>Sağlığınızı Sınırsız Takip Edin</Text>
+              <Text style={styles.heroTitle}>
+                Sağlığınızı Sınırsız Takip Edin
+              </Text>
               <Text style={styles.heroDesc}>
-                Klinik puanlama, gıda sağlık dereceleri ve limitsiz yapay zeka tabağı analizlerine anında erişin.
+                Klinik puanlama, gıda sağlık dereceleri ve limitsiz yapay zeka
+                tabağı analizlerine anında erişin.
               </Text>
             </>
           )}
@@ -225,18 +203,34 @@ export function PaywallScreen(): React.JSX.Element {
         {/* Period toggle: Monthly / Yearly */}
         <View style={styles.periodToggle}>
           <TouchableOpacity
-            style={[styles.periodOption, selectedPeriod === 'monthly' && styles.periodOptionActive]}
+            style={[
+              styles.periodOption,
+              selectedPeriod === 'monthly' && styles.periodOptionActive,
+            ]}
             onPress={() => setSelectedPeriod('monthly')}
           >
-            <Text style={[styles.periodOptionText, selectedPeriod === 'monthly' && styles.periodOptionTextActive]}>
+            <Text
+              style={[
+                styles.periodOptionText,
+                selectedPeriod === 'monthly' && styles.periodOptionTextActive,
+              ]}
+            >
               Aylık
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.periodOption, selectedPeriod === 'yearly' && styles.periodOptionActive]}
+            style={[
+              styles.periodOption,
+              selectedPeriod === 'yearly' && styles.periodOptionActive,
+            ]}
             onPress={() => setSelectedPeriod('yearly')}
           >
-            <Text style={[styles.periodOptionText, selectedPeriod === 'yearly' && styles.periodOptionTextActive]}>
+            <Text
+              style={[
+                styles.periodOptionText,
+                selectedPeriod === 'yearly' && styles.periodOptionTextActive,
+              ]}
+            >
               Yıllık
             </Text>
             <View style={styles.discountBadge}>
@@ -282,7 +276,12 @@ export function PaywallScreen(): React.JSX.Element {
 
                 <View style={styles.planHeader}>
                   <View>
-                    <Text style={[styles.planName, isSelected && styles.planNameSelected]}>
+                    <Text
+                      style={[
+                        styles.planName,
+                        isSelected && styles.planNameSelected,
+                      ]}
+                    >
                       {plan.displayName}
                     </Text>
                     <Text style={styles.planTagline}>{plan.tagline}</Text>
@@ -295,17 +294,24 @@ export function PaywallScreen(): React.JSX.Element {
                 </View>
 
                 <View style={styles.priceContainer}>
-                  <Text style={[styles.planPrice, isSelected && styles.planPriceSelected]}>
+                  <Text
+                    style={[
+                      styles.planPrice,
+                      isSelected && styles.planPriceSelected,
+                    ]}
+                  >
                     {priceLabel}
                   </Text>
                   {fullLabel !== '' && (
                     <Text style={styles.planPriceFull}>{fullLabel}</Text>
                   )}
-                  {plan.tier !== 'free' && selectedPeriod === 'yearly' && discount > 0 && (
-                    <Text style={styles.planDiscount}>
-                      Yıllık %{discount} indirim
-                    </Text>
-                  )}
+                  {plan.tier !== 'free' &&
+                    selectedPeriod === 'yearly' &&
+                    discount > 0 && (
+                      <Text style={styles.planDiscount}>
+                        Yıllık %{discount} indirim
+                      </Text>
+                    )}
                 </View>
 
                 {plan.tier === 'free' ? (
@@ -314,7 +320,10 @@ export function PaywallScreen(): React.JSX.Element {
                   </Text>
                 ) : (
                   <Text style={styles.planQuota}>
-                    {plan.dailyAiQuota === -1 ? 'Sınırsız' : `${plan.dailyAiQuota}`} AI tarama / gün
+                    {plan.dailyAiQuota === -1
+                      ? 'Sınırsız'
+                      : `${plan.dailyAiQuota}`}{' '}
+                    AI tarama / gün
                   </Text>
                 )}
               </TouchableOpacity>
@@ -331,7 +340,7 @@ export function PaywallScreen(): React.JSX.Element {
           {selectedPlan.features.map((f, i) => (
             <View key={i} style={styles.featureItem}>
               <View style={styles.featureIconContainer}>
-                <Icon name={f.icon as any} size={18} color={colors.primary} />
+                <Icon name={f.icon} size={18} color={colors.primary} />
               </View>
               <View style={styles.featureInfo}>
                 <Text style={styles.featureTitle}>{f.title}</Text>
@@ -360,9 +369,12 @@ export function PaywallScreen(): React.JSX.Element {
         <TouchableOpacity
           style={[
             styles.subscribeButton,
-            (selectedTier === 'free' || isStartingTrial) && styles.subscribeButtonDisabled,
+            (selectedTier === 'free' || isStartingTrial) &&
+              styles.subscribeButtonDisabled,
           ]}
-          onPress={selectedTier === 'free' ? handleManualFallback : handleSubscribe}
+          onPress={
+            selectedTier === 'free' ? handleManualFallback : handleSubscribe
+          }
           activeOpacity={0.8}
         >
           <Text style={styles.subscribeButtonText}>
@@ -379,15 +391,31 @@ export function PaywallScreen(): React.JSX.Element {
 
         {/* Fine print */}
         <Text style={styles.footerLegal}>
-          Abonelik bedeli iTunes hesabınızdan tahsil edilecektir. Yenileme tarihi gelmeden 24 saat önce iptal edilmediği sürece abonelikler otomatik olarak yenilenir.
+          Abonelik bedeli iTunes hesabınızdan tahsil edilecektir. Yenileme
+          tarihi gelmeden 24 saat önce iptal edilmediği sürece abonelikler
+          otomatik olarak yenilenir.
         </Text>
 
         <View style={styles.legalLinksRow}>
-          <TouchableOpacity onPress={() => Alert.alert('Kullanım Koşulları', 'HealthLens Standart Apple Kullanım Şartları (EULA) kurallarına tabidir.')}>
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert(
+                'Kullanım Koşulları',
+                'HealthLens Standart Apple Kullanım Şartları (EULA) kurallarına tabidir.',
+              )
+            }
+          >
             <Text style={styles.legalLink}>Kullanım Koşulları (EULA)</Text>
           </TouchableOpacity>
           <Text style={styles.legalBullet}>•</Text>
-          <TouchableOpacity onPress={() => Alert.alert('Gizlilik Politikası', 'Sağlık verileriniz yerel cihazınızda saklanmakta olup üçüncü şahıslarla paylaşılmaz.')}>
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert(
+                'Gizlilik Politikası',
+                'Sağlık verileriniz yerel cihazınızda saklanmakta olup üçüncü şahıslarla paylaşılmaz.',
+              )
+            }
+          >
             <Text style={styles.legalLink}>Gizlilik Politikası</Text>
           </TouchableOpacity>
         </View>

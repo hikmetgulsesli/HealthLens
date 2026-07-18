@@ -27,7 +27,10 @@ import { Share } from 'react-native';
 export function ProfileScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const profile = useUserStore(s => s.profile);
-  const remainingScans = Math.max(0, 5 - profile.freeScansUsed);
+  const todayKey = new Date().toISOString().split('T')[0];
+  const scansUsedToday =
+    profile.freeScansDateKey === todayKey ? profile.freeScansUsed : 0;
+  const remainingScans = Math.max(0, 3 - scansUsedToday);
   const getDotColor = () => {
     if (remainingScans >= 4) return '#10B981'; // Emerald Green
     if (remainingScans === 3) return '#14B8A6'; // Modern Teal
@@ -44,11 +47,15 @@ export function ProfileScreen(): React.JSX.Element {
 
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
-  const [loginMethodState, setLoginMethodState] = useState<'google' | 'apple'>('google');
+  const [loginMethodState, setLoginMethodState] = useState<'google' | 'apple'>(
+    'google',
+  );
 
   const handleMockLogin = (method: 'google' | 'apple') => {
     setLoginMethodState(method);
-    setLoginEmail(method === 'google' ? 'hikmet@gmail.com' : 'hikmet@apple.com');
+    setLoginEmail(
+      method === 'google' ? 'hikmet@gmail.com' : 'hikmet@apple.com',
+    );
     setLoginModalVisible(true);
   };
 
@@ -59,7 +66,10 @@ export function ProfileScreen(): React.JSX.Element {
     }
     loginUser(loginEmail, loginMethodState);
     setLoginModalVisible(false);
-    Alert.alert('Giriş Başarılı', 'Giriş yapıldı ve Premium Pro deneme hesabınız aktif edildi!');
+    Alert.alert(
+      'Giriş Başarılı',
+      'Giriş yapıldı ve Premium Pro deneme hesabınız aktif edildi!',
+    );
   };
 
   const handleLogout = () => {
@@ -74,9 +84,9 @@ export function ProfileScreen(): React.JSX.Element {
           onPress: () => {
             logoutUser();
             Alert.alert('Çıkış Yapıldı', 'Güvenli çıkış yapıldı.');
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
@@ -91,10 +101,13 @@ export function ProfileScreen(): React.JSX.Element {
           style: 'destructive',
           onPress: () => {
             resetOnboarding();
-            Alert.alert('Başarılı', 'Sağlık sihirbazı sıfırlandı. Sihirbaz anında başlatılacaktır.');
-          }
-        }
-      ]
+            Alert.alert(
+              'Başarılı',
+              'Sağlık sihirbazı sıfırlandı. Sihirbaz anında başlatılacaktır.',
+            );
+          },
+        },
+      ],
     );
   };
 
@@ -104,9 +117,6 @@ export function ProfileScreen(): React.JSX.Element {
     carbs: profile.goals.dailyCarbGoal?.toString() ?? '',
     fat: profile.goals.dailyFatGoal?.toString() ?? '',
   });
-
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
 
   const saveGoals = (updatedGoals?: {
     cal?: string;
@@ -128,7 +138,10 @@ export function ProfileScreen(): React.JSX.Element {
     });
   };
 
-  const adjustGoal = (key: 'cal' | 'protein' | 'carbs' | 'fat', amount: number) => {
+  const adjustGoal = (
+    key: 'cal' | 'protein' | 'carbs' | 'fat',
+    amount: number,
+  ) => {
     const currentValue = parseInt(localGoals[key], 10);
     let defaultValue = 0;
     if (key === 'cal') defaultValue = 2000;
@@ -145,15 +158,6 @@ export function ProfileScreen(): React.JSX.Element {
     saveGoals(newLocalGoals);
   };
 
-  const handleSaveApiKey = () => {
-    if (!apiKey.trim()) {
-      Alert.alert('Hata', 'API key boş olamaz');
-      return;
-    }
-    Alert.alert('Başarılı', 'API key kaydedildi');
-    setShowApiKey(false);
-  };
-
   const handleExport = async () => {
     try {
       let reportRows = '';
@@ -168,10 +172,13 @@ export function ProfileScreen(): React.JSX.Element {
         d.setDate(d.getDate() - i);
         const key = d.toISOString().split('T')[0];
         const dayEntries = entries[key] ?? [];
-        
+
         if (dayEntries.length > 0) {
           loggedDays++;
-          const dayCal = dayEntries.reduce((sum, e) => sum + e.totalCalories, 0);
+          const dayCal = dayEntries.reduce(
+            (sum, e) => sum + e.totalCalories,
+            0,
+          );
           const dayPro = dayEntries.reduce((sum, e) => sum + e.totalProtein, 0);
           const dayCarb = dayEntries.reduce((sum, e) => sum + e.totalCarbs, 0);
           const dayFat = dayEntries.reduce((sum, e) => sum + e.totalFat, 0);
@@ -339,7 +346,10 @@ export function ProfileScreen(): React.JSX.Element {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Elegant Profile Header Card */}
         <View style={styles.profileCard}>
           <View style={styles.profileCardHeader}>
@@ -350,10 +360,18 @@ export function ProfileScreen(): React.JSX.Element {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>
-                {profile.email ? (profile.loginMethod === 'google' ? 'Google Kullanıcısı' : 'Apple Kullanıcısı') : 'HealthLens Kullanıcısı'}
+                {profile.email
+                  ? profile.loginMethod === 'google'
+                    ? 'Google Kullanıcısı'
+                    : 'Apple Kullanıcısı'
+                  : 'HealthLens Kullanıcısı'}
               </Text>
               <Text style={styles.profileId}>
-                {profile.email ? profile.email : `Sistem Modülü: v${require('../utils/constants').SCHEMA_VERSION ?? '1.0'}`}
+                {profile.email
+                  ? profile.email
+                  : `Sistem Modülü: v${
+                      require('../utils/constants').SCHEMA_VERSION ?? '1.0'
+                    }`}
               </Text>
               {profile.isPremium ? (
                 <View style={styles.premiumBadge}>
@@ -377,11 +395,18 @@ export function ProfileScreen(): React.JSX.Element {
             <View style={styles.glassPanel}>
               <View style={styles.limitStatusRow}>
                 <View style={styles.limitInfoLeft}>
-                  <View style={[styles.listIconContainer, { borderColor: getDotColor() }]}>
+                  <View
+                    style={[
+                      styles.listIconContainer,
+                      { borderColor: getDotColor() },
+                    ]}
+                  >
                     <Icon name="bolt" size={20} color={getDotColor()} />
                   </View>
                   <View style={styles.limitTextWrapper}>
-                    <Text style={styles.limitTitle}>Yapay Zeka Tarama Hakkı</Text>
+                    <Text style={styles.limitTitle}>
+                      Yapay Zeka Tarama Hakkı
+                    </Text>
                     <Text style={styles.limitSub}>
                       {remainingScans === 0
                         ? 'Kamera ile yemek analiz hakkınız dolmuştur.'
@@ -389,12 +414,24 @@ export function ProfileScreen(): React.JSX.Element {
                     </Text>
                   </View>
                 </View>
-                <View style={[styles.limitBadge, { backgroundColor: withAlpha(getDotColor(), 0.15), borderColor: getDotColor() }]}>
-                  <Text style={[styles.limitBadgeText, { color: getDotColor() }]}>{remainingScans} / 5 Hak</Text>
+                <View
+                  style={[
+                    styles.limitBadge,
+                    {
+                      backgroundColor: withAlpha(getDotColor(), 0.15),
+                      borderColor: getDotColor(),
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.limitBadgeText, { color: getDotColor() }]}
+                  >
+                    {remainingScans} / 3 Hak
+                  </Text>
                 </View>
               </View>
               <View style={styles.divider} />
-              
+
               {/* LED Progress Dots */}
               <View style={styles.limitDotsContainer}>
                 <Text style={styles.limitDotsLabel}>Limit Durumu:</Text>
@@ -429,7 +466,11 @@ export function ProfileScreen(): React.JSX.Element {
                   <View style={styles.authStatusLeft}>
                     <View style={styles.listIconContainer}>
                       <Icon
-                        name={profile.loginMethod === 'google' ? 'g-mobiledata' : 'apple'}
+                        name={
+                          profile.loginMethod === 'google'
+                            ? 'g-mobiledata'
+                            : 'apple'
+                        }
                         size={24}
                         color={colors.primary}
                       />
@@ -437,7 +478,9 @@ export function ProfileScreen(): React.JSX.Element {
                     <View>
                       <Text style={styles.authEmail}>{profile.email}</Text>
                       <Text style={styles.authMethod}>
-                        {profile.loginMethod === 'google' ? 'Google hesabı ile bağlı' : 'Apple hesabı ile bağlı'}
+                        {profile.loginMethod === 'google'
+                          ? 'Google hesabı ile bağlı'
+                          : 'Apple hesabı ile bağlı'}
                       </Text>
                     </View>
                   </View>
@@ -459,12 +502,19 @@ export function ProfileScreen(): React.JSX.Element {
               <>
                 <View style={styles.authOfflineRow}>
                   <View style={styles.listIconContainer}>
-                    <Icon name="cloud-off" size={20} color={colors.onSurfaceVariant} />
+                    <Icon
+                      name="cloud-off"
+                      size={20}
+                      color={colors.onSurfaceVariant}
+                    />
                   </View>
                   <View style={styles.authOfflineInfo}>
-                    <Text style={styles.authOfflineTitle}>Bulut Yedekleme Çevrimdışı</Text>
+                    <Text style={styles.authOfflineTitle}>
+                      Bulut Yedekleme Çevrimdışı
+                    </Text>
                     <Text style={styles.authOfflineSub}>
-                      Verilerinizi güvenle senkronize etmek ve Premium Pro özelliklerini açmak için giriş yapın.
+                      Verilerinizi güvenle senkronize etmek ve Premium Pro
+                      özelliklerini açmak için giriş yapın.
                     </Text>
                   </View>
                 </View>
@@ -475,7 +525,9 @@ export function ProfileScreen(): React.JSX.Element {
                     onPress={() => handleMockLogin('google')}
                   >
                     <Icon name="g-mobiledata" size={28} color="#0F172A" />
-                    <Text style={styles.googleButtonText}>Google ile Giriş</Text>
+                    <Text style={styles.googleButtonText}>
+                      Google ile Giriş
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.socialButton, styles.appleButton]}
@@ -494,13 +546,15 @@ export function ProfileScreen(): React.JSX.Element {
         {/* Daily Targets Section (Bento Grid) */}
         <View style={styles.sectionWrap}>
           <Text style={styles.sectionLabel}>{tr.profile.dailyTargets}</Text>
-          
+
           <View style={styles.bentoGrid}>
             {/* Calorie Bento Card */}
             <View style={[styles.bentoCard, styles.bentoCardRed]}>
               <View style={styles.bentoCardHeader}>
                 <Icon name="local-fire-department" size={20} color="#EF4444" />
-                <Text style={styles.bentoLabel}>{tr.profile.calorieTarget}</Text>
+                <Text style={styles.bentoLabel}>
+                  {tr.profile.calorieTarget}
+                </Text>
               </View>
               <View style={styles.bentoAdjustRow}>
                 <TouchableOpacity
@@ -636,7 +690,9 @@ export function ProfileScreen(): React.JSX.Element {
 
         {/* Micronutrient Tracking Section */}
         <View style={styles.sectionWrap}>
-          <Text style={styles.sectionLabel}>{tr.profile.micronutrientTracking}</Text>
+          <Text style={styles.sectionLabel}>
+            {tr.profile.micronutrientTracking}
+          </Text>
           <View style={styles.glassPanel}>
             <ToggleRow
               label={tr.profile.sodium}
@@ -671,9 +727,15 @@ export function ProfileScreen(): React.JSX.Element {
             <View style={styles.listItem}>
               <View style={styles.listItemLeft}>
                 <View style={styles.listIconContainer}>
-                  <Icon name="settings-accessibility" size={20} color={colors.primary} />
+                  <Icon
+                    name="settings-accessibility"
+                    size={20}
+                    color={colors.primary}
+                  />
                 </View>
-                <Text style={styles.listLabel}>{tr.profile.unitPreference}</Text>
+                <Text style={styles.listLabel}>
+                  {tr.profile.unitPreference}
+                </Text>
               </View>
               <Text style={styles.listValue}>
                 {profile.unitSystem === 'metric'
@@ -681,52 +743,6 @@ export function ProfileScreen(): React.JSX.Element {
                   : tr.profile.imperial}
               </Text>
             </View>
-          </View>
-        </View>
-
-        {/* API Settings Section */}
-        <View style={styles.sectionWrap}>
-          <Text style={styles.sectionLabel}>API Ayarları</Text>
-          <View style={styles.glassPanel}>
-            <TouchableOpacity
-              style={styles.listItem}
-              activeOpacity={0.7}
-              onPress={() => setShowApiKey(!showApiKey)}
-            >
-              <View style={styles.listItemLeft}>
-                <View style={styles.listIconContainer}>
-                  <Icon name="vpn-key" size={20} color={colors.primary} />
-                </View>
-                <Text style={styles.listLabel}>Gemini API Key</Text>
-              </View>
-              <View style={styles.apiEditContainer}>
-                <Text style={styles.listValue}>
-                  {showApiKey ? 'Gizle' : 'Düzenle'}
-                </Text>
-                <Icon name={showApiKey ? 'expand-less' : 'expand-more'} size={20} color={colors.primary} />
-              </View>
-            </TouchableOpacity>
-
-            {showApiKey && (
-              <View style={styles.apiExpandedPanel}>
-                <TextInput
-                  style={styles.apiKeyInput}
-                  placeholder="API Key girin"
-                  placeholderTextColor={colors.onSurfaceVariant}
-                  value={apiKey}
-                  onChangeText={setApiKey}
-                  secureTextEntry
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.saveApiButton}
-                  activeOpacity={0.8}
-                  onPress={handleSaveApiKey}
-                >
-                  <Text style={styles.saveApiText}>API Key Kaydet</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </View>
 
@@ -738,7 +754,9 @@ export function ProfileScreen(): React.JSX.Element {
             onPress={handleResetOnboarding}
           >
             <Icon name="refresh" size={20} color={colors.primary} />
-            <Text style={styles.wizardResetText}>Sağlık Sihirbazını Baştan Başlat</Text>
+            <Text style={styles.wizardResetText}>
+              Sağlık Sihirbazını Baştan Başlat
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1077,37 +1095,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.outline,
     marginLeft: spacing.lg + 36,
-  },
-  apiEditContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  apiExpandedPanel: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
-  },
-  apiKeyInput: {
-    backgroundColor: colors.surfaceContainerLowest,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    color: colors.onSurface,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: colors.outline,
-  },
-  saveApiButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.lg,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  saveApiText: {
-    color: colors.onPrimary,
-    fontWeight: '700',
-    fontSize: 14,
   },
   actionSection: {
     marginTop: spacing.lg,

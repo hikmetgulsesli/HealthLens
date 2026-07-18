@@ -17,6 +17,7 @@ import { radii } from '../theme/radii';
 import { fontFamily } from '../theme/typography';
 import { useLogStore } from '../stores/logStore';
 import { useUserStore } from '../stores/userStore';
+import { getGradeStyle } from '../utils/healthGradeStyle';
 import { useAnalysisStore } from '../stores/analysisStore';
 import { useNavigation } from '@react-navigation/native';
 import { getMealHealthGrade } from '../utils/healthGrader';
@@ -165,7 +166,11 @@ export function HistoryScreen(): React.JSX.Element {
         {/* Compare to Goals */}
         <View style={styles.glassPanel}>
           <Text style={styles.goalsTitle}>{tr.history.compareGoals}</Text>
-          <GoalBar label={tr.history.calories} current={totals.cal} goal={goalCal} />
+          <GoalBar
+            label={tr.history.calories}
+            current={totals.cal}
+            goal={goalCal}
+          />
           <GoalBar
             label={tr.dashboard.protein}
             current={totals.protein}
@@ -186,6 +191,8 @@ export function HistoryScreen(): React.JSX.Element {
                 onPress={() => {
                   setAnalysis({
                     id: entry.id,
+                    dateKey: entry.dateKey,
+                    createdAt: entry.createdAt,
                     imageUri: entry.imageUri || '',
                     mealCategory: entry.mealCategory,
                     items: entry.items,
@@ -202,6 +209,8 @@ export function HistoryScreen(): React.JSX.Element {
                         onPress: () => {
                           setAnalysis({
                             id: entry.id,
+                            dateKey: entry.dateKey,
+                            createdAt: entry.createdAt,
                             imageUri: entry.imageUri || '',
                             mealCategory: entry.mealCategory,
                             items: entry.items,
@@ -220,7 +229,8 @@ export function HistoryScreen(): React.JSX.Element {
                 }}
               >
                 <View style={styles.mealThumb}>
-                  {entry.imageUri && !entry.imageUri.startsWith('barcode://') ? (
+                  {entry.imageUri &&
+                  !entry.imageUri.startsWith('barcode://') ? (
                     <Image
                       source={{ uri: entry.imageUri }}
                       style={styles.mealImage}
@@ -251,9 +261,10 @@ export function HistoryScreen(): React.JSX.Element {
                 </View>
                 {(() => {
                   const mealGrade = getMealHealthGrade(entry.items, healthGoal);
-                  const gradeClass = mealGrade.grade.startsWith('A') ? 'A' : (mealGrade.grade as 'B' | 'C' | 'D');
-                  const badgeStyle = gradeClass === 'A' ? styles.gradeBadgeA : (gradeClass === 'B' ? styles.gradeBadgeB : (gradeClass === 'C' ? styles.gradeBadgeC : styles.gradeBadgeD));
-                  const textStyle = gradeClass === 'A' ? styles.gradeTextA : (gradeClass === 'B' ? styles.gradeTextB : (gradeClass === 'C' ? styles.gradeTextC : styles.gradeTextD));
+                  const gradeClass = mealGrade.grade.startsWith('A')
+                    ? 'A'
+                    : (mealGrade.grade as 'B' | 'C' | 'D');
+                  const { badgeStyle, textStyle } = getGradeStyle(gradeClass);
                   return (
                     <View style={styles.mealCalSection}>
                       <View style={[styles.gradeBadge, badgeStyle]}>
