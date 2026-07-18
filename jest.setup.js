@@ -40,13 +40,23 @@ jest.mock('react-native-svg', () => ({
   Circle: 'Circle',
 }));
 
-jest.mock('react-native-mmkv', () => ({
-  MMKV: jest.fn(() => ({
-    getString: jest.fn(),
-    set: jest.fn(),
-    delete: jest.fn(),
-  })),
-}));
+jest.mock('react-native-mmkv', () => {
+  class MMKV {
+    constructor() {
+      this.store = new Map();
+    }
+    getString(name) {
+      return this.store.has(name) ? this.store.get(name) : undefined;
+    }
+    set(name, value) {
+      this.store.set(name, value);
+    }
+    delete(name) {
+      this.store.delete(name);
+    }
+  }
+  return { MMKV };
+});
 
 jest.mock('react-native-keychain', () => ({
   setGenericPassword: jest.fn(() => Promise.resolve(true)),
