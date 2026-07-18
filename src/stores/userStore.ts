@@ -1,10 +1,12 @@
-import {create} from 'zustand';
-import {persist, createJSONStorage} from 'zustand/middleware';
-import {MMKV} from 'react-native-mmkv';
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { MMKV } from 'react-native-mmkv';
 import * as Keychain from 'react-native-keychain';
-import type {UserProfile, NutritionGoals} from '../types';
+import type { UserProfile, NutritionGoals } from '../types';
+import { getTodayKey } from '../utils/date';
 
-const storage = new MMKV({id: 'user-storage'});
+const storage = new MMKV({ id: 'user-storage' });
+const SCAN_KEYCHAIN_SERVICE = 'com.hikmetgulsesli.healthlens.scans';
 
 const mmkvStorage = createJSONStorage(() => ({
   getItem: (name: string) => {
@@ -36,6 +38,7 @@ const defaultProfile: UserProfile = {
   isPremium: false,
   plan: 'free',
   trialEndsAt: null,
+  freeScansDateKey: getTodayKey(),
   freeScansUsed: 0,
   healthGoal: null,
   email: null,
@@ -48,13 +51,19 @@ interface UserState {
   setUnitSystem: (system: 'metric' | 'imperial') => void;
   setProfile: (profile: Partial<UserProfile>) => void;
   incrementFreeScans: () => void;
-  completeOnboarding: (data: Partial<UserProfile>, dynamicGoals: NutritionGoals) => void;
+  completeOnboarding: (
+    data: Partial<UserProfile>,
+    dynamicGoals: NutritionGoals,
+  ) => void;
   startTrial: (durationDays: number) => void;
   loginUser: (email: string, method: 'google' | 'apple') => void;
   logoutUser: () => void;
   resetOnboarding: () => void;
   /** Returns true if the user can do one more AI scan under their current plan. */
-  canScan: (freeQuotaPerDay: number, proQuotaPerDay: number) => { allowed: boolean; reason?: string };
+  canScan: (
+    freeQuotaPerDay: number,
+    proQuotaPerDay: number,
+  ) => { allowed: boolean; reason?: string };
   syncKeychainLimit: () => Promise<void>;
 }
 
@@ -67,7 +76,7 @@ export const useUserStore = create<UserState>()(
           profile: {
             ...state.profile,
             updatedAt: new Date().toISOString(),
-            goals: {...state.profile.goals, ...goals},
+            goals: { ...state.profile.goals, ...goals },
           },
         })),
       setUnitSystem: unitSystem =>
@@ -88,12 +97,23 @@ export const useUserStore = create<UserState>()(
         })),
       incrementFreeScans: () =>
         set(state => {
-          const newCount = state.profile.freeScansUsed + 1;
+          const todayKey = getTodayKey();
+          const previousCount =
+            state.profile.freeScansDateKey === todayKey
+              ? state.profile.freeScansUsed
+              : 0;
+          const newCount = previousCount + 1;
 
           // Asynchronously write to hardware secure storage
           try {
-            Keychain.setGenericPassword('freeScansLimit', newCount.toString(), { service: 'com.healthlens.app.scans' })
-              .catch((err: Error) => console.warn('Failed to save scans to keychain (expected if native module is not built):', err));
+            Keychain.setGenericPassword(todayKey, newCount.toString(), {
+              service: SCAN_KEYCHAIN_SERVICE,
+            }).catch((err: Error) =>
+              console.warn(
+                'Failed to save scans to keychain (expected if native module is not built):',
+                err,
+              ),
+            );
           } catch {
             // Keychain is native, ignore on non-native environments
           }
@@ -101,6 +121,7 @@ export const useUserStore = create<UserState>()(
           return {
             profile: {
               ...state.profile,
+              freeScansDateKey: todayKey,
               freeScansUsed: newCount,
               updatedAt: new Date().toISOString(),
             },
@@ -111,20 +132,25 @@ export const useUserStore = create<UserState>()(
           profile: {
             ...state.profile,
             ...data,
-            goals: {...state.profile.goals, ...dynamicGoals},
+            goals: { ...state.profile.goals, ...dynamicGoals },
             isFirstLaunch: false,
             updatedAt: new Date().toISOString(),
           },
         })),
-      startTrial: (durationDays) =>
+      startTrial: durationDays =>
         set(state => {
-          if (state.profile.trialEndsAt && new Date(state.profile.trialEndsAt) > new Date()) {
+          if (
+            state.profile.trialEndsAt &&
+            new Date(state.profile.trialEndsAt) > new Date()
+          ) {
             return state; // Already in active trial
           }
           if (state.profile.plan !== 'free') {
             return state; // Already paid user
           }
-          const trialEndsAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+          const trialEndsAt = new Date(
+            Date.now() + durationDays * 24 * 60 * 60 * 1000,
+          ).toISOString();
           return {
             profile: {
               ...state.profile,
@@ -149,8 +175,11 @@ export const useUserStore = create<UserState>()(
         set(state => {
           // Clear hardware secure storage on developer/manual logout
           try {
-            Keychain.resetGenericPassword({ service: 'com.healthlens.app.scans' })
-              .catch((err: Error) => console.warn('Failed to reset keychain scans:', err));
+            Keychain.resetGenericPassword({
+              service: SCAN_KEYCHAIN_SERVICE,
+            }).catch((err: Error) =>
+              console.warn('Failed to reset keychain scans:', err),
+            );
           } catch {
             // Keychain is native, ignore on non-native environments
           }
@@ -163,6 +192,7 @@ export const useUserStore = create<UserState>()(
               isPremium: false,
               plan: 'free',
               trialEndsAt: null,
+              freeScansDateKey: getTodayKey(),
               freeScansUsed: 0,
               updatedAt: new Date().toISOString(),
             },
@@ -172,7 +202,9 @@ export const useUserStore = create<UserState>()(
         const state = get();
         const profile = state.profile;
         const now = new Date();
-        const isInTrial = !!profile.trialEndsAt && new Date(profile.trialEndsAt) > now;
+        const todayKey = getTodayKey();
+        const isInTrial =
+          !!profile.trialEndsAt && new Date(profile.trialEndsAt) > now;
         const effectiveTier = isInTrial ? 'pro_plus' : profile.plan;
 
         // pro_plus = unlimited
@@ -180,13 +212,18 @@ export const useUserStore = create<UserState>()(
           return { allowed: true };
         }
 
-        const limit = effectiveTier === 'pro' ? proQuotaPerDay : freeQuotaPerDay;
+        const limit =
+          effectiveTier === 'pro' ? proQuotaPerDay : freeQuotaPerDay;
         if (limit < 0) return { allowed: true };
 
-        if (profile.freeScansUsed >= limit) {
-          const upgradeMsg = effectiveTier === 'free'
-            ? `Günlük ücretsiz ${limit} analiz hakkınız doldu. Pro'ya geçerek sınırsız analiz yapabilirsiniz!`
-            : `Günlük Pro limitiniz (${limit}) doldu. Pro+ ile sınırsız analiz yapabilirsiniz!`;
+        const scansUsedToday =
+          profile.freeScansDateKey === todayKey ? profile.freeScansUsed : 0;
+
+        if (scansUsedToday >= limit) {
+          const upgradeMsg =
+            effectiveTier === 'free'
+              ? `Günlük ücretsiz ${limit} analiz hakkınız doldu. Pro'ya geçerek sınırsız analiz yapabilirsiniz!`
+              : `Günlük Pro limitiniz (${limit}) doldu. Pro+ ile sınırsız analiz yapabilirsiniz!`;
           return { allowed: false, reason: upgradeMsg };
         }
         return { allowed: true };
@@ -202,13 +239,23 @@ export const useUserStore = create<UserState>()(
         })),
       syncKeychainLimit: async () => {
         try {
-          const credentials = await Keychain.getGenericPassword({ service: 'com.healthlens.app.scans' });
-          if (credentials) {
+          const todayKey = getTodayKey();
+          const credentials = await Keychain.getGenericPassword({
+            service: SCAN_KEYCHAIN_SERVICE,
+          });
+          const keychainDateKey = credentials
+            ? credentials.username ?? todayKey
+            : todayKey;
+          if (credentials && keychainDateKey === todayKey) {
             const keychainScans = parseInt(credentials.password, 10);
-            if (!isNaN(keychainScans) && keychainScans > get().profile.freeScansUsed) {
+            const profile = get().profile;
+            const scansUsedToday =
+              profile.freeScansDateKey === todayKey ? profile.freeScansUsed : 0;
+            if (!isNaN(keychainScans) && keychainScans > scansUsedToday) {
               set(state => ({
                 profile: {
                   ...state.profile,
+                  freeScansDateKey: todayKey,
                   freeScansUsed: keychainScans,
                   updatedAt: new Date().toISOString(),
                 },
@@ -216,7 +263,10 @@ export const useUserStore = create<UserState>()(
             }
           }
         } catch (error) {
-          console.warn('Failed to sync scans from keychain (expected if native module is not built):', error);
+          console.warn(
+            'Failed to sync scans from keychain (expected if native module is not built):',
+            error,
+          );
         }
       },
     }),
