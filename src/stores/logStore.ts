@@ -1,19 +1,9 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { MMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
 import type { LogEntry } from '../types';
+import { createMmkvStorage } from '../lib/persist';
 
-const storage = new MMKV({ id: 'log-storage' });
-
-const mmkvStorage = createJSONStorage(() => ({
-  getItem: (name: string) => {
-    const value = storage.getString(name);
-    return value ?? null;
-  },
-  setItem: (name: string, value: string) =>
-    storage.set(name, value),
-  removeItem: (name: string) => storage.delete(name),
-}));
+const logStorage = createMmkvStorage('log-storage');
 
 interface LogState {
   entries: Record<string, LogEntry[]>;
@@ -64,7 +54,14 @@ export const useLogStore = create<LogState>()(
     }),
     {
       name: 'daily-logs',
-      storage: mmkvStorage,
+      storage: logStorage,
+      version: 1,
+      migrate: (persisted: unknown, version?: number) => {
+        if (version === 1 && persisted && typeof persisted === 'object') {
+          return persisted as { entries?: Record<string, LogEntry[]> };
+        }
+        return { entries: {} };
+      },
     },
   ),
 );

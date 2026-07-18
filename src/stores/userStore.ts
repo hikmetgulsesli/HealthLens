@@ -1,21 +1,12 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { MMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
 import * as Keychain from 'react-native-keychain';
 import type { UserProfile, NutritionGoals } from '../types';
 import { getTodayKey } from '../utils/date';
+import { createMmkvStorage } from '../lib/persist';
 
-const storage = new MMKV({ id: 'user-storage' });
+const userStorage = createMmkvStorage('user-storage');
 const SCAN_KEYCHAIN_SERVICE = 'com.hikmetgulsesli.healthlens.scans';
-
-const mmkvStorage = createJSONStorage(() => ({
-  getItem: (name: string) => {
-    const value = storage.getString(name);
-    return value ?? null;
-  },
-  setItem: (name: string, value: string) => storage.set(name, value),
-  removeItem: (name: string) => storage.delete(name),
-}));
 
 const defaultGoals: NutritionGoals = {
   dailyCalorieGoal: null,
@@ -272,7 +263,15 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'user-profile',
-      storage: mmkvStorage,
+      storage: userStorage,
+      version: 1,
+      migrate: (persisted: unknown, version?: number) => {
+        if (version === 1 && persisted && typeof persisted === 'object') {
+          return persisted as { profile: UserProfile };
+        }
+        return { profile: defaultProfile };
+      },
+      partialize: state => ({ profile: state.profile }),
     },
   ),
 );

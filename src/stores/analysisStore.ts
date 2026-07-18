@@ -1,6 +1,10 @@
 import {create} from 'zustand';
 import type {AnalysisResult, MealCategory} from '../types';
 
+// analysisStore is ephemeral by design — analysis results are intentionally
+// not persisted across app restarts (matches PRD behaviour for in-progress
+// review state). See docs/superpowers/specs/2026-07-18-... §3.1.
+
 interface AnalysisState {
   currentAnalysis: AnalysisResult | null;
   isAnalyzing: boolean;

@@ -1,21 +1,11 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { MMKV } from 'react-native-mmkv';
+import { persist } from 'zustand/middleware';
 import type { OfflineQueueItem } from '../types';
 import { analyzeFoodImage } from '../services/aiService';
 import { useLogStore } from './logStore';
+import { createMmkvStorage } from '../lib/persist';
 
-const storage = new MMKV({ id: 'offline-queue-storage' });
-
-const mmkvStorage = createJSONStorage(() => ({
-  getItem: (name: string) => {
-    const value = storage.getString(name);
-    return value ?? null;
-  },
-  setItem: (name: string, value: string) =>
-    storage.set(name, value),
-  removeItem: (name: string) => storage.delete(name),
-}));
+const queueStorage = createMmkvStorage('offline-queue-storage');
 
 interface OfflineQueueState {
   queue: OfflineQueueItem[];
@@ -136,7 +126,14 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
     }),
     {
       name: 'offline-queue',
-      storage: mmkvStorage,
+      storage: queueStorage,
+      version: 1,
+      migrate: (persisted: unknown, version?: number) => {
+        if (version === 1 && persisted && typeof persisted === 'object') {
+          return persisted as { queue?: OfflineQueueItem[]; isProcessing?: boolean };
+        }
+        return { queue: [], isProcessing: false };
+      },
     },
   ),
 );
