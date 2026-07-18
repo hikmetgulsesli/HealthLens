@@ -13,6 +13,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Camera, CameraType } from 'react-native-camera-kit';
+import type { CameraApi } from 'react-native-camera-kit/dist/types';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,7 +33,7 @@ import { saveImage } from '../utils/imageStorage';
 import { findFoodByBarcode } from '../db/localFoods';
 
 export function CameraScreen(): React.JSX.Element {
-  const cameraRef = useRef<any>(null);
+  const cameraRef = useRef<CameraApi>(null);
   const [flashOn, setFlashOn] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBarcodeMode, setIsBarcodeMode] = useState(false);
