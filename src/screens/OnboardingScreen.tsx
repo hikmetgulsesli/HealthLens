@@ -8,143 +8,106 @@ import {
   ScrollView,
   Alert,
   StatusBar,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import type { ImageSourcePropType } from 'react-native';
-import { colors, withAlpha } from '../theme/colors';
+import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { radii } from '../theme/radii';
-import { fontFamily } from '../theme/typography';
+import { typography } from '../theme/typography';
 import { useUserStore } from '../stores/userStore';
-import { Illustrations } from '../assets/illustrations';
 import type { HealthGoal } from '../types';
 
-interface GoalOption {
-  id: HealthGoal;
-  icon: string;
-  title: string;
-  description: string;
-  color: string;
-  image: ImageSourcePropType;
+export type OnboardingStep = 1 | 2 | 3 | 4;
+
+interface Props {
+  onComplete?: () => void;
 }
 
-const GOAL_OPTIONS: GoalOption[] = [
-  {
-    id: 'hypertension',
-    icon: 'favorite',
-    title: 'Tansiyon & Kalp Sağlığı',
-    description: 'Sodyum kısıtlamasıyla tansiyon dengesini koruyun.',
-    color: '#EF4444',
-    image: Illustrations.goalHypertension,
-  },
-  {
-    id: 'diabetes',
-    icon: 'opacity',
-    title: 'Kan Şekeri Kontrolü',
-    description: 'Şeker ve karbonhidratı kısıtlayarak glisemik yükü azaltın.',
-    color: '#FB923C',
-    image: Illustrations.goalDiabetes,
-  },
-  {
-    id: 'gut_health',
-    icon: 'spa',
-    title: 'Sindirim & Bağırsak Sağlığı',
-    description: 'Yüksek lifli prebiyotik oranlarıyla şişkinliği önleyin.',
-    color: '#22C55E',
-    image: Illustrations.goalGutHealth,
-  },
-  {
-    id: 'weight_management',
-    icon: 'fitness-center',
-    title: 'Kilo Yönetimi & Kas Sağlığı',
-    description: 'Kalori dengesini koruyarak kas kütlenizi artırın.',
-    color: '#14B8A6',
-    image: Illustrations.goalWeight,
-  },
-];
+interface FormState {
+  age: string;
+  height: string;
+  weight: string;
+  gender: 'male' | 'female' | 'other' | null;
+}
 
-export function OnboardingScreen(): React.JSX.Element {
+const HEALTH_ADVICE: Partial<Record<Exclude<HealthGoal, null>, string>> = {
+  hypertension:
+    'Sodyum kısıtlaması (<1500mg/gün) ve tansiyon alarmları ile kalp sağlığınızı kontrol altında tutacağız.',
+  diabetes:
+    'Glisemik indeks analizi ve sıkı şeker takibi (<35g/gün) ile insülin dalgalanmalarını durduracağız.',
+  gut_health:
+    'Lif zengini gıdaları (+35g/gün) tespit edip prebiyotik oranlarınızı en üst düzeye çıkaracağız.',
+  weight_management:
+    'Porsiyon kontrolü, kalori açığı analizi ve yüksek protein dengesiyle kilo kontrolünüzü sağlayacağız.',
+};
+
+function DynamicGoals(
+  goal: HealthGoal,
+): Parameters<ReturnType<typeof useUserStore.getState>['completeOnboarding']>[1] {
+  const safe = goal ?? 'weight_management';
+  return {
+    dailyCalorieGoal: safe === 'diabetes' ? 1800 : 2000,
+    dailyProteinGoal: safe === 'weight_management' ? 110 : 80,
+    dailyCarbGoal: safe === 'diabetes' ? 180 : 250,
+    dailyFatGoal: 65,
+    showMicronutrients: safe !== 'weight_management',
+    showSodium: safe === 'hypertension',
+    showFiber: safe === 'gut_health',
+    showSugar: safe === 'diabetes',
+  };
+}
+
+export function OnboardingScreen({ onComplete: _onComplete }: Props): React.JSX.Element {
   const completeOnboarding = useUserStore(s => s.completeOnboarding);
   const startTrial = useUserStore(s => s.startTrial);
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<OnboardingStep>(1);
   const [selectedGoal, setSelectedGoal] = useState<HealthGoal>(null);
-
-  // Stats
-  const [age, setAge] = useState('');
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(
-    null,
-  );
-
-  // Paywall Option
+  const [form, setForm] = useState<FormState>({
+    age: '',
+    height: '',
+    weight: '',
+    gender: null,
+  });
   const [selectedPackage, setSelectedPackage] = useState<'monthly' | 'yearly'>(
-    'monthly',
+    'yearly',
   );
 
-  const handleNextFromGoal = () => {
+  const validateGoal = () => {
     if (!selectedGoal) {
-      Alert.alert(
-        'Hedef Seçin',
-        'Lütfen devam etmeden önce bir sağlık odağı seçin.',
-      );
-      return;
+      Alert.alert('Hedef Seçin', 'Lütfen bir sağlık odağı seçin.');
+      return false;
     }
-    setStep(2);
+    return true;
   };
 
-  const handleNextFromStats = () => {
-    if (!age || !height || !weight || !gender) {
+  const validateStats = () => {
+    if (!form.age || !form.height || !form.weight || !form.gender) {
       Alert.alert('Eksik Bilgi', 'Lütfen tüm fizyolojik verileri doldurun.');
-      return;
+      return false;
     }
-    setStep(3);
+    return true;
   };
 
-  const calculateSuccessDate = (): string => {
-    const date = new Date();
-    // 8 weeks in days = 56 days
-    date.setDate(date.getDate() + 56);
-    return date.toLocaleDateString('tr-TR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
-  const getDynamicAdvice = (): string => {
-    switch (selectedGoal) {
-      case 'hypertension':
-        return 'Sodyum kısıtlaması (<1500mg/gün) ve tansiyon alarmları ile kalp sağlığınızı kontrol altında tutacağız.';
-      case 'diabetes':
-        return 'Glisemik indeks analizi ve sıkı şeker takibi (<35g/gün) ile insülin dalgalanmalarını durduracağız.';
-      case 'gut_health':
-        return 'Lif zengini gıdaları (+35g/gün) tespit edip prebiyotik oranlarınızı en üst düzeye çıkaracağız.';
-      case 'weight_management':
-        return 'Porsiyon kontrolü, kalori açığı analizi ve yüksek protein dengesiyle kilo kontrolünüzü sağlayacağız.';
-      default:
-        return '';
-    }
-  };
-
-  const handleStartSubscription = () => {
-    // Pro Subscription logic (this is a demo build — no real StoreKit call)
-    const dynamicGoals = getDynamicGoals();
+  const finishOnboarding = (overrides: Record<string, unknown> = {}) => {
+    const dynamicGoals = DynamicGoals(selectedGoal);
     completeOnboarding(
       {
         healthGoal: selectedGoal,
-        age: parseInt(age, 10),
-        height: parseInt(height, 10),
-        weight: parseInt(weight, 10),
-        gender: gender || 'other',
-        isPremium: true,
-        plan: 'pro',
+        age: parseInt(form.age, 10),
+        height: parseInt(form.height, 10),
+        weight: parseInt(form.weight, 10),
+        gender: form.gender || 'other',
+        freeScansDateKey: new Date().toISOString().split('T')[0],
+        freeScansUsed: 0,
+        ...overrides,
       },
       dynamicGoals,
     );
+  };
+
+  const handleStartSubscription = () => {
+    finishOnboarding({ isPremium: true, plan: 'pro' });
     Alert.alert(
       'Hoş Geldiniz!',
       'HealthLens Pro üyeliğiniz başlatıldı ve sağlık planınız kuruldu.',
@@ -153,19 +116,7 @@ export function OnboardingScreen(): React.JSX.Element {
   };
 
   const handleStartTrial = () => {
-    // 7-day Pro+ trial — full feature access, no charge
-    const dynamicGoals = getDynamicGoals();
-    completeOnboarding(
-      {
-        healthGoal: selectedGoal,
-        age: parseInt(age, 10),
-        height: parseInt(height, 10),
-        weight: parseInt(weight, 10),
-        gender: gender || 'other',
-        isPremium: true,
-      },
-      dynamicGoals,
-    );
+    finishOnboarding({ isPremium: true });
     startTrial(7);
     Alert.alert(
       '7 Gün Ücretsiz Deneme Başladı! 🎉',
@@ -175,22 +126,7 @@ export function OnboardingScreen(): React.JSX.Element {
   };
 
   const handleSkipToFree = () => {
-    // Free Scan Limit logic — 3/day
-    const dynamicGoals = getDynamicGoals();
-    completeOnboarding(
-      {
-        healthGoal: selectedGoal,
-        age: parseInt(age, 10),
-        height: parseInt(height, 10),
-        weight: parseInt(weight, 10),
-        gender: gender || 'other',
-        isPremium: false,
-        plan: 'free',
-        freeScansDateKey: new Date().toISOString().split('T')[0],
-        freeScansUsed: 0,
-      },
-      dynamicGoals,
-    );
+    finishOnboarding({ isPremium: false, plan: 'free' });
     Alert.alert(
       'Hoş Geldiniz!',
       'Ücretsiz sürüm günlük 3 tarama hakkınızla aktif edildi.',
@@ -198,28 +134,13 @@ export function OnboardingScreen(): React.JSX.Element {
     );
   };
 
-  const getDynamicGoals = () => {
-    const showMicro = selectedGoal !== 'weight_management';
-    return {
-      dailyCalorieGoal: selectedGoal === 'diabetes' ? 1800 : 2000,
-      dailyProteinGoal: selectedGoal === 'weight_management' ? 110 : 80,
-      dailyCarbGoal: selectedGoal === 'diabetes' ? 180 : 250,
-      dailyFatGoal: 65,
-      showMicronutrients: showMicro,
-      showSodium: selectedGoal === 'hypertension',
-      showFiber: selectedGoal === 'gut_health',
-      showSugar: selectedGoal === 'diabetes',
-    };
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
-      {/* Upper Navigation Indicator */}
       <View style={styles.topBar}>
         <View style={styles.indicatorContainer}>
-          {[1, 2, 3, 4].map(idx => (
+          {([1, 2, 3, 4] as const).map(idx => (
             <View
               key={idx}
               style={[
@@ -237,49 +158,33 @@ export function OnboardingScreen(): React.JSX.Element {
           <View style={styles.stepContainer}>
             <Text style={styles.title}>Sağlık Odağınız Nedir?</Text>
             <Text style={styles.subtitle}>
-              Sizin için oluşturulacak klinik diyet puanlamasını ve alarm
-              kısıtlarını bu seçime göre kalibre edeceğiz.
+              Sizin için oluşturulacak klinik diyet puanlamasını bu seçime göre kalibre edeceğiz.
             </Text>
-
             <View style={styles.optionsList}>
-              {GOAL_OPTIONS.map(opt => {
+              {[
+                { id: 'hypertension' as HealthGoal, title: 'Tansiyon & Kalp', desc: 'Sodyum kısıtlaması' },
+                { id: 'diabetes' as HealthGoal, title: 'Kan Şekeri', desc: 'Şeker ve karbonhidrat takibi' },
+                { id: 'gut_health' as HealthGoal, title: 'Bağırsak Sağlığı', desc: 'Lif zengini gıdalar' },
+                { id: 'weight_management' as HealthGoal, title: 'Kilo Yönetimi', desc: 'Kalori dengesi' },
+              ].map(opt => {
                 const isSelected = selectedGoal === opt.id;
                 return (
                   <TouchableOpacity
                     key={opt.id}
-                    style={[
-                      styles.goalCard,
-                      isSelected && {
-                        borderColor: opt.color,
-                        backgroundColor: withAlpha(opt.color, 0.08),
-                      },
-                    ]}
+                    style={[styles.goalCard, isSelected && styles.goalCardSelected]}
                     onPress={() => setSelectedGoal(opt.id)}
                   >
-                    <View
-                      style={[
-                        styles.iconWrapper,
-                        { backgroundColor: withAlpha(opt.color, 0.15) },
-                      ]}
-                    >
-                      <Image
-                        source={opt.image}
-                        style={styles.goalImage}
-                        resizeMode="contain"
-                      />
-                    </View>
                     <View style={styles.goalInfo}>
                       <Text style={styles.goalTitle}>{opt.title}</Text>
-                      <Text style={styles.goalDesc}>{opt.description}</Text>
+                      <Text style={styles.goalDesc}>{opt.desc}</Text>
                     </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
-
             <TouchableOpacity
               style={styles.nextButton}
-              onPress={handleNextFromGoal}
+              onPress={() => validateGoal() && setStep(2)}
             >
               <Text style={styles.nextButtonText}>Devam Et</Text>
               <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
@@ -291,84 +196,60 @@ export function OnboardingScreen(): React.JSX.Element {
           <View style={styles.stepContainer}>
             <Text style={styles.title}>Kendinizden Bahsedin</Text>
             <Text style={styles.subtitle}>
-              Günlük kalori ve makro limitlerinizi tam hesaplayabilmek için
-              fizyolojik verilerinizi alıyoruz.
+              Günlük kalori ve makro limitlerinizi hesaplayabilmek için fizyolojik verilerinizi alıyoruz.
             </Text>
-
             <View style={styles.formContainer}>
-              <Text style={styles.inputLabel}>Yaş</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Örn: 28"
-                placeholderTextColor={colors.onSurfaceVariant}
-                keyboardType="numeric"
-                value={age}
-                onChangeText={setAge}
-              />
-
-              <Text style={styles.inputLabel}>Boy (cm)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Örn: 178"
-                placeholderTextColor={colors.onSurfaceVariant}
-                keyboardType="numeric"
-                value={height}
-                onChangeText={setHeight}
-              />
-
-              <Text style={styles.inputLabel}>Kilo (kg)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Örn: 74"
-                placeholderTextColor={colors.onSurfaceVariant}
-                keyboardType="numeric"
-                value={weight}
-                onChangeText={setWeight}
-              />
-
+              {([
+                { label: 'Yaş', key: 'age' as const, placeholder: 'Örn: 28' },
+                { label: 'Boy (cm)', key: 'height' as const, placeholder: 'Örn: 178' },
+                { label: 'Kilo (kg)', key: 'weight' as const, placeholder: 'Örn: 74' },
+              ] as const).map(field => (
+                <View key={field.key}>
+                  <Text style={styles.inputLabel}>{field.label}</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={field.placeholder}
+                    placeholderTextColor={colors.onSurfaceVariant}
+                    keyboardType="numeric"
+                    value={form[field.key]}
+                    onChangeText={v => setForm(f => ({ ...f, [field.key]: v }))}
+                  />
+                </View>
+              ))}
               <Text style={styles.inputLabel}>Cinsiyet</Text>
               <View style={styles.genderRow}>
-                {(['male', 'female', 'other'] as const).map(g => {
-                  const label =
-                    g === 'male' ? 'Erkek' : g === 'female' ? 'Kadın' : 'Diğer';
-                  const isSel = gender === g;
-                  return (
-                    <TouchableOpacity
-                      key={g}
+                {(['male', 'female', 'other'] as const).map(g => (
+                  <TouchableOpacity
+                    key={g}
+                    style={[
+                      styles.genderButton,
+                      form.gender === g && styles.genderButtonActive,
+                    ]}
+                    onPress={() => setForm(f => ({ ...f, gender: g }))}
+                  >
+                    <Text
                       style={[
-                        styles.genderButton,
-                        isSel && styles.genderButtonActive,
+                        styles.genderButtonText,
+                        form.gender === g && styles.genderButtonTextActive,
                       ]}
-                      onPress={() => setGender(g)}
                     >
-                      <Text
-                        style={[
-                          styles.genderText,
-                          isSel && styles.genderTextActive,
-                        ]}
-                      >
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                      {g === 'male' ? 'Erkek' : g === 'female' ? 'Kadın' : 'Diğer'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
-
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => setStep(1)}
-              >
+              <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
                 <Icon name="arrow-back" size={20} color={colors.onSurface} />
+                <Text style={styles.backButtonText}>Geri</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={[styles.nextButton, styles.flexButton]}
-                onPress={handleNextFromStats}
+                style={styles.nextButton}
+                onPress={() => validateStats() && setStep(3)}
               >
-                <Text style={styles.nextButtonText}>Profili Analiz Et</Text>
-                <Icon name="psychology" size={22} color={colors.onPrimary} />
+                <Text style={styles.nextButtonText}>Devam Et</Text>
+                <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -376,68 +257,17 @@ export function OnboardingScreen(): React.JSX.Element {
 
         {step === 3 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.title}>Klinik Başarı Projeksiyonu</Text>
+            <Text style={styles.title}>Kişiselleştirilmiş Planınız</Text>
             <Text style={styles.subtitle}>
-              HealthLens veri motoru, verdiğiniz bilgilere göre iyileşme ve
-              hedefe ulaşma takviminizi modelledi:
+              {selectedGoal ? HEALTH_ADVICE[selectedGoal as Exclude<HealthGoal, null>] : ''}
             </Text>
-
-            <View style={styles.glassProjectionCard}>
-              <Text style={styles.projTitle}>Öngörülen Başarı Takvimi</Text>
-              <Text style={styles.projDate}>{calculateSuccessDate()}</Text>
-              <Text style={styles.projHighlight}>
-                8 Hafta İçinde Dengelenme Hedefi
-              </Text>
-
-              <View style={styles.adviceBubble}>
-                <Icon
-                  name="lightbulb"
-                  size={20}
-                  color={colors.primary}
-                  style={styles.adviceIcon}
-                />
-                <Text style={styles.adviceText}>{getDynamicAdvice()}</Text>
-              </View>
-            </View>
-
-            <View style={styles.bulletsList}>
-              <View style={styles.bulletItem}>
-                <Icon
-                  name="check-circle"
-                  size={18}
-                  color={colors.success}
-                  style={styles.bulletIcon}
-                />
-                <Text style={styles.bulletText}>
-                  Klinik derecelendirme puanlamaları kuruldu.
-                </Text>
-              </View>
-              <View style={styles.bulletItem}>
-                <Icon
-                  name="check-circle"
-                  size={18}
-                  color={colors.success}
-                  style={styles.bulletIcon}
-                />
-                <Text style={styles.bulletText}>
-                  Tuz, şeker ve lif alarm limitleri kilitlendi.
-                </Text>
-              </View>
-            </View>
-
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => setStep(2)}
-              >
+              <TouchableOpacity style={styles.backButton} onPress={() => setStep(2)}>
                 <Icon name="arrow-back" size={20} color={colors.onSurface} />
+                <Text style={styles.backButtonText}>Geri</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.nextButton, styles.flexButton]}
-                onPress={() => setStep(4)}
-              >
-                <Text style={styles.nextButtonText}>Planı Etkinleştir</Text>
+              <TouchableOpacity style={styles.nextButton} onPress={() => setStep(4)}>
+                <Text style={styles.nextButtonText}>Devam Et</Text>
                 <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
             </View>
@@ -446,92 +276,49 @@ export function OnboardingScreen(): React.JSX.Element {
 
         {step === 4 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.title}>HealthLens Pro</Text>
+            <Text style={styles.title}>Tüm Pro+ Özelliklerinin Tadını Çıkarın</Text>
             <Text style={styles.subtitle}>
-              Yapay zeka asistanı, klinik analiz notları ve limitsiz PDF
-              diyetisyen raporları ile sağlığınızı koruyun.
+              Yapay zeka asistanı, klinik analiz notları ve limitsiz PDF diyetisyen raporları.
             </Text>
 
-            {/* 7-day trial CTA (primary) */}
             <View style={styles.trialHeroCard}>
-              <View style={styles.trialBadgeTop}>
-                <Icon name="schedule" size={14} color={colors.primary} />
-                <Text style={styles.trialBadgeTopText}>7 GÜN ÜCRETSİZ</Text>
-              </View>
-              <Text style={styles.trialTitle}>Tüm Pro+ özelliklerini dene</Text>
+              <Text style={styles.trialTitle}>7 GÜN ÜCRETSİZ DENE</Text>
               <Text style={styles.trialSubtitle}>
-                Limitsiz AI analiz, klinik hedef alarmları, diyetisyen modu ve
-                daha fazlası. Süre sonunda otomatik ücretlendirme yok.
+                Tüm Pro+ özelliklerini dene. Otomatik ücretlendirme yok.
               </Text>
-              <TouchableOpacity
-                style={styles.trialCtaButton}
-                onPress={handleStartTrial}
-              >
+              <TouchableOpacity style={styles.trialCtaButton} onPress={handleStartTrial}>
                 <Text style={styles.trialCtaText}>Şimdi Dene — ₺0</Text>
                 <Icon name="arrow-forward" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
-              <Text style={styles.trialFineprint}>
-                İstediğiniz an iptal edin. Ücretlendirme yok.
-              </Text>
             </View>
 
-            {/* Pricing cards (compact) */}
             <Text style={styles.pricingHeader}>veya abonelikle başla</Text>
-            <View style={styles.pricingContainer}>
+            {(['monthly', 'yearly'] as const).map(p => (
               <TouchableOpacity
+                key={p}
                 style={[
                   styles.priceCard,
-                  selectedPackage === 'monthly' && styles.priceCardActive,
+                  selectedPackage === p && styles.priceCardActive,
                 ]}
-                onPress={() => setSelectedPackage('monthly')}
+                onPress={() => setSelectedPackage(p)}
               >
-                <View style={styles.priceRow}>
-                  <Text style={styles.pricePeriod}>Pro Aylık</Text>
-                  <Text style={styles.priceValue}>₺49.99 / ay</Text>
-                </View>
-                <Text style={styles.priceInfo}>
-                  İstediğiniz an iptal edebilirsiniz.
+                <Text style={styles.pricePeriod}>
+                  Pro {p === 'monthly' ? 'Aylık' : 'Yıllık'}
+                </Text>
+                <Text style={styles.priceValue}>
+                  {p === 'monthly' ? '₺49.99 / ay' : '₺599.99 / yıl'}
                 </Text>
               </TouchableOpacity>
+            ))}
 
-              <TouchableOpacity
-                style={[
-                  styles.priceCard,
-                  selectedPackage === 'yearly' && styles.priceCardActive,
-                ]}
-                onPress={() => setSelectedPackage('yearly')}
-              >
-                <View style={styles.badgeLabel}>
-                  <Text style={styles.badgeText}>%50 İNDİRİM</Text>
-                </View>
-                <View style={styles.priceRow}>
-                  <Text style={styles.pricePeriod}>Pro Yıllık</Text>
-                  <Text style={styles.priceValue}>₺599.99 / yıl</Text>
-                </View>
-                <Text style={styles.priceInfo}>
-                  Aylık ₺49.99 yerine yıllık ₺49.99/ay
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.subscribeButton} onPress={handleStartSubscription}>
+              <Text style={styles.subscribeButtonText}>
+                {selectedPackage === 'yearly' ? '₺599.99 / yıl Öde' : '₺49.99 / ay Öde'}
+              </Text>
+              <Icon name="payment" size={20} color={colors.onPrimary} />
+            </TouchableOpacity>
 
-            {selectedPackage === 'monthly' || selectedPackage === 'yearly' ? (
-              <TouchableOpacity
-                style={styles.subscribeButton}
-                onPress={handleStartSubscription}
-              >
-                <Text style={styles.subscribeButtonText}>
-                  {selectedPackage === 'yearly'
-                    ? '₺599.99 / yıl Öde'
-                    : '₺49.99 / ay Öde'}
-                </Text>
-                <Icon name="payment" size={20} color={colors.onPrimary} />
-              </TouchableOpacity>
-            ) : null}
-
-            <TouchableOpacity
-              style={styles.skipLink}
-              onPress={handleSkipToFree}
-            >
+            <TouchableOpacity style={styles.skipLink} onPress={handleSkipToFree}>
               <Text style={styles.skipLinkText}>
                 Kısıtlı Sürümle Devam Et (3 Ücretsiz AI Tarama)
               </Text>
@@ -544,428 +331,199 @@ export function OnboardingScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  topBar: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  topBar: { paddingVertical: spacing.md },
   indicatorContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   indicator: {
-    flex: 1,
+    width: 32,
     height: 4,
+    borderRadius: 2,
     backgroundColor: colors.surfaceContainer,
-    borderRadius: radii.full,
   },
-  indicatorActive: {
-    backgroundColor: colors.primary,
-  },
-  indicatorComplete: {
-    backgroundColor: colors.primaryContainer,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
-  },
+  indicatorActive: { backgroundColor: colors.primary },
+  indicatorComplete: { backgroundColor: colors.primary },
+  scrollContent: { padding: spacing.lg },
   stepContainer: {
-    flex: 1,
-    paddingTop: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: fontFamily.sans,
+    ...typography.headlineXl,
     color: colors.onSurface,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
+    fontWeight: '700',
   },
   subtitle: {
-    fontSize: 13,
+    ...typography.bodyMd,
     color: colors.onSurfaceVariant,
-    fontFamily: fontFamily.sans,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: spacing.xl,
+    lineHeight: 22,
   },
-  optionsList: {
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
+  optionsList: { gap: spacing.sm },
   goalCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.outline,
-    borderWidth: 1.5,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.lg,
+    padding: spacing.md,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  goalImage: {
-    width: 44,
-    height: 44,
-  },
-  goalInfo: {
-    flex: 1,
-  },
+  goalCardSelected: { borderColor: colors.primary },
+  goalInfo: { flex: 1 },
   goalTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    fontFamily: fontFamily.sans,
+    ...typography.bodyLg,
     color: colors.onSurface,
-    marginBottom: 4,
+    fontWeight: '600',
   },
   goalDesc: {
-    fontSize: 11,
+    ...typography.bodySm,
     color: colors.onSurfaceVariant,
-    fontFamily: fontFamily.sans,
-    lineHeight: 14,
+    marginTop: 2,
   },
-  nextButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.full,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  nextButtonText: {
-    color: colors.onPrimary,
-    fontWeight: 'bold',
-    fontFamily: fontFamily.sans,
-    fontSize: 15,
-  },
-  formContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.xl,
-    borderColor: colors.outline,
-    borderWidth: 1,
-    marginBottom: spacing.xl,
-  },
+  formContainer: { gap: spacing.md },
   inputLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: fontFamily.sans,
+    ...typography.labelMd,
     color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.background,
-    borderColor: colors.outline,
-    borderWidth: 1,
-    borderRadius: radii.md,
+    ...typography.bodyLg,
     color: colors.onSurface,
-    padding: spacing.md,
-    fontSize: 15,
-    fontFamily: fontFamily.sans,
-    marginBottom: spacing.lg,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   genderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   genderButton: {
     flex: 1,
-    backgroundColor: colors.background,
-    borderColor: colors.outline,
-    borderWidth: 1.5,
-    borderRadius: radii.md,
     paddingVertical: spacing.md,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceContainer,
     alignItems: 'center',
   },
-  genderButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: withAlpha(colors.primary, 0.08),
+  genderButtonActive: { backgroundColor: colors.primary },
+  genderButtonText: {
+    ...typography.bodyMd,
+    color: colors.onSurface,
   },
-  genderText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: colors.onSurfaceVariant,
-  },
-  genderTextActive: {
-    color: colors.primary,
+  genderButtonTextActive: {
+    color: colors.onPrimary,
+    fontWeight: '700',
   },
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: 'auto',
+    marginTop: spacing.lg,
   },
   backButton: {
-    width: 50,
-    height: 50,
-    borderRadius: radii.full,
-    borderColor: colors.outline,
-    borderWidth: 1.5,
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceContainer,
   },
-  flexButton: {
-    flex: 1,
-  },
-  glassProjectionCard: {
-    backgroundColor: withAlpha(colors.surface, 0.6),
-    borderColor: colors.outline,
-    borderWidth: 1.5,
-    borderRadius: radii.xl,
-    padding: spacing.xl,
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  projTitle: {
-    fontSize: 11,
-    textTransform: 'uppercase',
-    color: colors.onSurfaceVariant,
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  projDate: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: colors.success,
-    marginBottom: 4,
-  },
-  projHighlight: {
-    fontSize: 12,
-    color: colors.onSurface,
-    marginBottom: spacing.lg,
-  },
-  adviceBubble: {
-    flexDirection: 'row',
-    backgroundColor: colors.background,
-    borderColor: colors.outline,
-    borderWidth: 1,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: spacing.md,
-    width: '100%',
-  },
-  adviceIcon: {
-    alignSelf: 'center',
-  },
-  adviceText: {
-    flex: 1,
-    fontSize: 11,
-    color: colors.onSurfaceVariant,
-    lineHeight: 15,
-  },
-  bulletsList: {
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-    paddingHorizontal: spacing.sm,
-  },
-  bulletItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  bulletIcon: {
-    alignSelf: 'center',
-  },
-  bulletText: {
-    fontSize: 13,
+  backButtonText: {
+    ...typography.labelMd,
     color: colors.onSurface,
   },
-  pricingContainer: {
-    gap: spacing.md,
-    marginBottom: spacing.xl,
+  nextButton: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+  },
+  nextButtonText: {
+    ...typography.labelMd,
+    color: colors.onPrimary,
+    fontWeight: '700',
+  },
+  trialHeroCard: {
+    padding: spacing.lg,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    gap: spacing.sm,
+  },
+  trialTitle: {
+    ...typography.headlineMd,
+    color: colors.onSurface,
+    fontWeight: '700',
+  },
+  trialSubtitle: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+  },
+  trialCtaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    marginTop: spacing.sm,
+  },
+  trialCtaText: {
+    ...typography.labelMd,
+    color: colors.onPrimary,
+    fontWeight: '700',
+  },
+  pricingHeader: {
+    ...typography.labelMd,
+    color: colors.onSurfaceVariant,
+    marginTop: spacing.md,
   },
   priceCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.outline,
-    borderWidth: 1.5,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    position: 'relative',
+    padding: spacing.md,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    marginBottom: spacing.sm,
   },
-  priceCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: withAlpha(colors.primary, 0.05),
-  },
-  badgeLabel: {
-    position: 'absolute',
-    top: -10,
-    right: 15,
-    backgroundColor: colors.primary,
-    borderRadius: radii.full,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: colors.onPrimary,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
+  priceCardActive: { borderColor: colors.primary },
   pricePeriod: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    ...typography.bodyLg,
     color: colors.onSurface,
+    fontWeight: '600',
   },
   priceValue: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  priceInfo: {
-    fontSize: 10,
+    ...typography.bodyMd,
     color: colors.onSurfaceVariant,
-  },
-  featuresPanel: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    borderColor: colors.outline,
-    borderWidth: 1,
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    alignItems: 'flex-start',
-  },
-  featureIcon: {
-    marginTop: 2,
-  },
-  featureHeader: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: colors.onSurface,
-  },
-  featureSub: {
-    fontSize: 10,
-    color: colors.onSurfaceVariant,
-    lineHeight: 13,
   },
   subscribeButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.full,
-    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-    marginBottom: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    marginTop: spacing.md,
   },
   subscribeButtonText: {
+    ...typography.labelMd,
     color: colors.onPrimary,
-    fontWeight: 'bold',
-    fontSize: 15,
+    fontWeight: '700',
   },
   skipLink: {
     paddingVertical: spacing.md,
     alignItems: 'center',
   },
   skipLinkText: {
+    ...typography.bodyMd,
     color: colors.onSurfaceVariant,
-    fontSize: 12,
-    textDecorationLine: 'underline',
-  },
-  trialHeroCard: {
-    backgroundColor: withAlpha(colors.primary, 0.08),
-    borderColor: colors.primary,
-    borderWidth: 1.5,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    position: 'relative',
-  },
-  trialBadgeTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: withAlpha(colors.primary, 0.2),
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: radii.full,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  trialBadgeTopText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: colors.primary,
-    letterSpacing: 0.5,
-  },
-  trialTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  trialSubtitle: {
-    fontSize: 12,
-    color: colors.onSurfaceVariant,
-    lineHeight: 17,
-    marginBottom: spacing.md,
-  },
-  trialCtaButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.full,
-    paddingVertical: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  trialCtaText: {
-    color: colors.onPrimary,
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  trialFineprint: {
-    fontSize: 10,
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  pricingHeader: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
   },
 });
