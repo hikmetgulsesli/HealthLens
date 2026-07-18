@@ -1,5 +1,5 @@
 import {create} from 'zustand';
-import {persist} from 'zustand/middleware';
+import {persist, createJSONStorage} from 'zustand/middleware';
 import {createMmkvStorage} from '../lib/persist';
 
 const hydrationStorage = createMmkvStorage('hydration-storage');
@@ -35,7 +35,7 @@ export const useHydrationStore = create<HydrationState>()(
     }),
     {
       name: 'hydration-data',
-      storage: hydrationStorage,
+      storage: createJSONStorage(() => hydrationStorage),
       version: 1,
       migrate: (persisted: unknown, version?: number) => {
         if (version === 1 && persisted && typeof persisted === 'object') {

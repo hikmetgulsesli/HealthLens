@@ -36,7 +36,7 @@ const emptyPlateImage = Illustrations.emptyPlate;
 export function DashboardScreen(): React.JSX.Element {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  
+
   const entries = useLogStore(s => s.entries);
   const deleteEntry = useLogStore(s => s.deleteEntry);
   const goals = useUserStore(s => s.profile.goals);
@@ -181,18 +181,22 @@ export function DashboardScreen(): React.JSX.Element {
       {isSyncing && (
         <View style={styles.syncBanner}>
           <ActivityIndicator size="small" color={colors.primary} />
-          <Text style={styles.syncText}>Senkronize ediliyor... ({pendingCount} yemek kaldı)</Text>
+          <Text style={styles.syncText}>
+            Senkronize ediliyor... ({pendingCount} yemek kaldı)
+          </Text>
         </View>
       )}
 
       {!isSyncing && pendingCount > 0 && (
         <View style={styles.syncBanner}>
           <Icon name="cloud-queue" size={16} color={colors.primary} />
-          <Text style={styles.syncText}>İnternet bağlantısı bekleniyor... ({pendingCount} yemek sırada)</Text>
+          <Text style={styles.syncText}>
+            İnternet bağlantısı bekleniyor... ({pendingCount} yemek sırada)
+          </Text>
         </View>
       )}
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
@@ -288,7 +292,8 @@ export function DashboardScreen(): React.JSX.Element {
 
               <View style={styles.liquidContent}>
                 <Text style={styles.liquidValue}>
-                  {todayWater} ml <Text style={styles.liquidTarget}>/ {dailyWaterGoal} ml</Text>
+                  {todayWater} ml{' '}
+                  <Text style={styles.liquidTarget}>/ {dailyWaterGoal} ml</Text>
                 </Text>
                 <Text style={styles.liquidPctText}>
                   Hedefin %{Math.round(waterPct * 100)} kadarı tamamlandı
@@ -320,7 +325,14 @@ export function DashboardScreen(): React.JSX.Element {
                 onPress={() => removeWater(todayWater, todayKey)}
               >
                 <Icon name="refresh" size={16} color={colors.error} />
-                <Text style={[styles.hydrationButtonText, styles.hydrationClearText]}>Temizle</Text>
+                <Text
+                  style={[
+                    styles.hydrationButtonText,
+                    styles.hydrationClearText,
+                  ]}
+                >
+                  Temizle
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -355,6 +367,8 @@ export function DashboardScreen(): React.JSX.Element {
                   onPress={() => {
                     setAnalysis({
                       id: entry.id, // CRUD Edit Mode active!
+                      dateKey: entry.dateKey,
+                      createdAt: entry.createdAt,
                       imageUri: entry.imageUri || '',
                       mealCategory: entry.mealCategory,
                       items: entry.items,
@@ -371,6 +385,8 @@ export function DashboardScreen(): React.JSX.Element {
                           onPress: () => {
                             setAnalysis({
                               id: entry.id,
+                              dateKey: entry.dateKey,
+                              createdAt: entry.createdAt,
                               imageUri: entry.imageUri || '',
                               mealCategory: entry.mealCategory,
                               items: entry.items,
@@ -390,7 +406,8 @@ export function DashboardScreen(): React.JSX.Element {
                 >
                   <View style={styles.mealRow}>
                     <View style={styles.mealIconBox}>
-                      {entry.imageUri && !entry.imageUri.startsWith('barcode://') ? (
+                      {entry.imageUri &&
+                      !entry.imageUri.startsWith('barcode://') ? (
                         <Image
                           source={{ uri: entry.imageUri }}
                           style={styles.mealImage}
@@ -425,12 +442,31 @@ export function DashboardScreen(): React.JSX.Element {
                         })}
                       </Text>
                     </View>
-                    
+
                     {(() => {
-                      const mealGrade = getMealHealthGrade(entry.items, healthGoal);
-                      const gradeClass = mealGrade.grade.startsWith('A') ? 'A' : (mealGrade.grade as 'B' | 'C' | 'D');
-                      const badgeStyle = gradeClass === 'A' ? styles.gradeBadgeA : (gradeClass === 'B' ? styles.gradeBadgeB : (gradeClass === 'C' ? styles.gradeBadgeC : styles.gradeBadgeD));
-                      const textStyle = gradeClass === 'A' ? styles.gradeTextA : (gradeClass === 'B' ? styles.gradeTextB : (gradeClass === 'C' ? styles.gradeTextC : styles.gradeTextD));
+                      const mealGrade = getMealHealthGrade(
+                        entry.items,
+                        healthGoal,
+                      );
+                      const gradeClass = mealGrade.grade.startsWith('A')
+                        ? 'A'
+                        : (mealGrade.grade as 'B' | 'C' | 'D');
+                      const badgeStyle =
+                        gradeClass === 'A'
+                          ? styles.gradeBadgeA
+                          : gradeClass === 'B'
+                          ? styles.gradeBadgeB
+                          : gradeClass === 'C'
+                          ? styles.gradeBadgeC
+                          : styles.gradeBadgeD;
+                      const textStyle =
+                        gradeClass === 'A'
+                          ? styles.gradeTextA
+                          : gradeClass === 'B'
+                          ? styles.gradeTextB
+                          : gradeClass === 'C'
+                          ? styles.gradeTextC
+                          : styles.gradeTextD;
                       return (
                         <View style={styles.mealCalSection}>
                           <View style={[styles.gradeBadge, badgeStyle]}>

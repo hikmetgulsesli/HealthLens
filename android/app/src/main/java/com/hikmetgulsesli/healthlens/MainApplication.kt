@@ -1,4 +1,4 @@
-package com.healthlens
+package com.hikmetgulsesli.healthlens
 
 import android.app.Application
 import com.facebook.react.PackageList

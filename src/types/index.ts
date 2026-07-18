@@ -40,7 +40,12 @@ export interface NutritionGoals {
   showSugar: boolean;
 }
 
-export type HealthGoal = 'hypertension' | 'diabetes' | 'gut_health' | 'weight_management' | null;
+export type HealthGoal =
+  | 'hypertension'
+  | 'diabetes'
+  | 'gut_health'
+  | 'weight_management'
+  | null;
 
 export type PlanTier = 'free' | 'pro' | 'pro_plus';
 
@@ -57,6 +62,8 @@ export interface UserProfile {
   plan: PlanTier;
   /** Active trial expiry. While in the future, user has full Pro+ access. */
   trialEndsAt: string | null;
+  /** Date key (YYYY-MM-DD) for the current daily scan counter. */
+  freeScansDateKey: string;
   freeScansUsed: number;
   healthGoal: HealthGoal;
   age?: number;
@@ -80,6 +87,8 @@ export interface AnalysisResult {
   id?: string;
   items: FoodItem[];
   mealCategory: MealCategory;
+  dateKey?: string;
+  createdAt?: string;
   imageUri?: string;
   imageUris?: string[];
   smartInsight?: string;

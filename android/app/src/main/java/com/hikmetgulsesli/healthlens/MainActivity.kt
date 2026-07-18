@@ -1,4 +1,4 @@
-package com.healthlens
+package com.hikmetgulsesli.healthlens
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

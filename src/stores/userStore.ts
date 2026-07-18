@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import * as Keychain from 'react-native-keychain';
 import type { UserProfile, NutritionGoals } from '../types';
 import { getTodayKey } from '../utils/date';
@@ -263,7 +263,7 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'user-profile',
-      storage: userStorage,
+      storage: createJSONStorage(() => userStorage),
       version: 1,
       migrate: (persisted: unknown, version?: number) => {
         if (version === 1 && persisted && typeof persisted === 'object') {

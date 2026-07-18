@@ -25,6 +25,8 @@ import type { MealCategory } from '../types';
 import { tr } from '../i18n';
 import { searchFoods, LocalFood } from '../db/localFoods';
 import { calculateHealthGrade } from '../utils/healthGrader';
+import { MacroBadge } from '../components/review/MacroBadge';
+import { SimpleSlider } from '../components/review/SimpleSlider';
 
 const MEAL_CATEGORIES: { label: string; value: MealCategory }[] = [
   { label: tr.review.breakfast, value: 'breakfast' },
@@ -41,14 +43,25 @@ export function ReviewScreen(): React.JSX.Element {
   const removeItem = useAnalysisStore(s => s.removeItem);
   const setMealCategory = useAnalysisStore(s => s.setMealCategory);
   const addItem = useAnalysisStore(s => s.addItem);
-  
+
   const addEntry = useLogStore(s => s.addEntry);
   const updateEntry = useLogStore(s => s.updateEntry);
   const deleteEntry = useLogStore(s => s.deleteEntry);
+  const entries = useLogStore(s => s.entries);
 
   const healthGoal = useUserStore(s => s.profile.healthGoal);
 
   const isEditMode = !!analysis?.id;
+  const existingEntry = useMemo(() => {
+    if (!analysis?.id) return null;
+
+    for (const dayEntries of Object.values(entries)) {
+      const match = dayEntries.find(entry => entry.id === analysis.id);
+      if (match) return match;
+    }
+
+    return null;
+  }, [analysis?.id, entries]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -57,10 +70,12 @@ export function ReviewScreen(): React.JSX.Element {
   const [newItemCarbs, setNewItemCarbs] = useState('');
   const [newItemFat, setNewItemFat] = useState('');
   const [newItemPortion, setNewItemPortion] = useState('100');
-  
+
   // Autocomplete search states
   const [searchResults, setSearchResults] = useState<LocalFood[]>([]);
-  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
+  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(
+    null,
+  );
 
   // Portion edit modal states
   const [portionModalVisible, setPortionModalVisible] = useState(false);
@@ -83,7 +98,15 @@ export function ReviewScreen(): React.JSX.Element {
     );
   }, [analysis]);
 
-  const handleAddHiddenIngredient = (name: string, portion: number, calories: number, pro: number, carb: number, fat: number, sodium = 0) => {
+  const handleAddHiddenIngredient = (
+    name: string,
+    portion: number,
+    calories: number,
+    pro: number,
+    carb: number,
+    fat: number,
+    sodium = 0,
+  ) => {
     addItem({
       id: `hidden-${Date.now()}-${name.replace(/\s+/g, '')}`,
       name: name,
@@ -113,14 +136,20 @@ export function ReviewScreen(): React.JSX.Element {
       Alert.alert('Hata', tr.review.errorNoItems);
       return;
     }
-    
-    const dateKey = new Date().toISOString().split('T')[0];
-    
+
+    const dateKey =
+      existingEntry?.dateKey ??
+      analysis.dateKey ??
+      new Date().toISOString().split('T')[0];
+
     if (isEditMode && analysis.id) {
       // Edit Mode: Overwrite saved log entry
       updateEntry({
         id: analysis.id,
-        createdAt: new Date().toISOString(), // keep or update timestamp
+        createdAt:
+          existingEntry?.createdAt ??
+          analysis.createdAt ??
+          new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         dateKey,
         mealCategory: analysis.mealCategory,
@@ -131,7 +160,9 @@ export function ReviewScreen(): React.JSX.Element {
         totalCarbs: Math.round(totals.carbs),
         totalFat: Math.round(totals.fat),
       });
-      Alert.alert('Başarılı', 'Öğün başarıyla güncellendi.', [{ text: 'Tamam' }]);
+      Alert.alert('Başarılı', 'Öğün başarıyla güncellendi.', [
+        { text: 'Tamam' },
+      ]);
     } else {
       // New Mode: Create new log entry
       addEntry({
@@ -147,14 +178,23 @@ export function ReviewScreen(): React.JSX.Element {
         totalCarbs: Math.round(totals.carbs),
         totalFat: Math.round(totals.fat),
       });
-      
+
       // Charge a scan token if it is a camera scan and user is not premium
       const userProfile = useUserStore.getState().profile;
-      if (imageUris.length > 0 && !userProfile.isPremium) {
+      const isInTrial =
+        !!userProfile.trialEndsAt &&
+        new Date(userProfile.trialEndsAt) > new Date();
+      if (
+        imageUris.length > 0 &&
+        userProfile.plan !== 'pro_plus' &&
+        !isInTrial
+      ) {
         useUserStore.getState().incrementFreeScans();
       }
-      
-      Alert.alert('Başarılı', 'Öğün başarıyla kaydedildi.', [{ text: 'Tamam' }]);
+
+      Alert.alert('Başarılı', 'Öğün başarıyla kaydedildi.', [
+        { text: 'Tamam' },
+      ]);
     }
 
     useAnalysisStore.getState().reset();
@@ -163,7 +203,7 @@ export function ReviewScreen(): React.JSX.Element {
 
   const handleDelete = () => {
     if (!analysis.id) return;
-    
+
     Alert.alert(
       'Öğünü Sil',
       'Bu kaydı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
@@ -173,13 +213,16 @@ export function ReviewScreen(): React.JSX.Element {
           text: 'Sil',
           style: 'destructive',
           onPress: () => {
-            const dateKey = new Date().toISOString().split('T')[0];
+            const dateKey =
+              existingEntry?.dateKey ??
+              analysis.dateKey ??
+              new Date().toISOString().split('T')[0];
             deleteEntry(dateKey, analysis.id!);
             useAnalysisStore.getState().reset();
             navigation.goBack();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -244,10 +287,16 @@ export function ReviewScreen(): React.JSX.Element {
                   {uri.startsWith('barcode://') ? (
                     <View style={[styles.foodImage, styles.placeholderImage]}>
                       <Icon name="qr-code" size={48} color={colors.primary} />
-                      <Text style={styles.placeholderText}>Barkod Taraması</Text>
+                      <Text style={styles.placeholderText}>
+                        Barkod Taraması
+                      </Text>
                     </View>
                   ) : (
-                    <Image source={{ uri }} style={styles.foodImage} resizeMode="cover" />
+                    <Image
+                      source={{ uri }}
+                      style={styles.foodImage}
+                      resizeMode="cover"
+                    />
                   )}
                 </View>
               ))}
@@ -255,7 +304,14 @@ export function ReviewScreen(): React.JSX.Element {
 
             {/* Glowing computer-vision pointer scanner dots */}
             {analysis.items.map((item, idx) => {
-              const dotStyle = idx === 0 ? styles.scannerDotPos0 : (idx === 1 ? styles.scannerDotPos1 : (idx === 2 ? styles.scannerDotPos2 : styles.scannerDotPos3));
+              const dotStyle =
+                idx === 0
+                  ? styles.scannerDotPos0
+                  : idx === 1
+                  ? styles.scannerDotPos1
+                  : idx === 2
+                  ? styles.scannerDotPos2
+                  : styles.scannerDotPos3;
               const isActive = activeTooltipIndex === idx;
               return (
                 <View
@@ -263,22 +319,39 @@ export function ReviewScreen(): React.JSX.Element {
                   style={[styles.scannerDotContainer, dotStyle]}
                 >
                   <TouchableOpacity
-                    style={[styles.scannerDot, isActive && styles.scannerDotActive]}
+                    style={[
+                      styles.scannerDot,
+                      isActive && styles.scannerDotActive,
+                    ]}
                     activeOpacity={0.8}
                     onPress={() => setActiveTooltipIndex(isActive ? null : idx)}
                   >
                     <View style={styles.scannerDotInner} />
                     <Text style={styles.scannerDotText}>{idx + 1}</Text>
                   </TouchableOpacity>
-                  
+
                   {isActive && (
                     <View style={styles.scannerTooltip}>
                       <Text style={styles.tooltipName}>{item.name}</Text>
                       <Text style={styles.tooltipCal}>
-                        {item.estimatedPortionGrams}g • {Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)} kcal
+                        {item.estimatedPortionGrams}g •{' '}
+                        {Math.round(
+                          (item.caloriesPer100g * item.estimatedPortionGrams) /
+                            100,
+                        )}{' '}
+                        kcal
                       </Text>
                       <Text style={styles.tooltipMacros}>
-                        P: {Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)}g • Y: {Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)}g
+                        P:{' '}
+                        {Math.round(
+                          (item.proteinPer100g * item.estimatedPortionGrams) /
+                            100,
+                        )}
+                        g • Y:{' '}
+                        {Math.round(
+                          (item.fatPer100g * item.estimatedPortionGrams) / 100,
+                        )}
+                        g
                       </Text>
                     </View>
                   )}
@@ -301,7 +374,11 @@ export function ReviewScreen(): React.JSX.Element {
         ) : (
           <View style={styles.imageCard}>
             <View style={[styles.foodImage, styles.placeholderImage]}>
-              <Icon name="restaurant" size={48} color={colors.onSurfaceVariant} />
+              <Icon
+                name="restaurant"
+                size={48}
+                color={colors.onSurfaceVariant}
+              />
               <Text style={styles.placeholderText}>{tr.review.noAnalysis}</Text>
             </View>
           </View>
@@ -331,14 +408,16 @@ export function ReviewScreen(): React.JSX.Element {
                 key={cat.value}
                 style={[
                   styles.categoryChip,
-                  analysis.mealCategory === cat.value && styles.categoryChipActive,
+                  analysis.mealCategory === cat.value &&
+                    styles.categoryChipActive,
                 ]}
                 onPress={() => setMealCategory(cat.value)}
               >
                 <Text
                   style={[
                     styles.categoryText,
-                    analysis.mealCategory === cat.value && styles.categoryTextActive,
+                    analysis.mealCategory === cat.value &&
+                      styles.categoryTextActive,
                   ]}
                 >
                   {cat.label}
@@ -380,9 +459,25 @@ export function ReviewScreen(): React.JSX.Element {
                           item.sodiumPer100g ?? 0,
                           healthGoal,
                         );
-                        const gradeClass = scoreInfo.grade.startsWith('A') ? 'A' : (scoreInfo.grade as 'B' | 'C' | 'D');
-                        const badgeStyle = gradeClass === 'A' ? styles.gradeBadgeA : (gradeClass === 'B' ? styles.gradeBadgeB : (gradeClass === 'C' ? styles.gradeBadgeC : styles.gradeBadgeD));
-                        const textStyle = gradeClass === 'A' ? styles.gradeTextA : (gradeClass === 'B' ? styles.gradeTextB : (gradeClass === 'C' ? styles.gradeTextC : styles.gradeTextD));
+                        const gradeClass = scoreInfo.grade.startsWith('A')
+                          ? 'A'
+                          : (scoreInfo.grade as 'B' | 'C' | 'D');
+                        const badgeStyle =
+                          gradeClass === 'A'
+                            ? styles.gradeBadgeA
+                            : gradeClass === 'B'
+                            ? styles.gradeBadgeB
+                            : gradeClass === 'C'
+                            ? styles.gradeBadgeC
+                            : styles.gradeBadgeD;
+                        const textStyle =
+                          gradeClass === 'A'
+                            ? styles.gradeTextA
+                            : gradeClass === 'B'
+                            ? styles.gradeTextB
+                            : gradeClass === 'C'
+                            ? styles.gradeTextC
+                            : styles.gradeTextD;
                         return (
                           <View style={[styles.itemGradeBadge, badgeStyle]}>
                             <Text style={[styles.itemGradeText, textStyle]}>
@@ -395,18 +490,26 @@ export function ReviewScreen(): React.JSX.Element {
                     {item.isVerified ? (
                       <View style={styles.verifiedBadge}>
                         <Icon name="verified" size={10} color="#00e676" />
-                        <Text style={styles.verifiedText}>Doğrulanmış Besin</Text>
+                        <Text style={styles.verifiedText}>
+                          Doğrulanmış Besin
+                        </Text>
                       </View>
                     ) : (
                       <View style={styles.aiEstimatedBadge}>
                         <Icon name="psychology" size={10} color="#90caf9" />
-                        <Text style={styles.aiEstimatedText}>Yapay Zeka Tahmini</Text>
+                        <Text style={styles.aiEstimatedText}>
+                          Yapay Zeka Tahmini
+                        </Text>
                       </View>
                     )}
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => removeItem(item.id)}>
-                  <Icon name="delete" size={20} color={colors.onSurfaceVariant} />
+                  <Icon
+                    name="delete"
+                    size={20}
+                    color={colors.onSurfaceVariant}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -424,8 +527,15 @@ export function ReviewScreen(): React.JSX.Element {
                     }}
                   >
                     <View style={styles.portionValueContainer}>
-                      <Text style={styles.portionValueInteractive}>{item.estimatedPortionGrams}g</Text>
-                      <Icon name="edit" size={10} color={colors.primaryLight} style={styles.portionEditIcon} />
+                      <Text style={styles.portionValueInteractive}>
+                        {item.estimatedPortionGrams}g
+                      </Text>
+                      <Icon
+                        name="edit"
+                        size={10}
+                        color={colors.primaryLight}
+                        style={styles.portionEditIcon}
+                      />
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -443,7 +553,10 @@ export function ReviewScreen(): React.JSX.Element {
                   <Text style={styles.macroLabelSmall}>{tr.review.energy}</Text>
                   <View style={styles.macroValueRow}>
                     <Text style={styles.macroValueLarge}>
-                      {Math.round((item.caloriesPer100g * item.estimatedPortionGrams) / 100)}
+                      {Math.round(
+                        (item.caloriesPer100g * item.estimatedPortionGrams) /
+                          100,
+                      )}
                     </Text>
                     <Text style={styles.macroUnit}>kcal</Text>
                   </View>
@@ -451,15 +564,21 @@ export function ReviewScreen(): React.JSX.Element {
                 <View style={styles.macroRight}>
                   <MacroBadge
                     label={tr.review.pro}
-                    value={`${Math.round((item.proteinPer100g * item.estimatedPortionGrams) / 100)}g`}
+                    value={`${Math.round(
+                      (item.proteinPer100g * item.estimatedPortionGrams) / 100,
+                    )}g`}
                   />
                   <MacroBadge
                     label={tr.review.carb}
-                    value={`${Math.round((item.carbsPer100g * item.estimatedPortionGrams) / 100)}g`}
+                    value={`${Math.round(
+                      (item.carbsPer100g * item.estimatedPortionGrams) / 100,
+                    )}g`}
                   />
                   <MacroBadge
                     label={tr.review.fat}
-                    value={`${Math.round((item.fatPer100g * item.estimatedPortionGrams) / 100)}g`}
+                    value={`${Math.round(
+                      (item.fatPer100g * item.estimatedPortionGrams) / 100,
+                    )}g`}
                   />
                 </View>
               </View>
@@ -468,7 +587,9 @@ export function ReviewScreen(): React.JSX.Element {
 
           {/* Gizli Yağlar & Soslar (Ekstra Kalori Ekle) Çubuğu */}
           <View style={styles.hiddenIngredientsSection}>
-            <Text style={styles.hiddenLabel}>Gizli Yağlar, Soslar & Ekstralar</Text>
+            <Text style={styles.hiddenLabel}>
+              Gizli Yağlar, Soslar & Ekstralar
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -476,37 +597,89 @@ export function ReviewScreen(): React.JSX.Element {
             >
               <TouchableOpacity
                 style={styles.hiddenChip}
-                onPress={() => handleAddHiddenIngredient('Zeytinyağı (1 YK)', 10, 90, 0, 0, 10)}
+                onPress={() =>
+                  handleAddHiddenIngredient(
+                    'Zeytinyağı (1 YK)',
+                    10,
+                    90,
+                    0,
+                    0,
+                    10,
+                  )
+                }
               >
-                <Icon name="opacity" size={14} color={colors.primary} style={styles.chipIcon} />
-                <Text style={styles.hiddenChipText}>+ Zeytinyağı (90 kcal)</Text>
+                <Icon
+                  name="opacity"
+                  size={14}
+                  color={colors.primary}
+                  style={styles.chipIcon}
+                />
+                <Text style={styles.hiddenChipText}>
+                  + Zeytinyağı (90 kcal)
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.hiddenChip}
-                onPress={() => handleAddHiddenIngredient('Tereyağı (1 TK)', 5, 36, 0, 0, 4)}
+                onPress={() =>
+                  handleAddHiddenIngredient('Tereyağı (1 TK)', 5, 36, 0, 0, 4)
+                }
               >
-                <Icon name="layers" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Icon
+                  name="layers"
+                  size={14}
+                  color={colors.primary}
+                  style={styles.chipIcon}
+                />
                 <Text style={styles.hiddenChipText}>+ Tereyağı (36 kcal)</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.hiddenChip}
-                onPress={() => handleAddHiddenIngredient('Mayonez (1 YK)', 15, 100, 0, 0, 11)}
+                onPress={() =>
+                  handleAddHiddenIngredient('Mayonez (1 YK)', 15, 100, 0, 0, 11)
+                }
               >
-                <Icon name="lens" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Icon
+                  name="lens"
+                  size={14}
+                  color={colors.primary}
+                  style={styles.chipIcon}
+                />
                 <Text style={styles.hiddenChipText}>+ Mayonez (100 kcal)</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.hiddenChip}
-                onPress={() => handleAddHiddenIngredient('Ketçap (1 YK)', 15, 15, 0, 4, 0)}
+                onPress={() =>
+                  handleAddHiddenIngredient('Ketçap (1 YK)', 15, 15, 0, 4, 0)
+                }
               >
-                <Icon name="adjust" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Icon
+                  name="adjust"
+                  size={14}
+                  color={colors.primary}
+                  style={styles.chipIcon}
+                />
                 <Text style={styles.hiddenChipText}>+ Ketçap (15 kcal)</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.hiddenChip}
-                onPress={() => handleAddHiddenIngredient('İlave Tuz (1g)', 1, 0, 0, 0, 0, 0.4)}
+                onPress={() =>
+                  handleAddHiddenIngredient(
+                    'İlave Tuz (1g)',
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.4,
+                  )
+                }
               >
-                <Icon name="grain" size={14} color={colors.primary} style={styles.chipIcon} />
+                <Icon
+                  name="grain"
+                  size={14}
+                  color={colors.primary}
+                  style={styles.chipIcon}
+                />
                 <Text style={styles.hiddenChipText}>+ İlave Tuz (Sodyum)</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -528,16 +701,29 @@ export function ReviewScreen(): React.JSX.Element {
         <View style={styles.bottomContent}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryLeft}>
-              <Text style={styles.summaryLabel}>{tr.review.totalNutrition}</Text>
+              <Text style={styles.summaryLabel}>
+                {tr.review.totalNutrition}
+              </Text>
               <View style={styles.summaryValueRow}>
-                <Text style={styles.summaryValue}>{Math.round(totals.cal)}</Text>
+                <Text style={styles.summaryValue}>
+                  {Math.round(totals.cal)}
+                </Text>
                 <Text style={styles.summaryUnit}>kcal</Text>
               </View>
             </View>
             <View style={styles.summaryRight}>
-              <MacroBento label={tr.review.pro} value={`${Math.round(totals.protein)}g`} />
-              <MacroBento label={tr.review.carb} value={`${Math.round(totals.carbs)}g`} />
-              <MacroBento label={tr.review.fat} value={`${Math.round(totals.fat)}g`} />
+              <MacroBento
+                label={tr.review.pro}
+                value={`${Math.round(totals.protein)}g`}
+              />
+              <MacroBento
+                label={tr.review.carb}
+                value={`${Math.round(totals.carbs)}g`}
+              />
+              <MacroBento
+                label={tr.review.fat}
+                value={`${Math.round(totals.fat)}g`}
+              />
             </View>
           </View>
 
@@ -578,7 +764,7 @@ export function ReviewScreen(): React.JSX.Element {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{tr.review.addItem}</Text>
-            
+
             <View style={styles.searchInputContainer}>
               <TextInput
                 style={styles.modalInput}
@@ -587,11 +773,14 @@ export function ReviewScreen(): React.JSX.Element {
                 value={newItemName}
                 onChangeText={handleSearchTextChange}
               />
-              
+
               {/* Autocomplete dropdown results */}
               {searchResults.length > 0 && (
                 <View style={styles.autocompleteDropdown}>
-                  <ScrollView style={styles.dropdownScroll} keyboardShouldPersistTaps="handled">
+                  <ScrollView
+                    style={styles.dropdownScroll}
+                    keyboardShouldPersistTaps="handled"
+                  >
                     {searchResults.map((food, idx) => (
                       <TouchableOpacity
                         key={idx}
@@ -599,7 +788,9 @@ export function ReviewScreen(): React.JSX.Element {
                         onPress={() => handleSelectAutofill(food)}
                       >
                         <Text style={styles.dropdownItemText}>{food.name}</Text>
-                        <Text style={styles.dropdownItemSub}>{food.caloriesPer100g} kcal/100g</Text>
+                        <Text style={styles.dropdownItemSub}>
+                          {food.caloriesPer100g} kcal/100g
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -728,7 +919,10 @@ export function ReviewScreen(): React.JSX.Element {
                     updateItemPortion(editingItemId, val);
                     setPortionModalVisible(false);
                   } else {
-                    Alert.alert('Hata', 'Lütfen 1 ile 5000 gram arasında geçerli bir değer girin.');
+                    Alert.alert(
+                      'Hata',
+                      'Lütfen 1 ile 5000 gram arasında geçerli bir değer girin.',
+                    );
                   }
                 }}
               >
@@ -739,45 +933,6 @@ export function ReviewScreen(): React.JSX.Element {
         </View>
       </Modal>
     </SafeAreaView>
-  );
-}
-
-function SimpleSlider({
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  value: number;
-  min: number;
-  max: number;
-  onChange: (v: number) => void;
-}) {
-  const pct = (value - min) / (max - min);
-  const [trackWidth, setTrackWidth] = React.useState(0);
-  return (
-    <TouchableOpacity
-      style={styles.sliderTrack}
-      activeOpacity={1}
-      onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}
-      onPress={e => {
-        const locationX = e.nativeEvent.locationX;
-        const newPct = Math.max(0, Math.min(1, locationX / trackWidth));
-        onChange(min + newPct * (max - min));
-      }}
-    >
-      <View style={[styles.sliderFill, { width: `${pct * 100}%` }]} />
-      <View style={[styles.sliderThumb, { left: `${pct * 100}%` }]} />
-    </TouchableOpacity>
-  );
-}
-
-function MacroBadge({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.macroBadge}>
-      <Text style={styles.macroBadgeLabel}>{label}</Text>
-      <Text style={styles.macroBadgeValue}>{value}</Text>
-    </View>
   );
 }
 

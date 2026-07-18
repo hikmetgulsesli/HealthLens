@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { OfflineQueueItem } from '../types';
 import { analyzeFoodImage } from '../services/aiService';
 import { useLogStore } from './logStore';
@@ -126,7 +126,7 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
     }),
     {
       name: 'offline-queue',
-      storage: queueStorage,
+      storage: createJSONStorage(() => queueStorage),
       version: 1,
       migrate: (persisted: unknown, version?: number) => {
         if (version === 1 && persisted && typeof persisted === 'object') {

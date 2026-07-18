@@ -23,6 +23,7 @@ describe('userStore actions', () => {
         isPremium: false,
         plan: 'free',
         trialEndsAt: null,
+        freeScansDateKey: new Date().toISOString().split('T')[0],
         freeScansUsed: 0,
         healthGoal: null,
         email: null,
@@ -82,5 +83,35 @@ describe('userStore actions', () => {
     const updatedProfile = useUserStore.getState().profile;
     expect(updatedProfile.isFirstLaunch).toBe(true);
     expect(updatedProfile.healthGoal).toBeNull();
+  });
+
+  test('canScan uses only scans from the current date key', () => {
+    useUserStore.setState({
+      profile: {
+        ...useUserStore.getState().profile,
+        freeScansDateKey: '2024-01-01',
+        freeScansUsed: 3,
+      },
+    });
+
+    expect(useUserStore.getState().canScan(3, 100).allowed).toBe(true);
+  });
+
+  test('incrementFreeScans resets stale daily scan count before incrementing', () => {
+    const todayKey = new Date().toISOString().split('T')[0];
+
+    useUserStore.setState({
+      profile: {
+        ...useUserStore.getState().profile,
+        freeScansDateKey: '2024-01-01',
+        freeScansUsed: 3,
+      },
+    });
+
+    useUserStore.getState().incrementFreeScans();
+
+    const updatedProfile = useUserStore.getState().profile;
+    expect(updatedProfile.freeScansDateKey).toBe(todayKey);
+    expect(updatedProfile.freeScansUsed).toBe(1);
   });
 });

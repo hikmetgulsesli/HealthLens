@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { LogEntry } from '../types';
 import { createMmkvStorage } from '../lib/persist';
 
@@ -54,7 +54,7 @@ export const useLogStore = create<LogState>()(
     }),
     {
       name: 'daily-logs',
-      storage: logStorage,
+      storage: createJSONStorage(() => logStorage),
       version: 1,
       migrate: (persisted: unknown, version?: number) => {
         if (version === 1 && persisted && typeof persisted === 'object') {
@@ -73,17 +73,14 @@ export const useLogStore = create<LogState>()(
 export function getStreakForEntries(entries: Record<string, LogEntry[]>): number {
   let streak = 0;
   const today = new Date();
-
   const checkDate = new Date(today);
   let key = checkDate.toISOString().split('T')[0];
 
-  // If no entries today, check yesterday to keep the streak alive
   if (!entries[key] || entries[key].length === 0) {
     checkDate.setDate(checkDate.getDate() - 1);
     key = checkDate.toISOString().split('T')[0];
   }
 
-  // Count backwards consecutively
   while (entries[key] && entries[key].length > 0) {
     streak++;
     checkDate.setDate(checkDate.getDate() - 1);
