@@ -24,6 +24,7 @@ import { fontFamily } from '../theme/typography';
 import { useAnalysisStore } from '../stores/analysisStore';
 import { useOfflineQueueStore } from '../stores/offlineQueueStore';
 import { useUserStore } from '../stores/userStore';
+import { CameraTopBar } from '../components/camera/CameraTopBar';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -267,41 +268,16 @@ export function CameraScreen(): React.JSX.Element {
 
       {/* Top Bar */}
       <SafeAreaView style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          activeOpacity={0.7}
-          onPress={() => {
+        <CameraTopBar
+          title={tr.appName}
+          isBarcodeMode={isBarcodeMode}
+          onClose={() => {
             resetAnalysis();
             navigation.navigate('MainTabs');
           }}
-        >
-          <Icon name="close" size={24} color={colors.onSurface} />
-        </TouchableOpacity>
-
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{tr.appName}</Text>
-        </View>
-
-        <View style={styles.topBarRight}>
-          {/* Voice Assistant Button */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            activeOpacity={0.7}
-            onPress={() => setShowVoiceModal(true)}
-            disabled={isBarcodeMode}
-          >
-            <Icon name="mic" size={24} color={isBarcodeMode ? colors.outline : colors.onSurface} />
-          </TouchableOpacity>
-
-          {/* Barcode Mode Toggle */}
-          <TouchableOpacity
-            style={[styles.iconButton, isBarcodeMode && styles.barcodeButtonActive]}
-            activeOpacity={0.7}
-            onPress={() => setIsBarcodeMode(v => !v)}
-          >
-            <Icon name={isBarcodeMode ? 'qr-code-scanner' : 'qr-code'} size={24} color={isBarcodeMode ? colors.primary : colors.onSurface} />
-          </TouchableOpacity>
-        </View>
+          onToggleVoice={() => setShowVoiceModal(true)}
+          onToggleBarcode={() => setIsBarcodeMode(v => !v)}
+        />
       </SafeAreaView>
 
       {/* Center Reticle */}

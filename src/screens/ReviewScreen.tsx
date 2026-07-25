@@ -27,6 +27,7 @@ import { searchFoods, LocalFood } from '../db/localFoods';
 import { calculateHealthGrade } from '../utils/healthGrader';
 import { MacroBadge } from '../components/review/MacroBadge';
 import { SimpleSlider } from '../components/review/SimpleSlider';
+import { MacroBento } from '../components/review/MacroBento';
 
 const MEAL_CATEGORIES: { label: string; value: MealCategory }[] = [
   { label: tr.review.breakfast, value: 'breakfast' },
@@ -933,15 +934,6 @@ export function ReviewScreen(): React.JSX.Element {
         </View>
       </Modal>
     </SafeAreaView>
-  );
-}
-
-function MacroBento({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.macroBento}>
-      <Text style={styles.macroBentoLabel}>{label}</Text>
-      <Text style={styles.macroBentoValue}>{value}</Text>
-    </View>
   );
 }
 

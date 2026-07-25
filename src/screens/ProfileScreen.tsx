@@ -23,6 +23,8 @@ import { useNavigation } from '@react-navigation/native';
 import { tr } from '../i18n';
 import RNFS from 'react-native-fs';
 import { Share } from 'react-native';
+import { ProfileHeader } from '../components/profile/ProfileHeader';
+import { GoalCard } from '../components/profile/GoalCard';
 
 export function ProfileScreen(): React.JSX.Element {
   const navigation = useNavigation();
@@ -351,42 +353,7 @@ export function ProfileScreen(): React.JSX.Element {
         showsVerticalScrollIndicator={false}
       >
         {/* Elegant Profile Header Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileCardHeader}>
-            <View style={styles.avatarGlowContainer}>
-              <View style={styles.avatarInner}>
-                <Icon name="psychology" size={32} color={colors.primary} />
-              </View>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {profile.email
-                  ? profile.loginMethod === 'google'
-                    ? 'Google Kullanıcısı'
-                    : 'Apple Kullanıcısı'
-                  : 'HealthLens Kullanıcısı'}
-              </Text>
-              <Text style={styles.profileId}>
-                {profile.email
-                  ? profile.email
-                  : `Sistem Modülü: v${
-                      require('../utils/constants').SCHEMA_VERSION ?? '1.0'
-                    }`}
-              </Text>
-              {profile.isPremium ? (
-                <View style={styles.premiumBadge}>
-                  <Icon name="verified" size={12} color="#00e676" />
-                  <Text style={styles.premiumText}>💎 PREMIUM AKTİF</Text>
-                </View>
-              ) : (
-                <View style={styles.freeBadge}>
-                  <Icon name="lock-open" size={12} color={colors.success} />
-                  <Text style={styles.freeText}>ÜCRETSİZ SÜRÜM</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
+        <ProfileHeader profile={profile} />
 
         {/* Ücretsiz Kullanım Limiti (Eğer Premium Değilse) */}
         {!profile.isPremium && (
@@ -548,143 +515,58 @@ export function ProfileScreen(): React.JSX.Element {
           <Text style={styles.sectionLabel}>{tr.profile.dailyTargets}</Text>
 
           <View style={styles.bentoGrid}>
-            {/* Calorie Bento Card */}
-            <View style={[styles.bentoCard, styles.bentoCardRed]}>
-              <View style={styles.bentoCardHeader}>
-                <Icon name="local-fire-department" size={20} color="#EF4444" />
-                <Text style={styles.bentoLabel}>
-                  {tr.profile.calorieTarget}
-                </Text>
-              </View>
-              <View style={styles.bentoAdjustRow}>
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('cal', -50)}
-                >
-                  <Icon name="remove" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.bentoInput, styles.bentoInputRed]}
-                  keyboardType="numeric"
-                  value={localGoals.cal}
-                  placeholder="---"
-                  placeholderTextColor={colors.outline}
-                  onChangeText={v => setLocalGoals(p => ({ ...p, cal: v }))}
-                  onBlur={() => saveGoals()}
-                />
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('cal', 50)}
-                >
-                  <Icon name="add" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.bentoUnit}>kcal / gün</Text>
-            </View>
-
-            {/* Protein Bento Card */}
-            <View style={[styles.bentoCard, styles.bentoCardPrimary]}>
-              <View style={styles.bentoCardHeader}>
-                <Icon name="fitness-center" size={20} color={colors.primary} />
-                <Text style={styles.bentoLabel}>{tr.profile.protein}</Text>
-              </View>
-              <View style={styles.bentoAdjustRow}>
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('protein', -5)}
-                >
-                  <Icon name="remove" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.bentoInput, styles.bentoInputPrimary]}
-                  keyboardType="numeric"
-                  value={localGoals.protein}
-                  placeholder="---"
-                  placeholderTextColor={colors.outline}
-                  onChangeText={v => setLocalGoals(p => ({ ...p, protein: v }))}
-                  onBlur={() => saveGoals()}
-                />
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('protein', 5)}
-                >
-                  <Icon name="add" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.bentoUnit}>gram / gün</Text>
-            </View>
-
-            {/* Carbohydrate Bento Card */}
-            <View style={[styles.bentoCard, styles.bentoCardOrange]}>
-              <View style={styles.bentoCardHeader}>
-                <Icon name="grain" size={20} color="#F59E0B" />
-                <Text style={styles.bentoLabel}>{tr.profile.carbs}</Text>
-              </View>
-              <View style={styles.bentoAdjustRow}>
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('carbs', -10)}
-                >
-                  <Icon name="remove" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.bentoInput, styles.bentoInputOrange]}
-                  keyboardType="numeric"
-                  value={localGoals.carbs}
-                  placeholder="---"
-                  placeholderTextColor={colors.outline}
-                  onChangeText={v => setLocalGoals(p => ({ ...p, carbs: v }))}
-                  onBlur={() => saveGoals()}
-                />
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('carbs', 10)}
-                >
-                  <Icon name="add" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.bentoUnit}>gram / gün</Text>
-            </View>
-
-            {/* Fat Bento Card */}
-            <View style={[styles.bentoCard, styles.bentoCardBlue]}>
-              <View style={styles.bentoCardHeader}>
-                <Icon name="opacity" size={20} color="#3B82F6" />
-                <Text style={styles.bentoLabel}>{tr.profile.fat}</Text>
-              </View>
-              <View style={styles.bentoAdjustRow}>
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('fat', -5)}
-                >
-                  <Icon name="remove" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.bentoInput, styles.bentoInputBlue]}
-                  keyboardType="numeric"
-                  value={localGoals.fat}
-                  placeholder="---"
-                  placeholderTextColor={colors.outline}
-                  onChangeText={v => setLocalGoals(p => ({ ...p, fat: v }))}
-                  onBlur={() => saveGoals()}
-                />
-                <TouchableOpacity
-                  style={styles.adjustBtn}
-                  activeOpacity={0.7}
-                  onPress={() => adjustGoal('fat', 5)}
-                >
-                  <Icon name="add" size={16} color={colors.onSurface} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.bentoUnit}>gram / gün</Text>
-            </View>
+            <GoalCard
+              label={tr.profile.calorieTarget}
+              icon="local-fire-department"
+              accentColor="#EF4444"
+              accentInputColor="#EF4444"
+              value={localGoals.cal}
+              placeholder="---"
+              unit="kcal / gün"
+              onChange={v => setLocalGoals(p => ({ ...p, cal: v }))}
+              onBlur={() => saveGoals()}
+              onIncrement={() => adjustGoal('cal', 50)}
+              onDecrement={() => adjustGoal('cal', -50)}
+            />
+            <GoalCard
+              label={tr.profile.protein}
+              icon="fitness-center"
+              accentColor={colors.primary}
+              accentInputColor={colors.primary}
+              value={localGoals.protein}
+              placeholder="---"
+              unit="gram / gün"
+              onChange={v => setLocalGoals(p => ({ ...p, protein: v }))}
+              onBlur={() => saveGoals()}
+              onIncrement={() => adjustGoal('protein', 5)}
+              onDecrement={() => adjustGoal('protein', -5)}
+            />
+            <GoalCard
+              label={tr.profile.carbs}
+              icon="grain"
+              accentColor="#F59E0B"
+              accentInputColor="#F59E0B"
+              value={localGoals.carbs}
+              placeholder="---"
+              unit="gram / gün"
+              onChange={v => setLocalGoals(p => ({ ...p, carbs: v }))}
+              onBlur={() => saveGoals()}
+              onIncrement={() => adjustGoal('carbs', 10)}
+              onDecrement={() => adjustGoal('carbs', -10)}
+            />
+            <GoalCard
+              label={tr.profile.fat}
+              icon="opacity"
+              accentColor="#3B82F6"
+              accentInputColor="#3B82F6"
+              value={localGoals.fat}
+              placeholder="---"
+              unit="gram / gün"
+              onChange={v => setLocalGoals(p => ({ ...p, fat: v }))}
+              onBlur={() => saveGoals()}
+              onIncrement={() => adjustGoal('fat', 5)}
+              onDecrement={() => adjustGoal('fat', -5)}
+            />
           </View>
         </View>
 
