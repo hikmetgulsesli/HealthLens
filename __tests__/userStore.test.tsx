@@ -1,4 +1,5 @@
 import { useUserStore } from '../src/stores/userStore';
+import { getTodayKey } from '../src/utils/date';
 
 describe('userStore actions', () => {
   beforeEach(() => {
@@ -98,7 +99,7 @@ describe('userStore actions', () => {
   });
 
   test('incrementFreeScans resets stale daily scan count before incrementing', () => {
-    const todayKey = new Date().toISOString().split('T')[0];
+    const todayKey = getTodayKey();
 
     useUserStore.setState({
       profile: {
