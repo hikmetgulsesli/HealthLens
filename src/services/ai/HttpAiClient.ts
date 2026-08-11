@@ -19,6 +19,12 @@ const VALID_MEAL_CATEGORIES: MealCategory[] = [
   'snack',
 ];
 
+function createTimeoutSignal(ms: number): AbortSignal {
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), ms);
+  return ctrl.signal;
+}
+
 function validateMealCategory(cat: unknown): MealCategory {
   return VALID_MEAL_CATEGORIES.includes(cat as MealCategory)
     ? (cat as MealCategory)
@@ -43,11 +49,11 @@ export class HttpAiClient implements AiClient {
     params: AnalyzeParams,
     opts?: AiRequestOptions,
   ): Promise<AnalysisResult> {
-    const checksum = sha256(params.imageBuffer);
+    const checksum = await sha256(params.imageBuffer);
     const inflight = this.dedupMap.get(checksum);
     if (inflight) return inflight;
 
-    const signal = opts?.signal ?? AbortSignal.timeout(AI_TIMEOUT_MS);
+    const signal = opts?.signal ?? createTimeoutSignal(AI_TIMEOUT_MS);
     const promise = this.executeImageRequest(params, signal);
     this.dedupMap.set(checksum, promise);
     try {
@@ -62,7 +68,7 @@ export class HttpAiClient implements AiClient {
     params: AnalyzeTextParams,
     opts?: AiRequestOptions,
   ): Promise<AnalysisResult> {
-    const signal = opts?.signal ?? AbortSignal.timeout(AI_TIMEOUT_MS);
+    const signal = opts?.signal ?? createTimeoutSignal(AI_TIMEOUT_MS);
     const url = `${this.baseUrl}/v1/analyze-text`;
     const response = await this.fetchImpl(url, {
       method: 'POST',

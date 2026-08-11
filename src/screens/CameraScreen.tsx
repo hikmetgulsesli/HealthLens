@@ -29,7 +29,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { tr } from '../i18n';
-import { analyzeFoodImage, getMockAnalysis, analyzeTextMeal } from '../services/aiService';
+import { analyzeFoodImage, analyzeTextMeal } from '../services/aiService';
 import { saveImage } from '../utils/imageStorage';
 import { findFoodByBarcode } from '../db/localFoods';
 
@@ -169,19 +169,17 @@ export function CameraScreen(): React.JSX.Element {
         const result = await analyzeFoodImage(imageUris);
         setAnalysis(result);
       } catch (error) {
-        console.warn('AI analysis failed, using mock data / offline queue:', error);
-        
-        // Add all captured images to offline queue
+        console.warn('AI analysis failed, queueing for retry:', error);
         for (const uri of imageUris) {
           addToQueue({
             imageUri: uri,
             mealCategory: 'breakfast',
           });
         }
-        
-        // Populate standard mock analysis
-        const mockRes = getMockAnalysis(imageUris);
-        setAnalysis(mockRes);
+        Alert.alert(
+          'Çevrimdışı',
+          'Yemek kaydedildi. İnternet bağlantısı gelince analiz tamamlanacak.',
+        );
       }
 
       setAnalyzing(false);
