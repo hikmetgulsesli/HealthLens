@@ -81,6 +81,7 @@ export interface OfflineQueueItem {
   mealCategory: MealCategory;
   status: 'pending' | 'uploading' | 'failed';
   retryCount: number;
+  nextRetryAt?: string | null;
 }
 
 export interface AnalysisResult {
