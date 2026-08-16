@@ -70,6 +70,9 @@ export function ReviewScreen(): React.JSX.Element {
   const [newItemProtein, setNewItemProtein] = useState('');
   const [newItemCarbs, setNewItemCarbs] = useState('');
   const [newItemFat, setNewItemFat] = useState('');
+  const [newItemFiber, setNewItemFiber] = useState('');
+  const [newItemSugar, setNewItemSugar] = useState('');
+  const [newItemSodium, setNewItemSodium] = useState('');
   const [newItemPortion, setNewItemPortion] = useState('100');
 
   // Autocomplete search states
@@ -690,6 +693,7 @@ export function ReviewScreen(): React.JSX.Element {
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => setShowAddModal(true)}
+            testID="reviewAddItemButton"
           >
             <Icon name="add" size={20} color={colors.primary} />
             <Text style={styles.addButtonText}>{tr.review.addItem}</Text>
@@ -735,6 +739,7 @@ export function ReviewScreen(): React.JSX.Element {
                 useAnalysisStore.getState().reset();
                 navigation.goBack();
               }}
+              testID="reviewRetakeButton"
             >
               <Text style={styles.retakeText}>{tr.review.cancel}</Text>
             </TouchableOpacity>
@@ -833,6 +838,30 @@ export function ReviewScreen(): React.JSX.Element {
             />
             <TextInput
               style={styles.modalInput}
+              placeholder="Lif (100g)"
+              placeholderTextColor={colors.onSurfaceVariant}
+              keyboardType="numeric"
+              value={newItemFiber}
+              onChangeText={setNewItemFiber}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Şeker (100g)"
+              placeholderTextColor={colors.onSurfaceVariant}
+              keyboardType="numeric"
+              value={newItemSugar}
+              onChangeText={setNewItemSugar}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Sodyum (100g)"
+              placeholderTextColor={colors.onSurfaceVariant}
+              keyboardType="numeric"
+              value={newItemSodium}
+              onChangeText={setNewItemSodium}
+            />
+            <TextInput
+              style={styles.modalInput}
               placeholder="Porsiyon (g)"
               placeholderTextColor={colors.onSurfaceVariant}
               keyboardType="numeric"
@@ -865,16 +894,23 @@ export function ReviewScreen(): React.JSX.Element {
                     proteinPer100g: parseFloat(newItemProtein) || 0,
                     carbsPer100g: parseFloat(newItemCarbs) || 0,
                     fatPer100g: parseFloat(newItemFat) || 0,
+                    fiberPer100g: parseFloat(newItemFiber) || 0,
+                    sugarPer100g: parseFloat(newItemSugar) || 0,
+                    sodiumPer100g: parseFloat(newItemSodium) || 0,
                   });
                   setNewItemName('');
                   setNewItemCalories('');
                   setNewItemProtein('');
                   setNewItemCarbs('');
                   setNewItemFat('');
+                  setNewItemFiber('');
+                  setNewItemSugar('');
+                  setNewItemSodium('');
                   setNewItemPortion('100');
                   setSearchResults([]);
                   setShowAddModal(false);
                 }}
+                testID="reviewAddItemSaveButton"
               >
                 <Text style={styles.modalSaveText}>{tr.review.save}</Text>
               </TouchableOpacity>

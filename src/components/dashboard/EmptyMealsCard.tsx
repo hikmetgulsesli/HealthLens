@@ -29,9 +29,14 @@ export function EmptyMealsCard({
         source={Illustrations.emptyPlate}
         style={styles.emptyPlateIllustration}
         resizeMode="contain"
+        testID="dashboardEmptyPlate"
       />
       <Text style={styles.emptyText}>{emptyText}</Text>
-      <TouchableOpacity style={styles.emptyCta} onPress={onPressCta}>
+      <TouchableOpacity
+        style={styles.emptyCta}
+        onPress={onPressCta}
+        testID="dashboardFirstCaptureCta"
+      >
         <Icon name="photo-camera" size={16} color={colors.onPrimary} />
         <Text style={styles.emptyCtaText}>{ctaText}</Text>
       </TouchableOpacity>

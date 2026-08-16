@@ -22,7 +22,11 @@ export function CameraTopBar({
 }: Props): React.JSX.Element {
   return (
     <View style={styles.topBar}>
-      <TouchableOpacity style={styles.iconButton} onPress={onClose}>
+      <TouchableOpacity
+        style={styles.iconButton}
+        onPress={onClose}
+        testID="cameraCloseButton"
+      >
         <Icon name="close" size={24} color={colors.onSurface} />
       </TouchableOpacity>
       <View style={styles.titleContainer}>
@@ -33,6 +37,7 @@ export function CameraTopBar({
           style={styles.iconButton}
           onPress={onToggleVoice}
           disabled={isBarcodeMode}
+          testID="cameraVoiceButton"
         >
           <Icon
             name="mic"
@@ -43,6 +48,7 @@ export function CameraTopBar({
         <TouchableOpacity
           style={[styles.iconButton, isBarcodeMode && styles.barcodeButtonActive]}
           onPress={onToggleBarcode}
+          testID="cameraBarcodeButton"
         >
           <Icon
             name={isBarcodeMode ? 'qr-code-scanner' : 'qr-code'}

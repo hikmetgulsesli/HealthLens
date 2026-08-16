@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   RefreshControl,
   StatusBar,
@@ -8,6 +7,7 @@ import {
   Text,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { tr } from '../i18n';
+import { getTodayKey } from '../utils/date';
 
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { SyncStatusBanner } from '../components/dashboard/SyncStatusBanner';
@@ -43,7 +44,14 @@ export function DashboardScreen(): React.JSX.Element {
   const isSyncing = useOfflineQueueStore(s => s.isProcessing);
   const processQueue = useOfflineQueueStore(s => s.processQueue);
 
-  const todayKey = new Date().toISOString().split('T')[0];
+  // Re-evaluate the day key once per minute so a session that crosses
+// midnight updates the header "Bugün" automatically.
+const [now, setNow] = useState(() => new Date());
+useEffect(() => {
+  const timer = setInterval(() => setNow(new Date()), 60_000);
+  return () => clearInterval(timer);
+}, []);
+const todayKey = getTodayKey(now);
   const pendingCount = useMemo(
     () => queue.filter(i => i.status === 'pending' || i.status === 'failed').length,
     [queue],

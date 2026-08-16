@@ -15,4 +15,12 @@ describe('getTodayKey', () => {
     const fake = new Date(2026, 0, 5, 9, 0);
     expect(getTodayKey(fake)).toBe('2026-01-05');
   });
+
+  it('crosses midnight boundary into a new day', () => {
+    const justBefore = new Date(2026, 11, 31, 23, 59, 59);
+    // 23:59:59 Dec 31 stays in 2026-12-31; next day 00:00:01 is 2027-01-01.
+    expect(getTodayKey(justBefore)).toBe('2026-12-31');
+    const nextDay = new Date(2027, 0, 1, 0, 0, 1);
+    expect(getTodayKey(nextDay)).toBe('2027-01-01');
+  });
 });

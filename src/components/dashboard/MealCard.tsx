@@ -93,6 +93,9 @@ export function MealCard({
       style={styles.mealCard}
       onPress={handlePress}
       onLongPress={handleLongPress}
+      testID={`dashboardMealCard-${entry.id}`}
+      accessibilityLabel={`Öğün ${tr.meals[entry.mealCategory]}, ${entry.totalCalories} kalori, sağlık notu ${mealGrade.grade}`}
+      accessibilityRole="button"
     >
       <View style={styles.mealRow}>
         <View style={styles.mealIconBox}>
@@ -101,6 +104,7 @@ export function MealCard({
               source={{ uri: entry.imageUri }}
               style={styles.mealImage}
               resizeMode="cover"
+              testID={`dashboardMealCardImage-${entry.id}`}
             />
           ) : (
             <Icon
@@ -119,7 +123,7 @@ export function MealCard({
           )}
         </View>
         <View style={styles.mealInfo}>
-          <Text style={styles.mealName}>
+          <Text style={styles.mealName} testID={`dashboardMealCardName-${entry.id}`}>
             {entry.items.map(i => i.name).join(', ')}
           </Text>
           <Text style={styles.mealTime}>

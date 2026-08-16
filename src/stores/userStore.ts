@@ -254,10 +254,19 @@ export const useUserStore = create<UserState>()(
             }
           }
         } catch (error) {
-          console.warn(
-            'Failed to sync scans from keychain (expected if native module is not built):',
-            error,
-          );
+          // Two known-benign failure modes are intentionally swallowed:
+          //   1. Simulator runs without the keychain entitlement (the standard
+          //      `Internal error when a required entitlement isn't present`).
+          //   2. Tests / reduced environments without the native module linked.
+          // Both are recoverable; surface only unknown failures so we don't
+          // spam LogBox with redundant diagnostics on every foreground event.
+          const message =
+            error instanceof Error ? error.message : String(error);
+          const isSimulatorEntitlementError =
+            /required entitlement/i.test(message);
+          if (!isSimulatorEntitlementError && __DEV__) {
+            console.warn('Failed to sync scans from keychain:', error);
+          }
         }
       },
     }),

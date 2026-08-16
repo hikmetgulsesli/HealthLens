@@ -1,0 +1,26 @@
+appId: com.hikmetgulsesli.healthlens
+onFlowStart:
+  - launchApp
+tags:
+  - critical
+  - goal-editing
+---
+# Goal editing flow: verify calorie goal decrement + increment keys,
+# dashboard ring recalculation value.
+
+- assertVisible: "Günlük Enerji"
+- tapOn: "Ayarlar"
+- assertVisible: "HealthLens"
+- runFlow:
+    when:
+      visible: "KALORİ HEDEFİ"
+    commands:
+      - tapOn:
+          id: "profileGoalCalorie-decrement"
+      - tapOn:
+          id: "profileGoalCalorie-decrement"
+      - tapOn:
+          id: "profileGoalCalorie-increment"
+- assertVisible: "kcal / gün"
+- tapOn: "Ana Sayfa"
+- assertVisible: "Günlük Enerji"

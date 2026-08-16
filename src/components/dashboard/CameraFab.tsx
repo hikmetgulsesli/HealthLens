@@ -19,6 +19,7 @@ export function CameraFab({
       style={[styles.fab, { bottom, right }]}
       activeOpacity={0.8}
       onPress={onPress}
+      testID="dashboardCameraFab"
     >
       <Icon name="photo-camera" size={24} color={colors.onPrimary} />
     </TouchableOpacity>

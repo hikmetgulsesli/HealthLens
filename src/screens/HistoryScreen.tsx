@@ -77,6 +77,20 @@ export function HistoryScreen(): React.JSX.Element {
     });
   }, [weekDays, entries, goalCal]);
 
+  // 7-day rolling average (kcal/day) — drives the trend header summary.
+  const weekAverageCal = useMemo(() => {
+    const dailyTotals = weekDays.map(d => {
+      const key = d.toISOString().split('T')[0];
+      const dailyEntries = entries[key] ?? [];
+      return dailyEntries.reduce((sum, e) => sum + e.totalCalories, 0);
+    });
+    const loggedDays = dailyTotals.filter(t => t > 0);
+    if (loggedDays.length === 0) return 0;
+    return Math.round(
+      loggedDays.reduce((s, n) => s + n, 0) / loggedDays.length,
+    );
+  }, [weekDays, entries]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
@@ -287,7 +301,9 @@ export function HistoryScreen(): React.JSX.Element {
         <View style={styles.glassPanel}>
           <View style={styles.trendHeader}>
             <Text style={styles.trendTitle}>{tr.history.sevenDayTrend}</Text>
-            <Text style={styles.trendSubtitle}>{tr.history.calories}</Text>
+            <Text style={styles.trendSubtitle}>
+              {tr.history.calories} • 7 günlük ort. {weekAverageCal} kcal
+            </Text>
           </View>
           <View style={styles.trendChart}>
             {trendData.map((h, i) => {

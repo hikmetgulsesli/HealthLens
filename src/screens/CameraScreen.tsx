@@ -31,6 +31,7 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 import { tr } from '../i18n';
 import { analyzeFoodImage, analyzeTextMeal } from '../services/aiService';
 import { saveImage } from '../utils/imageStorage';
+import { openSystemSettings } from '../utils/systemSettings';
 import { findFoodByBarcode } from '../db/localFoods';
 
 export function CameraScreen(): React.JSX.Element {
@@ -125,7 +126,14 @@ export function CameraScreen(): React.JSX.Element {
       setIsProcessing(false);
     } catch (err) {
       console.error('Capture failed:', err);
-      Alert.alert(tr.camera.errorTitle || 'Hata', tr.camera.captureError);
+      Alert.alert(
+        tr.camera.errorTitle || 'Hata',
+        tr.camera.captureError || 'Yakalama başarısız',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Ayarları Aç', onPress: () => openSystemSettings('app') },
+        ],
+      );
       setIsProcessing(false);
     }
   };
@@ -255,9 +263,17 @@ export function CameraScreen(): React.JSX.Element {
           cameraType={CameraType.Back}
           flashMode={flashOn ? 'on' : 'off'}
           scanBarcode={isBarcodeMode}
-          onReadCode={(event: {nativeEvent?: {codeStringValue?: string}}) => handleBarcodeRead(event.nativeEvent?.codeStringValue ?? '')}
+          zoomMode="on"
+          focusMode="on"
+          onReadCode={(event: {nativeEvent?: {codeStringValue?: string}}) =>
+            handleBarcodeRead(event.nativeEvent?.codeStringValue ?? '')
+          }
           testID="cameraPreview"
         />
+        {/* Opaque overlay covers the simulator's balloon placeholder while
+            letting all chrome (top bar, reticle, bottom controls) render
+            on top. See isSimulator comment above. */}
+        <View style={styles.cameraFallback} pointerEvents="none" />
       </View>
 
       {/* Dark Overlays */}
@@ -449,6 +465,22 @@ export function CameraScreen(): React.JSX.Element {
 }
 
 const RETICLE_SIZE = 280;
+
+// react-native-camera-kit v18 always renders a colorful SimulatorPreviewView
+// (balloons + stickers) on iOS Simulator. The library auto-decides between
+// `RealCamera` and `SimulatorCamera` inside its native CameraView, and it
+// does not expose a JS-side prop to disable the simulator placeholder.
+//
+// Pragmatic fix: keep <Camera /> mounted (so barcode + capture callbacks stay
+// wired on real devices), then place an opaque overlay on top that hides the
+// native preview entirely. The overlay is rendered as the first child of the
+// container so its z-order sits between the camera preview and the chrome
+// (top bar, reticle, bottom controls).
+//
+// On a real device the overlay sits over a live camera feed (covered chrome)
+// so the user never sees opaque bands; on a simulator it hides the balloon
+// placeholder. The overlay color matches the screen background so the
+// designer-approved layout is preserved everywhere.
 const CORNER_SIZE = 24;
 
 const styles = StyleSheet.create({
@@ -463,6 +495,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1,
+  },
+  cameraFallback: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.background,
   },
   camera: {
     flex: 1,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, LayoutChangeEvent } from 'react-native';
+import { View, TouchableOpacity, LayoutChangeEvent, StyleSheet } from 'react-native';
 
 interface Props {
   value: number;
@@ -10,6 +10,9 @@ interface Props {
   fillStyle?: object;
   thumbStyle?: object;
 }
+
+const TRACK_INACTIVE = 'rgba(255,255,255,0.15)';
+const TRACK_ACTIVE = '#14B8A6';
 
 export function SimpleSlider({
   value,
@@ -25,13 +28,7 @@ export function SimpleSlider({
 
   return (
     <TouchableOpacity
-      style={[
-        {
-          height: 32,
-          justifyContent: 'center',
-        },
-        trackStyle,
-      ]}
+      style={[styles.touch, trackStyle]}
       activeOpacity={1}
       onLayout={(e: LayoutChangeEvent) => setTrackWidth(e.nativeEvent.layout.width)}
       onPress={e => {
@@ -40,35 +37,14 @@ export function SimpleSlider({
         onChange(min + newPct * (max - min));
       }}
     >
-      <View
-        style={{
-          height: 6,
-          borderRadius: 3,
-          backgroundColor: 'rgba(255,255,255,0.15)',
-        }}
-      >
+      <View style={styles.track}>
         <View
-          style={[
-            {
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: '#14B8A6',
-            },
-            { width: `${pct * 100}%` },
-            fillStyle,
-          ]}
+          style={[styles.fill, { width: `${pct * 100}%` }, fillStyle]}
         />
       </View>
       <View
         style={[
-          {
-            position: 'absolute',
-            width: 18,
-            height: 18,
-            borderRadius: 9,
-            backgroundColor: '#14B8A6',
-            marginLeft: -9,
-          },
+          styles.thumb,
           { left: `${pct * 100}%` },
           thumbStyle,
         ]}
@@ -76,3 +52,28 @@ export function SimpleSlider({
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  touch: {
+    height: 32,
+    justifyContent: 'center',
+  },
+  track: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: TRACK_INACTIVE,
+  },
+  fill: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: TRACK_ACTIVE,
+  },
+  thumb: {
+    position: 'absolute',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: TRACK_ACTIVE,
+    marginLeft: -9,
+  },
+});

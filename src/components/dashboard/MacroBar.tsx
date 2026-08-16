@@ -11,14 +11,25 @@ interface Props {
   barColor: string;
 }
 
-export function MacroBar({ label, current, goal, barColor }: Props): React.JSX.Element {
+export function MacroBar({ label, current, goal, barColor, testID }: Props & { testID?: string }): React.JSX.Element {
   const pct = Math.min(current / goal, 1);
   return (
-    <View style={styles.macroRow}>
+    <View
+      style={styles.macroRow}
+      testID={testID ?? `dashboardMacroBar-${label}`}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${label} makro ilerlemesi`}
+      accessibilityValue={{
+        min: 0,
+        max: Math.round(goal),
+        now: Math.round(current),
+      }}
+    >
       <View style={styles.macroLabelRow}>
         <Text style={styles.macroLabel}>{label}</Text>
         <View style={styles.macroValueRow}>
-          <Text style={styles.macroValue}>{current}g</Text>
+          <Text style={styles.macroValue} testID={`macroValue-${label}`}>{current}g</Text>
           <Text style={styles.macroTarget}> / {goal}g</Text>
         </View>
       </View>
@@ -28,6 +39,9 @@ export function MacroBar({ label, current, goal, barColor }: Props): React.JSX.E
             styles.barFill,
             { width: `${pct * 100}%`, backgroundColor: barColor },
           ]}
+          testID={`macroFill-${label}`}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
         />
       </View>
     </View>

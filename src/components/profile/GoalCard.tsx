@@ -23,6 +23,7 @@ interface Props {
   accentColor: string;
   accentInputColor: string;
   icon: string;
+  testID?: string;
 }
 
 export function GoalCard({
@@ -37,15 +38,21 @@ export function GoalCard({
   accentColor,
   accentInputColor,
   icon,
+  testID,
 }: Props): React.JSX.Element {
   return (
-    <View style={styles.bentoCard}>
+    <View style={styles.bentoCard} testID={testID}>
       <View style={styles.bentoCardHeader}>
         <Icon name={icon} size={20} color={accentColor} />
         <Text style={styles.bentoLabel}>{label}</Text>
       </View>
       <View style={styles.bentoAdjustRow}>
-        <TouchableOpacity style={styles.adjustBtn} onPress={onDecrement}>
+        <TouchableOpacity
+          style={styles.adjustBtn}
+          onPress={onDecrement}
+          testID={testID ? `${testID}-decrement` : undefined}
+          accessibilityLabel={`${label} azalt`}
+        >
           <Icon name="remove" size={16} color={colors.onSurface} />
         </TouchableOpacity>
         <TextInput
@@ -56,8 +63,15 @@ export function GoalCard({
           placeholderTextColor={colors.outline}
           onChangeText={onChange}
           onBlur={onBlur}
+          testID={testID ? `${testID}-input` : undefined}
+          accessibilityLabel={label}
         />
-        <TouchableOpacity style={styles.adjustBtn} onPress={onIncrement}>
+        <TouchableOpacity
+          style={styles.adjustBtn}
+          onPress={onIncrement}
+          testID={testID ? `${testID}-increment` : undefined}
+          accessibilityLabel={`${label} arttır`}
+        >
           <Icon name="add" size={16} color={colors.onSurface} />
         </TouchableOpacity>
       </View>

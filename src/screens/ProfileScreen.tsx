@@ -527,6 +527,7 @@ export function ProfileScreen(): React.JSX.Element {
               onBlur={() => saveGoals()}
               onIncrement={() => adjustGoal('cal', 50)}
               onDecrement={() => adjustGoal('cal', -50)}
+              testID="profileGoalCalorie"
             />
             <GoalCard
               label={tr.profile.protein}
@@ -540,6 +541,7 @@ export function ProfileScreen(): React.JSX.Element {
               onBlur={() => saveGoals()}
               onIncrement={() => adjustGoal('protein', 5)}
               onDecrement={() => adjustGoal('protein', -5)}
+              testID="profileGoalProtein"
             />
             <GoalCard
               label={tr.profile.carbs}
@@ -553,6 +555,7 @@ export function ProfileScreen(): React.JSX.Element {
               onBlur={() => saveGoals()}
               onIncrement={() => adjustGoal('carbs', 10)}
               onDecrement={() => adjustGoal('carbs', -10)}
+              testID="profileGoalCarbs"
             />
             <GoalCard
               label={tr.profile.fat}
@@ -566,6 +569,7 @@ export function ProfileScreen(): React.JSX.Element {
               onBlur={() => saveGoals()}
               onIncrement={() => adjustGoal('fat', 5)}
               onDecrement={() => adjustGoal('fat', -5)}
+              testID="profileGoalFat"
             />
           </View>
         </View>
@@ -645,6 +649,7 @@ export function ProfileScreen(): React.JSX.Element {
             style={styles.exportButton}
             activeOpacity={0.8}
             onPress={handleExport}
+            testID="profileExportButton"
           >
             <View style={styles.gradientOverlay} />
             <Icon name="download" size={20} color={colors.onPrimary} />
@@ -655,6 +660,7 @@ export function ProfileScreen(): React.JSX.Element {
             style={styles.destructiveButton}
             activeOpacity={0.8}
             onPress={handleDeleteAll}
+            testID="profileDeleteHistoryButton"
           >
             <Icon name="delete-forever" size={20} color={colors.error} />
             <Text style={styles.destructiveText}>

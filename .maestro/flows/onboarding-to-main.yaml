@@ -1,0 +1,31 @@
+appId: com.hikmetgulsesli.healthlens
+onFlowStart:
+  - launchApp
+tags:
+  - smoke
+  - critical
+---
+# Onboarding → trial start → main tabs
+# Verifies: first-launch Onboarding gate, scan selection, paywall navigation.
+
+- assertVisible: "Sağlık Odağınız Nedir?"
+- tapOn: "Kilo Yönetimi"
+- tapOn: "Devam Et"
+
+- assertVisible: "Kendinizden Bahsedin"
+- tapOn: "Erkek"
+- tapOn: "Devam Et"
+
+- assertVisible: "Kişiselleştirilmiş Planınız"
+- tapOn: "Devam Et"
+
+# Paywall: tap 7-day trial CTA
+- assertVisible: "Tüm Pro+ Özelliklerinin Tadını Çıkarın"
+- tapOn:
+    id: "paywallStartTrialButton"
+
+# Trial confirmation dialog
+- tapOn: "Başla"
+
+# After dismiss, we land on the main camera tab.
+- assertVisible: "Yemeği çerçeveye hizalayın"

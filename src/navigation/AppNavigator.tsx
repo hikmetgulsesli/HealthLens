@@ -14,6 +14,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { PaywallScreen } from '../screens/PaywallScreen';
 import { useUserStore } from '../stores/userStore';
+import { RootContainer } from '../components/common/RootContainer';
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -150,9 +151,11 @@ export function AppNavigator() {
   }, [syncKeychainLimit]);
 
   return (
-    <NavigationContainer>
-      <CameraTabStack />
-    </NavigationContainer>
+    <RootContainer>
+      <NavigationContainer>
+        <CameraTabStack />
+      </NavigationContainer>
+    </RootContainer>
   );
 }
 

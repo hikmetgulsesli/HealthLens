@@ -14,13 +14,16 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useUserStore } from '../stores/userStore';
 import type { PlanTier } from '../types';
 import { PLANS, type Period } from '../config/plans';
 import { PlanCard } from '../components/paywall/PlanCard';
 
 export function PaywallScreen(): React.JSX.Element {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const profile = useUserStore(s => s.profile);
   const setProfile = useUserStore(s => s.setProfile);
 
@@ -85,7 +88,12 @@ export function PaywallScreen(): React.JSX.Element {
         [
           {
             text: 'Başla',
-            onPress: () => navigation.canGoBack() && navigation.goBack(),
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs' }],
+              });
+            },
           },
         ],
       );
@@ -200,6 +208,7 @@ export function PaywallScreen(): React.JSX.Element {
             onPress={handleStartTrial}
             disabled={isStartingTrial}
             activeOpacity={0.8}
+            testID="paywallStartTrialButton"
           >
             <Icon name="schedule" size={20} color={colors.primary} />
             <Text style={styles.trialButtonText}>7 GÜN ÜCRETSİZ DENE</Text>

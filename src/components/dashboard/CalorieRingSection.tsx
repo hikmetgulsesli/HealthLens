@@ -24,12 +24,26 @@ export function CalorieRingSection({
   const strokeDashoffset = circumference * (1 - calPercent);
 
   return (
-    <View style={styles.ringContainer}>
+    <View
+      style={styles.ringContainer}
+      testID="dashboardCalorieRing"
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Günlük kalori ilerlemesi"
+      accessibilityValue={{
+        min: 0,
+        max: Math.round(goal),
+        now: Math.round(consumed),
+      }}
+    >
       <Svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         style={{ transform: [{ rotate: '-90deg' }] }}
+        testID="dashboardCalorieRingSvg"
+        accessibilityElementsHidden
+        importantForAccessibility="no"
       >
         <Circle
           cx={size / 2}
@@ -52,7 +66,9 @@ export function CalorieRingSection({
         />
       </Svg>
       <View style={styles.ringCenter}>
-        <Text style={styles.ringValue}>{Math.round(consumed)}</Text>
+        <Text style={styles.ringValue} testID="dashboardCalorieValue">
+          {Math.round(consumed)}
+        </Text>
         <Text style={styles.ringUnit}>kcal</Text>
       </View>
     </View>
