@@ -86,8 +86,10 @@ export function DashboardScreen(): React.JSX.Element {
       dateKey: entry.dateKey,
       createdAt: entry.createdAt,
       imageUri: entry.imageUri || '',
+      imageUris: entry.imageUri ? [entry.imageUri] : [],
       mealCategory: entry.mealCategory,
       items: entry.items,
+      smartInsight: 'Kaydedilmiş öğün düzenleniyor.',
     });
     navigation.navigate('Review');
   };
