@@ -1,4 +1,4 @@
-import React, { type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Alert } from 'react-native';
 import TestRenderer, { act, type ReactTestRenderer, type ReactTestInstance } from 'react-test-renderer';
 
