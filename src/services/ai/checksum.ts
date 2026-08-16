@@ -1,24 +1,15 @@
-// SHA-256 via Web Crypto API (browser/RN with polyfill) or Node crypto (tests).
-type DigestFn = (algorithm: string, data: ArrayBuffer) => Promise<ArrayBuffer>;
+/* eslint-disable no-bitwise */
+import CryptoJS from 'crypto-js';
 
-interface CryptoLike {
-  subtle?: { digest: DigestFn };
-}
-
-function getSubtle(): DigestFn {
-  const g = globalThis as unknown as { crypto?: CryptoLike };
-  if (g.crypto?.subtle?.digest) {
-    return g.crypto.subtle.digest.bind(g.crypto.subtle);
+function bytesToWordArray(bytes: Uint8Array): CryptoJS.lib.WordArray {
+  const words: number[] = [];
+  for (let i = 0; i < bytes.length; i += 1) {
+    words[i >>> 2] |= bytes[i] << (24 - (i % 4) * 8);
   }
-  // Node fallback for jest / SSR.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-  const nodeCrypto = require('crypto') as { webcrypto: { subtle: { digest: DigestFn } } };
-  return nodeCrypto.webcrypto.subtle.digest.bind(nodeCrypto.webcrypto.subtle);
+  return CryptoJS.lib.WordArray.create(words, bytes.length);
 }
 
 export async function sha256(buffer: ArrayBuffer): Promise<string> {
-  const digest = await getSubtle()('SHA-256', buffer);
-  return Array.from(new Uint8Array(digest))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  const bytes = new Uint8Array(buffer);
+  return CryptoJS.SHA256(bytesToWordArray(bytes)).toString(CryptoJS.enc.Hex);
 }
