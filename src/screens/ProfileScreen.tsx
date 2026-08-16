@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   Switch,
   StatusBar,
   Modal,

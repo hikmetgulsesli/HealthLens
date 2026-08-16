@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   StatusBar,
   Image,
 } from 'react-native';

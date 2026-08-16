@@ -171,6 +171,10 @@ export function OnboardingScreen({ onComplete: _onComplete }: Props): React.JSX.
                 return (
                   <TouchableOpacity
                     key={opt.id}
+                    testID={`onboardingGoal-${opt.id}`}
+                    accessibilityLabel={`Sağlık odağı: ${opt.title}`}
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityRole="button"
                     style={[styles.goalCard, isSelected && styles.goalCardSelected]}
                     onPress={() => setSelectedGoal(opt.id)}
                   >
@@ -185,6 +189,7 @@ export function OnboardingScreen({ onComplete: _onComplete }: Props): React.JSX.
             <TouchableOpacity
               style={styles.nextButton}
               onPress={() => validateGoal() && setStep(2)}
+              testID="onboardingGoalNextButton"
             >
               <Text style={styles.nextButtonText}>Devam Et</Text>
               <Icon name="arrow-forward" size={20} color={colors.onPrimary} />

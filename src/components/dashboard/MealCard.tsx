@@ -1,11 +1,11 @@
 import React from 'react';
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
   Image,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '../../theme/colors';

@@ -362,6 +362,7 @@ export function CameraScreen(): React.JSX.Element {
             activeOpacity={0.7}
             onPress={handleGalleryPick}
             disabled={isBarcodeMode}
+            testID="cameraGalleryButton"
           >
             <Icon name="photo-library" size={24} color={isBarcodeMode ? colors.outline : colors.onSurface} />
           </TouchableOpacity>
@@ -396,6 +397,7 @@ export function CameraScreen(): React.JSX.Element {
             onPress={() => setFlashOn(v => !v)}
             activeOpacity={0.7}
             disabled={isBarcodeMode}
+            testID="cameraFlashButton"
           >
             <Icon
               name={flashOn ? 'flash-on' : 'flash-off'}

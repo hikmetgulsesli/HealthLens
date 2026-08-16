@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Image,
-  Alert,
   Modal,
   TextInput,
   StatusBar,
