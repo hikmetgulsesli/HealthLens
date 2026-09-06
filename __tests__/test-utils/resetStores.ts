@@ -1,4 +1,5 @@
 import { useAnalysisStore } from '../../src/stores/analysisStore';
+import { useHydrationStore } from '../../src/stores/hydrationStore';
 import { useLogStore } from '../../src/stores/logStore';
 import { useOfflineQueueStore } from '../../src/stores/offlineQueueStore';
 import { useUserStore } from '../../src/stores/userStore';
@@ -45,4 +46,5 @@ export function resetAllStores(): void {
     imageUris: [],
   });
   useOfflineQueueStore.setState({ queue: [], isProcessing: false });
+  useHydrationStore.setState({ waterIntake: {}, dailyWaterGoal: 2500 });
 }

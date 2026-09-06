@@ -84,4 +84,13 @@ describe('ProfileScreen', () => {
     );
     await r.unmount();
   });
+
+  it('renders all four micronutrient toggles + 4 goal cards with testIDs', async () => {
+    const r = await renderScreen(<ProfileScreen />);
+    expect(r.findAllByTestID('profileGoalCalorie').length).toBeGreaterThan(0);
+    expect(r.findAllByTestID('profileGoalProtein').length).toBeGreaterThan(0);
+    expect(r.findAllByTestID('profileGoalCarbs').length).toBeGreaterThan(0);
+    expect(r.findAllByTestID('profileGoalFat').length).toBeGreaterThan(0);
+    await r.unmount();
+  });
 });

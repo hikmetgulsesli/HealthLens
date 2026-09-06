@@ -122,6 +122,9 @@ export function HistoryScreen(): React.JSX.Element {
             return (
               <TouchableOpacity
                 key={key}
+                testID={`historyDay-${key}`}
+                accessibilityLabel={`${key}${hasData ? ', veri var' : ', boş'}`}
+                accessibilityState={{ selected: isSelected }}
                 style={[styles.dayCell, isSelected && styles.dayCellActive]}
                 onPress={() => setSelectedDate(d)}
               >
