@@ -116,3 +116,60 @@ describe('userStore actions', () => {
     expect(updatedProfile.freeScansUsed).toBe(1);
   });
 });
+
+describe('userStore — setGoals / setUnitSystem / setProfile', () => {
+  beforeEach(() => {
+    useUserStore.setState(state => ({
+      profile: { ...state.profile, unitSystem: 'metric', goals: { ...state.profile.goals } },
+    }));
+  });
+
+  test('setGoals merges partial fields without overwriting siblings', () => {
+    useUserStore.setState(state => ({
+      profile: { ...state.profile, goals: { ...state.profile.goals, dailyCalorieGoal: 2000, dailyProteinGoal: 100 } },
+    }));
+    useUserStore.getState().setGoals({ dailyCarbGoal: 250 });
+    const goals = useUserStore.getState().profile.goals;
+    expect(goals.dailyCalorieGoal).toBe(2000);
+    expect(goals.dailyProteinGoal).toBe(100);
+    expect(goals.dailyCarbGoal).toBe(250);
+  });
+
+  test('setGoals accepts null values to clear a target', () => {
+    useUserStore.setState(state => ({
+      profile: { ...state.profile, goals: { ...state.profile.goals, dailyCalorieGoal: 2000 } },
+    }));
+    useUserStore.getState().setGoals({ dailyCalorieGoal: null });
+    expect(useUserStore.getState().profile.goals.dailyCalorieGoal).toBeNull();
+  });
+
+  test('setGoals updates the profile updatedAt timestamp', () => {
+    const before = useUserStore.getState().profile.updatedAt;
+    useUserStore.getState().setGoals({ dailyCalorieGoal: 1800 });
+    const after = useUserStore.getState().profile.updatedAt;
+    expect(new Date(after).getTime()).toBeGreaterThanOrEqual(new Date(before).getTime());
+  });
+
+  test('setUnitSystem flips metric ↔ imperial', () => {
+    useUserStore.getState().setUnitSystem('imperial');
+    expect(useUserStore.getState().profile.unitSystem).toBe('imperial');
+    useUserStore.getState().setUnitSystem('metric');
+    expect(useUserStore.getState().profile.unitSystem).toBe('metric');
+  });
+
+  test('setProfile merges top-level fields but preserves nested goals', () => {
+    useUserStore.setState(state => ({
+      profile: { ...state.profile, goals: { ...state.profile.goals, dailyCalorieGoal: 2000 } },
+    }));
+    useUserStore.getState().setProfile({ isFirstLaunch: false });
+    const p = useUserStore.getState().profile;
+    expect(p.isFirstLaunch).toBe(false);
+    // setProfile intentionally preserves goals (the reducer spreads the
+    // incoming profile on top, but `goals` lives inside profile so it
+    // would be replaced if setProfile is given a full profile). With a
+    // partial profile arg, goals stay intact.
+    expect(p.goals.dailyCalorieGoal).toBe(2000);
+    // updatedAt bumps on each call.
+    expect(p.updatedAt).toBeDefined();
+  });
+});

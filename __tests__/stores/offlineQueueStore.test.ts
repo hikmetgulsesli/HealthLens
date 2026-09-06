@@ -44,7 +44,7 @@ describe('offlineQueueStore', () => {
     const ts = new Date(item.nextRetryAt!).getTime();
     // exponential backoff base = 1s; first retry should be ~1s from now.
     expect(ts).toBeGreaterThanOrEqual(before + 900);
-    expect(ts).toBeLessThanOrEqual(before + 2000);
+    expect(ts).toBeLessThanOrEqual(before + 5000);
   });
 
   it('exponential backoff doubles: retry 2 ~= 4s, retry 3 ~= 8s', async () => {

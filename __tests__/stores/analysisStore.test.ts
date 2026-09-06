@@ -134,4 +134,54 @@ describe('analysisStore', () => {
     const kcalAt250 = all[1].caloriesPer100g * 2.5;
     expect(kcalAt250 / kcalAt100).toBeCloseTo(2.5, 5);
   });
+
+  it('multi-step add/remove preserves array order and uniqueness', () => {
+    useAnalysisStore.getState().setAnalysis(seedAnalysis([baseItem]));
+    useAnalysisStore.getState().addItem({ ...baseItem, id: 'x' });
+    useAnalysisStore.getState().addItem({ ...baseItem, id: 'y' });
+    useAnalysisStore.getState().addItem({ ...baseItem, id: 'z' });
+    expect(useAnalysisStore.getState().currentAnalysis!.items.map(i => i.id)).toEqual([
+      'apple',
+      'x',
+      'y',
+      'z',
+    ]);
+    useAnalysisStore.getState().removeItem('x');
+    useAnalysisStore.getState().removeItem('apple');
+    expect(useAnalysisStore.getState().currentAnalysis!.items.map(i => i.id)).toEqual([
+      'y',
+      'z',
+    ]);
+  });
+
+  it('updateItemPortion is a no-op for unknown item id', () => {
+    useAnalysisStore.getState().setAnalysis(seedAnalysis([baseItem]));
+    const before = useAnalysisStore.getState().currentAnalysis!.items[0]
+      .estimatedPortionGrams;
+    useAnalysisStore.getState().updateItemPortion('does-not-exist', 999);
+    expect(useAnalysisStore.getState().currentAnalysis!.items[0].estimatedPortionGrams).toBe(
+      before,
+    );
+  });
+
+  it('setAnalyzing toggles the loading flag independently of the analysis', () => {
+    useAnalysisStore.getState().setAnalyzing(true);
+    expect(useAnalysisStore.getState().isAnalyzing).toBe(true);
+    expect(useAnalysisStore.getState().currentAnalysis).toBeNull();
+    useAnalysisStore.getState().setAnalyzing(false);
+    expect(useAnalysisStore.getState().isAnalyzing).toBe(false);
+  });
+
+  it('addImageUri accepts duplicates (allows review of staged images)', () => {
+    useAnalysisStore.getState().addImageUri('file:///a.jpg');
+    useAnalysisStore.getState().addImageUri('file:///a.jpg');
+    expect(useAnalysisStore.getState().imageUris).toHaveLength(2);
+  });
+
+  it('removeImageUri drops only the first matching uri', () => {
+    useAnalysisStore.getState().addImageUri('file:///a.jpg');
+    useAnalysisStore.getState().addImageUri('file:///b.jpg');
+    useAnalysisStore.getState().removeImageUri('file:///a.jpg');
+    expect(useAnalysisStore.getState().imageUris).toEqual(['file:///b.jpg']);
+  });
 });

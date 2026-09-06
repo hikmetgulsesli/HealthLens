@@ -1,9 +1,9 @@
-/* eslint-disable no-bitwise */
 import CryptoJS from 'crypto-js';
 
 function bytesToWordArray(bytes: Uint8Array): CryptoJS.lib.WordArray {
   const words: number[] = [];
   for (let i = 0; i < bytes.length; i += 1) {
+    // eslint-disable-next-line no-bitwise
     words[i >>> 2] |= bytes[i] << (24 - (i % 4) * 8);
   }
   return CryptoJS.lib.WordArray.create(words, bytes.length);

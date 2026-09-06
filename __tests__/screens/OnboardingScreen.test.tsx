@@ -5,6 +5,16 @@ import { OnboardingScreen } from '../../src/screens/OnboardingScreen';
 import { resetAllStores } from '../test-utils/resetStores';
 import { useUserStore } from '../../src/stores/userStore';
 
+const _orphanedTrees: TestRenderer.ReactTestRenderer[] = [];
+
+afterEach(() => {
+  act(() => {
+    while (_orphanedTrees.length > 0) {
+      _orphanedTrees.pop()?.unmount();
+    }
+  });
+});
+
 jest.mock('../../src/services/aiService', () => ({
   analyzeFoodImage: jest.fn(),
   analyzeTextMeal: jest.fn(),
@@ -132,7 +142,11 @@ describe('OnboardingScreen — step 1', () => {
   });
 
   it('committing health goal to userStore flips isFirstLaunch=false', () => {
-    TestRenderer.create(<OnboardingScreen />);
+    let tree: TestRenderer.ReactTestRenderer | undefined;
+    act(() => {
+      tree = TestRenderer.create(<OnboardingScreen />);
+    });
+    _orphanedTrees.push(tree!);
     useUserStore.setState(state => ({
       profile: {
         ...state.profile,

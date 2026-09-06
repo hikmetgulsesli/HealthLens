@@ -8,8 +8,10 @@ module.exports = {
     '^react-native-fs$': '<rootDir>/__mocks__/react-native-fs.js',
     '^react-native-image-picker$':
       '<rootDir>/__mocks__/react-native-image-picker.js',
-    '^../services/aiService$': '<rootDir>/__mocks__/aiService.js',
-    '^./services/aiService$': '<rootDir>/__mocks__/aiService.js',
+    // aiService is mocked per-test via jest.mock so each suite can swap
+    // its own implementation without conflicting with a static __mocks__
+    // entry. Tests that need the default fallback should use
+    // jest.requireMock('../../src/services/aiService').
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   collectCoverageFrom: [
@@ -18,7 +20,7 @@ module.exports = {
     'src/utils/**/*.ts',
     'src/hooks/**/*.ts',
     'src/config/**/*.ts',
-    '!src/**/*.{test,spec}.ts',
+    '!src/**/*/{test,spec}.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'json-summary', 'lcov'],
