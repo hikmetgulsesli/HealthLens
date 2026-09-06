@@ -56,7 +56,7 @@ export const PLANS: PlanDef[] = [
     displayName: 'Pro',
     tagline: 'Ciddi sağlık takibi için',
     monthlyCents: 499,
-    yearlyCents: 5999,
+    yearlyCents: 4990,
     dailyAiQuota: 100,
     features: [
       {
@@ -93,7 +93,7 @@ export const PLANS: PlanDef[] = [
     displayName: 'Pro+',
     tagline: 'Profesyoneller için',
     monthlyCents: 999,
-    yearlyCents: 11999,
+    yearlyCents: 9990,
     dailyAiQuota: -1,
     features: [
       {

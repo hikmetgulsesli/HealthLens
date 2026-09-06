@@ -12,4 +12,14 @@ module.exports = {
     '^./services/aiService$': '<rootDir>/__mocks__/aiService.js',
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  collectCoverageFrom: [
+    'src/services/**/*.ts',
+    'src/stores/**/*.ts',
+    'src/utils/**/*.ts',
+    'src/hooks/**/*.ts',
+    'src/config/**/*.ts',
+    '!src/**/*.{test,spec}.ts',
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'json-summary', 'lcov'],
 };

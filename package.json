@@ -7,7 +7,15 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:screens": "jest __tests__/screens",
+    "test:stores": "jest __tests__/stores",
+    "test:hooks": "jest __tests__/hooks",
+    "test:utils": "jest __tests__/utils __tests__/config",
+    "tsc": "tsc --noEmit",
+    "qa": "npm run tsc && npm run lint && npm test"
   },
   "dependencies": {
     "@expo-google-fonts/hanken-grotesk": "^0.4.3",

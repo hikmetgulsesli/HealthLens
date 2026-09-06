@@ -16,29 +16,23 @@ jest.mock('react-native-camera-kit', () => ({
   CameraType: { Back: 'back' },
 }));
 
-jest.mock('react-native-svg', () => ({
-  Svg: 'Svg',
-  Circle: 'Circle',
-}));
-
-jest.mock('@react-navigation/native-stack', () => ({
-  createNativeStackNavigator: () => ({
-    Navigator: 'Navigator',
-    Screen: 'Screen',
-  }),
-}));
-
-jest.mock('@react-navigation/bottom-tabs', () => ({
-  createBottomTabNavigator: () => ({
-    Navigator: 'Navigator',
-    Screen: 'Screen',
-  }),
-}));
-
-jest.mock('react-native-svg', () => ({
-  Svg: 'Svg',
-  Circle: 'Circle',
-}));
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const passthrough = (name: string) =>
+    React.forwardRef((props: { children?: React.ReactNode } & object, _ref: unknown) =>
+      React.createElement(name, props, props?.children),
+    );
+  return {
+    Svg: passthrough('Svg'),
+    Circle: passthrough('Circle'),
+    Path: passthrough('Path'),
+    Rect: passthrough('Rect'),
+    G: passthrough('G'),
+    Text: passthrough('SvgText'),
+    Line: passthrough('Line'),
+    Polygon: passthrough('Polygon'),
+  };
+});
 
 jest.mock('react-native-mmkv', () => {
   class MMKV {
