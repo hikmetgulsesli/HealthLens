@@ -69,7 +69,11 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
         set(state => ({
           queue: state.queue.map(item =>
             item.id === id
-              ? { ...item, retryCount: item.retryCount + 1 }
+              ? {
+                  ...item,
+                  retryCount: item.retryCount + 1,
+                  nextRetryAt: computeNextRetryAt(item.retryCount + 1),
+                }
               : item,
           ),
         })),
@@ -152,8 +156,10 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
       },
       clearCompleted: () =>
         set(state => ({
+          // PRD §9 defines only three statuses; "completed" maps to clearing
+          // failed entries that have exhausted MAX_RETRY retries.
           queue: state.queue.filter(
-            item => item.status !== 'failed' || item.retryCount < MAX_RETRY,
+            item => !(item.status === 'failed' && item.retryCount >= MAX_RETRY),
           ),
         })),
     }),
