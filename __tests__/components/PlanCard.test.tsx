@@ -118,4 +118,60 @@ describe('PlanCard', () => {
       await flushAsync();
     });
   });
+
+  it('invokes formatPrice with the monthlyCents value', async () => {
+    const formatPrice = jest.fn(c => `₺${(c / 100).toFixed(2)}`);
+    let tree: TestRenderer.ReactTestRenderer | undefined;
+    await act(async () => {
+      tree = TestRenderer.create(
+        <PlanCard
+          plan={mockPlan}
+          isSelected={false}
+          onSelect={() => {}}
+          formatPrice={formatPrice}
+          formatPerMonth={c => String(c)}
+        />,
+      );
+      await flushAsync();
+    });
+    expect(formatPrice).toHaveBeenCalledWith(499);
+    await act(async () => {
+      tree!.unmount();
+      await flushAsync();
+    });
+  });
+
+  it('renders Yıllık prefix in the secondary price line', async () => {
+    let tree: TestRenderer.ReactTestRenderer | undefined;
+    await act(async () => {
+      tree = TestRenderer.create(
+        <PlanCard
+          plan={mockPlan}
+          isSelected={false}
+          onSelect={() => {}}
+          formatPrice={c => `₺${(c / 100).toFixed(2)}`}
+          formatPerMonth={c => `₺${(c / 100).toFixed(2)}/ay`}
+        />,
+      );
+      await flushAsync();
+    });
+    const { Text } = require('react-native');
+    const allText = tree!.root.findAllByType(Text);
+    const yearLine = allText.find(n => {
+      const c = (n.props as { children?: unknown }).children;
+      // The exact "/ay" suffix is whatever formatPerMonth returns; we
+      // check for the "Yıllık:" prefix that PlanCard always emits.
+      return (
+        c === 'Yıllık: ₺49.90/ay' ||
+        (Array.isArray(c) && c.some(x => x === 'Yıllık: ₺49.90/ay')) ||
+        (typeof c === 'string' && c.startsWith('Yıllık:')) ||
+        (Array.isArray(c) && c.some(x => typeof x === 'string' && x.startsWith('Yıllık:')))
+      );
+    });
+    expect(yearLine).toBeTruthy();
+    await act(async () => {
+      tree!.unmount();
+      await flushAsync();
+    });
+  });
 });
