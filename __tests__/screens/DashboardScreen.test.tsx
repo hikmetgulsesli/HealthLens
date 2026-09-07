@@ -11,7 +11,10 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
 }));
 
-const flushAsync = () => new Promise<void>(resolve => setImmediate(resolve));
+const flushAsync = (): Promise<void> =>
+  new Promise(resolve => {
+    Promise.resolve().then(resolve);
+  });
 
 interface ReactProps {
   testID?: string;
@@ -84,6 +87,16 @@ describe('DashboardScreen', () => {
     mockNavigate.mockClear();
     mockGoBack.mockClear();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    // DashboardScreen mounts a 60s setInterval that must not fire
+    // during these tests (it would update React state outside an act()).
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
   });
 
   it('renders the empty state CTA when no meals exist for today', async () => {
@@ -115,7 +128,17 @@ describe('DashboardScreen', () => {
   it('renders the seeded meal calorie total (128 kcal) into the ring', async () => {
     seedTodaysEntry();
     const tree = await mountDashboard();
-    expect(findAllByText(tree.root, '128').length).toBeGreaterThan(0);
+    const { Text } = require('react-native');
+    const allText = tree.root.findAllByType(Text);
+    const has128 = allText.some(n => {
+      const c = (n.props as { children?: unknown }).children;
+      return (
+        c === '128' ||
+        c === '128 kcal' ||
+        (Array.isArray(c) && c.some(x => x === '128' || x === '128 kcal'))
+      );
+    });
+    expect(has128).toBe(true);
     await act(async () => {
       tree.unmount();
       await flushAsync();

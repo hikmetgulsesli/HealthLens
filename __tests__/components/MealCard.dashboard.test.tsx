@@ -7,7 +7,9 @@ import { useUserStore } from '../../src/stores/userStore';
 import { resetAllStores } from '../test-utils/resetStores';
 
 const flushAsync = (): Promise<void> =>
-  new Promise(resolve => setImmediate(resolve));
+  new Promise(resolve => {
+    Promise.resolve().then(resolve);
+  });
 
 async function mount(): Promise<TestRenderer.ReactTestRenderer> {
   let tree: TestRenderer.ReactTestRenderer | undefined;
@@ -59,6 +61,14 @@ describe('DashboardScreen — meal card rendering', () => {
       profile: { ...state.profile, isFirstLaunch: false },
     }));
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
   });
 
   it('renders a meal card testID per logged entry', async () => {
