@@ -14,6 +14,8 @@
     "test:stores": "jest __tests__/stores",
     "test:hooks": "jest __tests__/hooks",
     "test:utils": "jest __tests__/utils __tests__/config",
+    "ai:mock": "node scripts/fake-ai-server.js",
+    "ai:probe": "node scripts/aiPipelineProbe.js",
     "tsc": "tsc --noEmit",
     "qa": "npm run tsc && npm run lint && npm test"
   },

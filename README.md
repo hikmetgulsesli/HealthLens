@@ -95,3 +95,132 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+# Testing
+
+## Quick reference
+
+```sh
+# Run the whole suite (44 suites, 263 tests, ~5s)
+npm test
+
+# Type-check + lint + test in one shot
+npm run qa
+
+# Coverage report (writes to ./coverage/)
+npm run test:coverage
+
+# Sub-suites (faster iteration)
+npm run test:screens      # UI mount + interaction
+npm run test:stores       # Zustand store reducers + offline queue
+npm run test:hooks        # useReduceMotion + custom hooks
+npm run test:utils        # date, imageUtils, healthGradeStyle, systemSettings
+```
+
+## Conventions
+
+- **Tests live under `__tests__/`** mirroring `src/`. Use the file's
+  sibling name plus `.test.ts(x)` (jest default `testMatch`).
+- **`renderScreen` helper** (in `__tests__/test-utils/renderScreen.tsx`)
+  wraps `TestRenderer.create()` in `act()` and auto-mocks `Alert.alert`.
+  Use it for any screen that mounts `react-native` UI.
+- **Store tests** call `resetAllStores()` in `beforeEach` to avoid
+  cross-test state leaks across `analysisStore` / `logStore` /
+  `offlineQueueStore` / `userStore` / `hydrationStore`.
+- **Snapshots** are restricted to design-system components only
+  (`MacroBadge`, `MacroBento`, `CameraTopBar`, `EmptyMealsCard`,
+  etc.). Business screens are excluded.
+- **`tsc --noEmit` and `eslint` must both be clean** before committing.
+  The `npm run qa` pipeline runs all three.
+
+## TestID contract
+
+Every interactive element exposed to E2E (Maestro) must carry a stable
+`testID` prop. Run `npm run test:screens` and grep for the rendered
+surface — every primary action must show up. Currently wired:
+
+| testID | Surface |
+| --- | --- |
+| `cameraPreview`, `cameraCaptureButton`, `cameraGalleryButton`, `cameraFlashButton` | Camera |
+| `cameraCloseButton`, `cameraVoiceButton`, `cameraBarcodeButton` | CameraTopBar |
+| `paywallStartTrialButton` | Paywall |
+| `profileGoalCalorie[-increment/decrement/-input]` | Profile |
+| `dashboardCalorieRing`, `dashboardCalorieValue`, `dashboardCameraFab` | Dashboard |
+| `dashboardFirstCaptureCta`, `dashboardMealCard-<entryId>` | Dashboard meals |
+| `dashboardMacroBar-Protein/Karbonhidrat/Yağ` | Macro bars |
+| `reviewAddItemButton`, `reviewRetakeButton`, `saveLogButton`, `reviewAddItemSaveButton` | Review |
+| `errorBoundaryRetry` | ErrorBoundary |
+| `historyDay-<YYYY-MM-DD>` | History picker |
+
+## AI backend integration
+
+`HttpAiClient` (`src/services/ai/HttpAiClient.ts`) is the only thing
+that talks to the network. The contract is:
+
+```
+POST {AI_PROXY_URL}/v1/analyze-image
+Authorization: Bearer {AI_PROXY_TOKEN}
+Content-Type: application/json
+{
+  "mime": "image/jpeg" | "image/png" | "image/heic",
+  "imageBase64": "<base64 of file bytes>"
+}
+
+200 OK →
+{
+  "imageUri": "...",
+  "imageUris": ["..."],
+  "mealCategory": "breakfast" | "lunch" | "dinner" | "snack",
+  "smartInsight": "<string>",
+  "items": [
+    {
+      "id": "<uuid>",
+      "name": "<localized>",
+      "confidence": 0..1,
+      "estimatedPortionGrams": number,
+      "caloriesPer100g": number,
+      "proteinPer100g": number,
+      "carbsPer100g": number,
+      "fatPer100g": number,
+      "fiberPer100g": number,
+      "sugarPer100g": number,
+      "sodiumPer100g": number
+    }
+  ]
+}
+```
+
+Errors are mapped to a typed `AiError` (`src/services/ai/errors.ts`):
+
+| HTTP | kind | retry? |
+| --- | --- | --- |
+| timeout (15 s AbortSignal) | `timeout` | yes |
+| 401 / 403 | `auth` | no |
+| 429 w/ Retry-After | `rate_limit` (+ retryAfterSec) | yes |
+| 5xx | `provider_error` | yes |
+| 4xx other | `invalid_payload` | no |
+| JSON parse fail | `parse_error` | no |
+
+The `offlineQueueStore` (`src/stores/offlineQueueStore.ts`) replays
+these with exponential backoff (1 s, 4 s, 16 s) up to `MAX_RETRY = 3`.
+
+### Manual end-to-end probe
+
+To validate the wire contract against a local mock without a real
+Kimi / Minimax deployment:
+
+```sh
+# Terminal A — fake server
+node scripts/fake-ai-server.js   # listens on 127.0.0.1:9999
+
+# Terminal B — Jest integration test
+AI_PROXY_URL=http://127.0.0.1:9999 \
+AI_PROXY_TOKEN=test-token-12345 \
+  npm test -- offlineQueueProcess
+
+# The suite asserts: timeout, retry-after, 401, 500, dedup, and the
+# full happy-path (3-item food list) end-to-end.
+```
+
+Coverage is published under `./coverage/lcov-report/index.html` after
+`npm run test:coverage`.

@@ -23,7 +23,7 @@ export interface RenderScreenResult {
   unmount: () => Promise<void>;
 }
 
-const flushAsync = () =>
+const flushAsync = (): Promise<void> =>
   new Promise<void>(resolve => setImmediate(resolve));
 
 /**

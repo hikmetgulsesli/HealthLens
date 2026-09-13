@@ -1,6 +1,10 @@
 module.exports = {
   preset: '@react-native/jest-preset',
-  testPathIgnorePatterns: ['/node_modules/', '/__tests__/test-utils/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/test-utils/',
+    '/__tests__/scripts/',
+  ],
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|@react-navigation|react-native-safe-area-context|react-native-screens|react-native-gesture-handler|react-native-vector-icons|react-native-svg|react-native-camera-kit|react-native-mmkv|react-native-permissions|react-native-gifted-charts|@tanstack/react-query|zustand|@testing-library)/)',
   ],

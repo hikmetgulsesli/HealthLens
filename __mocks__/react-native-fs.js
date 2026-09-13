@@ -5,4 +5,13 @@ export default {
   copyFile: jest.fn(() => Promise.resolve()),
   unlink: jest.fn(() => Promise.resolve()),
   readFile: jest.fn(() => Promise.resolve('base64encodedstring')),
+  writeFile: jest.fn(() => Promise.resolve()),
+  readDir: jest.fn(() => Promise.resolve([])),
+  existsDir: jest.fn(() => Promise.resolve(true)),
+  getInfoAsync: jest.fn(() => Promise.resolve({ exists: true })),
+  moveFile: jest.fn(() => Promise.resolve()),
+  copyFileAssets: jest.fn(() => Promise.resolve()),
+  unlinkAssets: jest.fn(() => Promise.resolve()),
+  existsAssets: jest.fn(() => Promise.resolve(true)),
+  readDirAssets: jest.fn(() => Promise.resolve([])),
 };

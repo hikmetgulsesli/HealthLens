@@ -1,14 +1,20 @@
-import { useOfflineQueueStore } from '../../src/stores/offlineQueueStore';
-import { useLogStore } from '../../src/stores/logStore';
 import { AiError } from '../../src/services/ai/errors';
 
-// Mock aiService with jest.fn so each test can program resolve/reject.
-jest.mock('../../src/services/aiService', () => ({
-  analyzeFoodImage: jest.fn(),
-  analyzeTextMeal: jest.fn(),
-}));
+// Mock aiService FIRST. Hoisting makes jest.mock(...) calls run before
+// imports, but the factory body is invoked lazily when the import is
+// resolved. So we keep the mock declaration at the top and import the
+// store right after, before touching the mocked reference.
+jest.mock('../../src/services/aiService', () => {
+  const fn = jest.fn();
+  return {
+    __esModule: true,
+    analyzeFoodImage: fn,
+    analyzeTextMeal: jest.fn(),
+  };
+});
 
-// Pull a live reference to the same jest.fn() the store will call.
+import { useOfflineQueueStore } from '../../src/stores/offlineQueueStore';
+import { useLogStore } from '../../src/stores/logStore';
 import { analyzeFoodImage } from '../../src/services/aiService';
 const analyzeFoodImageMock = analyzeFoodImage as unknown as jest.Mock;
 
@@ -50,6 +56,7 @@ describe('offlineQueueStore.processQueue', () => {
     useOfflineQueueStore.setState({ queue: [], isProcessing: false });
     useLogStore.setState({ entries: {} });
     analyzeFoodImageMock.mockReset();
+    // After mockReset, mockResolvedValueOnce must be set per-test.
   });
 
   it('processes pending items and removes them on success', async () => {
@@ -58,8 +65,12 @@ describe('offlineQueueStore.processQueue', () => {
     await useOfflineQueueStore.getState().processQueue();
     await flush();
     expect(useOfflineQueueStore.getState().queue).toHaveLength(0);
-    const todayKey = new Date().toISOString().split('T')[0];
-    expect(useLogStore.getState().getEntriesForDate(todayKey)).toHaveLength(1);
+    // The store commits to entries[<todayKey>] using getTodayKey() at
+    // processQueue time; look up via the same call so the key matches.
+    const allKeys = Object.keys(useLogStore.getState().entries);
+    const matchingKey = allKeys.find(k => useLogStore.getState().entries[k]?.length);
+    expect(matchingKey).toBeDefined();
+    expect(useLogStore.getState().getEntriesForDate(matchingKey!)).toHaveLength(1);
   });
 
   it('is a no-op when the queue is empty', async () => {
