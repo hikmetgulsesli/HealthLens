@@ -12,6 +12,8 @@ module.exports = {
     '^react-native-fs$': '<rootDir>/__mocks__/react-native-fs.js',
     '^react-native-image-picker$':
       '<rootDir>/__mocks__/react-native-image-picker.js',
+    // Allow tests to import from src/* via a non-relative specifier.
+    '^src/(.*)$': '<rootDir>/src/$1',
     // aiService is mocked per-test via jest.mock so each suite can swap
     // its own implementation without conflicting with a static __mocks__
     // entry. Tests that need the default fallback should use
