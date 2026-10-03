@@ -167,8 +167,6 @@ describe('offlineQueueStore.processQueue', () => {
     addOne();
     const first = useOfflineQueueStore.getState().processQueue();
     await flushAsync();
-    // While in-flight, a second call returns *immediately* without
-    // starting another request. We assert by counting calls.
     const callsBefore = analyzeFoodImageMock.mock.calls.length;
     await useOfflineQueueStore.getState().processQueue();
     expect(analyzeFoodImageMock.mock.calls.length).toBe(callsBefore);
@@ -177,5 +175,40 @@ describe('offlineQueueStore.processQueue', () => {
     await first;
     expect(useOfflineQueueStore.getState().queue).toHaveLength(0);
     expect(useOfflineQueueStore.getState().isProcessing).toBe(false);
+  });
+
+  it('skips items that have hit MAX_RETRY on subsequent processQueue calls', async () => {
+    analyzeFoodImageMock.mockReset();
+    addOne();
+    useOfflineQueueStore.setState(state => ({
+      queue: state.queue.map(i => ({
+        ...i,
+        retryCount: 3,
+        status: 'failed' as const,
+        nextRetryAt: null,
+      })),
+    }));
+    const callsBefore = analyzeFoodImageMock.mock.calls.length;
+    await useOfflineQueueStore.getState().processQueue();
+    await flush();
+    expect(analyzeFoodImageMock.mock.calls.length).toBe(callsBefore);
+  });
+
+  it('rate_limit failure path increments retry and marks the item failed', async () => {
+    analyzeFoodImageMock.mockRejectedValueOnce(
+      Object.assign(new Error('rate_limited'), {
+        name: 'AiError',
+        kind: 'rate_limit',
+        retryAfterSec: 60,
+      }),
+    );
+    addOne();
+    await useOfflineQueueStore.getState().processQueue();
+    await flush();
+    const item = useOfflineQueueStore.getState().queue[0];
+    // Status flips to failed; retryCount + 1; nextRetryAt set.
+    expect(item.status).toBe('failed');
+    expect(item.retryCount).toBe(1);
+    expect(item.nextRetryAt).not.toBeNull();
   });
 });

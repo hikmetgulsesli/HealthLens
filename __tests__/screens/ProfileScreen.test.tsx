@@ -61,12 +61,25 @@ describe('ProfileScreen', () => {
     await r.unmount();
   });
 
-  it('exports data button triggers handler that reads log entries', async () => {
+  it('exports data button writes an HTML report and opens the share sheet', async () => {
     seedLogEntries();
+    const { Share } = require('react-native');
+    const shareSpy = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: 'sharedAction' } as never);
+    const RNFS = require('react-native-fs').default;
+    const writeFileSpy = jest.spyOn(RNFS, 'writeFile');
     const r = await renderScreen(<ProfileScreen />);
     await r.pressById('profileExportButton');
-    // handleExport currently displays an Alert with the JSON.
-    // Spy was already attached in beforeEach.
+    expect(writeFileSpy).toHaveBeenCalledTimes(1);
+    expect(shareSpy).toHaveBeenCalledTimes(1);
+    const shareArg = shareSpy.mock.calls[0][0] as { url?: string };
+    expect(shareArg.url).toMatch(/^file:\/\//);
+    const callArgs = writeFileSpy.mock.calls[0];
+    expect(callArgs.length).toBe(3);
+    expect(callArgs[2]).toBe('utf8');
+    writeFileSpy.mockRestore();
+    shareSpy.mockRestore();
     await r.unmount();
   });
 
